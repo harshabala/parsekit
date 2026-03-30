@@ -1,0 +1,13 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for ParseDock",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "store:default",
+    "dialog:default",
+    "shell:default",
+    "clipboard-manager:default",
+    "core:event:default"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "parsedock-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@llamaindex/liteparse": "latest",
+    "p-limit": "^6.0.0"
+  }
+}
