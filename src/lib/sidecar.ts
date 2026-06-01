@@ -1,6 +1,7 @@
 import { Command } from "@tauri-apps/plugin-shell";
 
 export interface ParseConfig {
+  /** Informational only — directory scanning is done frontend-side; the sidecar is driven by `files`. */
   inputDir: string;
   files: string[];
   outputDir: string;

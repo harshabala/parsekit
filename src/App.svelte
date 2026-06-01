@@ -85,6 +85,23 @@ import { MAX_RECENT_BATCHES } from "./lib/types";
   async function startParse() {
     if (!inputDir || !outputDir) return;
 
+    errorMsg = null;
+
+    let filesToParse: string[];
+    try {
+      // Re-scan at parse time (folder may have changed since selection).
+      // Rust scan_directory is the single source of truth for supported extensions.
+      filesToParse = await invoke<string[]>("scan_directory", { path: inputDir });
+    } catch (e) {
+      errorMsg = e instanceof Error ? e.message : String(e);
+      return;
+    }
+
+    if (filesToParse.length === 0) {
+      errorMsg = "No supported files found in the input folder.";
+      return;
+    }
+
     try {
       await invoke("trigger_haptic");
     } catch {}
@@ -92,16 +109,8 @@ import { MAX_RECENT_BATCHES } from "./lib/types";
     isParsing = true;
     files = [];
     totalFiles = 0;
-    errorMsg = null;
 
     try {
-      // Re-scan at parse time (folder may have changed since selection).
-      // Rust scan_directory is the single source of truth for supported extensions.
-      const filesToParse = await invoke<string[]>("scan_directory", { path: inputDir });
-      if (filesToParse.length === 0) {
-        isParsing = false;
-        return;
-      }
 
       await runParse({
         inputDir,

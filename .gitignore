@@ -3,6 +3,7 @@ dist/
 target/
 sidecar/node_modules/
 src-tauri/binaries/
+src-tauri/gen/
 .DS_Store
 *.log
 .env

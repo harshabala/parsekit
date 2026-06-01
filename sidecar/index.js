@@ -73,7 +73,7 @@ async function processFile(parser, filePath, outDir, format) {
 }
 
 async function run(config) {
-  const { inputDir, files, outputDir, format, ocrEnabled = true, ocrLanguage = "eng", workers = 4 } = config;
+  const { files, outputDir, format, ocrEnabled = true, ocrLanguage = "eng", workers = 4 } = config;
 
   try {
     const concurrency = Math.max(1, Number(workers) || 4);
