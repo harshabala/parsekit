@@ -227,7 +227,9 @@ import { MAX_RECENT_BATCHES } from "./lib/types";
           <span>Format</span>
           <FormatSelector value={format} onChange={handleFormatChange} />
         </div>
-        <div class="file-count-preview" style="margin-top: -4px;">Spreadsheets always export as JSON.</div>
+        {#if format !== "json"}
+          <div class="file-count-preview caption-hint">Spreadsheets always export as JSON.</div>
+        {/if}
 
         <div class="row">
           <div style="display: flex; align-items: center; gap: 8px;">

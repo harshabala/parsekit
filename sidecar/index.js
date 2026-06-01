@@ -24,6 +24,7 @@ async function walkDir(dir) {
   return files;
 }
 
+// NOTE: the format->extension mapping here must stay in sync with the format->content branches in processFile.
 function getOutputPath(filePath, outDir, format) {
   const ext = path.extname(filePath).toLowerCase();
   const baseName = path.basename(filePath, ext);
@@ -38,27 +39,26 @@ function getOutputPath(filePath, outDir, format) {
   } else {
     outExt = ".md";
   }
-  return path.join(outDir, baseName + outExt);
+  const outPath = path.join(outDir, baseName + outExt);
+  return { outPath, baseName, isExcel };
 }
 
 async function processFile(parser, filePath, outDir, format) {
   const fileName = path.basename(filePath);
-  const outPath = getOutputPath(filePath, outDir, format);
+  const { outPath, baseName, isExcel } = getOutputPath(filePath, outDir, format);
 
-  // Skip if output already exists for this format
+  // Skip if a non-empty output already exists (empty = interrupted/truncated prior run, re-parse it)
   try {
-    await fs.access(outPath);
-    stdout.write(JSON.stringify({ type: "progress", file: fileName, status: "skipped", path: outPath }) + "\n");
-    return "skipped";
+    const stat = await fs.stat(outPath);
+    if (stat.size > 0) {
+      stdout.write(JSON.stringify({ type: "progress", file: fileName, status: "skipped", path: outPath }) + "\n");
+      return "skipped";
+    }
   } catch {
     // File does not exist — proceed with parsing
   }
 
   stdout.write(JSON.stringify({ type: "progress", file: fileName, status: "parsing" }) + "\n");
-
-  const ext = path.extname(filePath).toLowerCase();
-  const baseName = path.basename(filePath, ext);
-  const isExcel = [".xlsx", ".xls"].includes(ext);
 
   // LiteParse takes OCR config in the constructor; the second parse() arg is `quiet`.
   const result = await parser.parse(filePath, true);

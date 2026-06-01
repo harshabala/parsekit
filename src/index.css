@@ -329,6 +329,10 @@ label {
   margin-top: -6px;
 }
 
+.caption-hint {
+  margin-top: -4px;
+}
+
 .error-banner {
   margin-top: 8px;
   padding: 8px 10px;
