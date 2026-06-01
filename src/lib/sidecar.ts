@@ -4,6 +4,7 @@ export interface ParseConfig {
   inputDir: string;
   outputDir: string;
   format: "md" | "json" | "txt";
+  ocrEnabled?: boolean;
   ocrLanguage?: string;
   workers?: number;
 }

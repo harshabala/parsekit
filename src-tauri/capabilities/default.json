@@ -8,6 +8,13 @@
     "dialog:default",
     "shell:default",
     "clipboard-manager:default",
-    "core:event:default"
+    "core:event:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "node", "cmd": "node", "args": true },
+        { "name": "open", "cmd": "open", "args": true }
+      ]
+    }
   ]
 }

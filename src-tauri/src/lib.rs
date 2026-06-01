@@ -1,10 +1,65 @@
 use std::path::Path;
-use tauri::Manager;
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use tauri::Manager;
 use walkdir::WalkDir;
 
+#[cfg(target_os = "macos")]
+use std::process::Command;
+
+#[cfg(target_os = "macos")]
+fn detect_apple_silicon() -> bool {
+    std::process::Command::new("sysctl")
+        .arg("-n")
+        .arg("machdep.cpu.brand_string")
+        .output()
+        .map(|o| {
+            let output = String::from_utf8_lossy(&o.stdout);
+            output.contains("Apple")
+                || output.contains("M1")
+                || output.contains("M2")
+                || output.contains("M3")
+                || output.contains("M4")
+        })
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "macos")]
+fn get_optimal_workers() -> usize {
+    if detect_apple_silicon() {
+        6
+    } else {
+        4
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn get_optimal_workers() -> usize {
+    4
+}
+
+#[tauri::command]
+fn get_system_info() -> Result<serde_json::Value, String> {
+    Ok(serde_json::json!({
+        "optimalWorkers": get_optimal_workers(),
+        "isAppleSilicon": cfg!(target_os = "macos") && detect_apple_silicon()
+    }))
+}
+
+#[tauri::command]
+fn trigger_haptic() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("/usr/bin/osascript")
+            .arg("-e")
+            .arg("beep")
+            .spawn()
+            .map_err(|e| format!("Failed to trigger haptic: {}", e))?;
+    }
+    Ok(())
+}
+
 const SUPPORTED_EXTENSIONS: &[&str] = &[
-    "pdf", "docx", "doc", "pptx", "ppt", "xlsx", "xls", "png", "jpg", "jpeg", "tiff", "bmp",
+    "pdf", "docx", "doc", "pptx", "ppt", "xlsx", "xls", "png", "jpg", "jpeg", "tiff", "tif", "bmp",
 ];
 
 #[tauri::command]
@@ -42,8 +97,8 @@ fn open_in_finder(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn copy_file_to_clipboard(path: String) -> Result<String, String> {
-    std::fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))
+fn copy_file_to_clipboard(path: String) -> Result<Vec<u8>, String> {
+    std::fs::read(&path).map_err(|e| format!("Failed to read file: {}", e))
 }
 
 pub fn run() {
@@ -55,16 +110,16 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             scan_directory,
             open_in_finder,
-            copy_file_to_clipboard
+            copy_file_to_clipboard,
+            get_system_info,
+            trigger_haptic
         ])
         .setup(|app| {
-            // Hide dock icon on macOS
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             let window = app.get_webview_window("main").unwrap();
 
-            // Hide window on blur
             let w = window.clone();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Focused(false) = event {
@@ -72,7 +127,6 @@ pub fn run() {
                 }
             });
 
-            // Setup Tray Icon
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .on_tray_icon_event(|tray, event| {

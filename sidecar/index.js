@@ -5,9 +5,7 @@ import pLimit from "p-limit";
 import { createInterface } from "readline";
 import { stdin, stdout } from "process";
 
-const parser = new LiteParse();
-
-const supportedExts = [".pdf", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls", ".png", ".jpg", ".jpeg"];
+const supportedExts = [".pdf", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp"];
 
 async function walkDir(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -26,29 +24,39 @@ async function walkDir(dir) {
   return files;
 }
 
-async function processFile(filePath, outDir, format, ocrLanguage) {
+async function processFile(parser, filePath, outDir, format) {
   stdout.write(JSON.stringify({ type: "progress", file: path.basename(filePath), status: "parsing" }) + "\n");
 
   const ext = path.extname(filePath).toLowerCase();
   const baseName = path.basename(filePath, ext);
 
-  const result = await parser.parse(filePath, {
-    language: ocrLanguage || "eng"
-  });
+  const isExcel = [".xlsx", ".xls"].includes(ext);
+  // LiteParse takes OCR config in the constructor; the second parse() arg is `quiet`.
+  const result = await parser.parse(filePath, true);
 
   let outputContent = "";
   let outExt = ".md";
 
-  if (format === "json") {
+  if (isExcel) {
+    outputContent = JSON.stringify(result, null, 2);
+    outExt = ".json";
+  } else if (format === "json") {
     outputContent = JSON.stringify(result, null, 2);
     outExt = ".json";
   } else if (format === "txt") {
-    outputContent = result.pages.map(p => p.text).join("\n\n---\n\n");
+    if (result.pages) {
+      outputContent = result.pages.map(p => p.text).join("\n\n---\n\n");
+    } else {
+      outputContent = JSON.stringify(result, null, 2);
+    }
     outExt = ".txt";
   } else {
-    // Smart Markdown: title header + page subheaders with separators
-    const pages = result.pages.map((p, i) => `## Page ${i + 1}\n\n${p.text}`);
-    outputContent = `# ${baseName}\n\n${pages.join("\n\n---\n\n")}`;
+    if (result.pages) {
+      const pages = result.pages.map((p, i) => `## Page ${i + 1}\n\n${p.text}`);
+      outputContent = `# ${baseName}\n\n${pages.join("\n\n---\n\n")}`;
+    } else {
+      outputContent = `# ${baseName}\n\n${JSON.stringify(result, null, 2)}`;
+    }
     outExt = ".md";
   }
 
@@ -61,9 +69,12 @@ async function processFile(filePath, outDir, format, ocrLanguage) {
 }
 
 async function run(config) {
-  const { inputDir, outputDir, format, ocrLanguage, concurrency = 4 } = config;
+  const { inputDir, outputDir, format, ocrEnabled = true, ocrLanguage = "eng", workers = 4 } = config;
 
   try {
+    const concurrency = Math.max(1, Number(workers) || 4);
+    const parser = new LiteParse({ ocrEnabled, ocrLanguage });
+
     await fs.mkdir(outputDir, { recursive: true });
     const files = await walkDir(inputDir);
     const limit = pLimit(concurrency);
@@ -77,7 +88,7 @@ async function run(config) {
     const tasks = files.map(filePath =>
       limit(async () => {
         try {
-          await processFile(filePath, outputDir, format, ocrLanguage);
+          await processFile(parser, filePath, outputDir, format);
           parsed++;
         } catch (error) {
           errors++;
