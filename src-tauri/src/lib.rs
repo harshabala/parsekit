@@ -143,29 +143,42 @@ pub fn run() {
                                 // Position the popover window just below the tray icon,
                                 // horizontally centered on it.
                                 if let Ok(win_size) = window.outer_size() {
+                                    // Scale factor for converting logical → physical pixels.
+                                    let scale = window.scale_factor().unwrap_or(1.0);
+
                                     // Resolve icon rect to physical pixels.
                                     // Tray icon positions are already in screen physical coords.
                                     let icon_x = match rect.position {
                                         Position::Physical(p) => p.x as f64,
-                                        Position::Logical(p) => p.x,
+                                        Position::Logical(p) => p.x * scale,
                                     };
                                     let icon_y = match rect.position {
                                         Position::Physical(p) => p.y as f64,
-                                        Position::Logical(p) => p.y,
+                                        Position::Logical(p) => p.y * scale,
                                     };
                                     let icon_w = match rect.size {
                                         Size::Physical(s) => s.width as f64,
-                                        Size::Logical(s) => s.width,
+                                        Size::Logical(s) => s.width * scale,
                                     };
                                     let icon_h = match rect.size {
                                         Size::Physical(s) => s.height as f64,
-                                        Size::Logical(s) => s.height,
+                                        Size::Logical(s) => s.height * scale,
                                     };
                                     let win_w = win_size.width as f64;
 
+                                    // Monitor width for right-edge clamping (physical px).
+                                    let monitor_width = window
+                                        .current_monitor()
+                                        .ok()
+                                        .flatten()
+                                        .map(|m| m.size().width as f64)
+                                        .unwrap_or(f64::MAX);
+
                                     // Center window horizontally under the icon, clamp to avoid
-                                    // going off the left edge of the screen.
-                                    let x = (icon_x + icon_w / 2.0 - win_w / 2.0).max(0.0) as i32;
+                                    // going off either edge of the screen.
+                                    let x = (icon_x + icon_w / 2.0 - win_w / 2.0)
+                                        .max(0.0)
+                                        .min(monitor_width - win_w) as i32;
                                     let y = (icon_y + icon_h) as i32;
 
                                     let _ = window.set_position(
