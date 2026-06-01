@@ -1,10 +1,7 @@
 use std::path::Path;
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-use tauri::Manager;
+use tauri::{Manager, PhysicalPosition, Position, Size};
 use walkdir::WalkDir;
-
-#[cfg(target_os = "macos")]
-use std::process::Command;
 
 #[cfg(target_os = "macos")]
 fn detect_apple_silicon() -> bool {
@@ -49,11 +46,15 @@ fn get_system_info() -> Result<serde_json::Value, String> {
 fn trigger_haptic() -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
-        Command::new("/usr/bin/osascript")
-            .arg("-e")
-            .arg("beep")
-            .spawn()
-            .map_err(|e| format!("Failed to trigger haptic: {}", e))?;
+        use objc2_app_kit::{
+            NSHapticFeedbackManager, NSHapticFeedbackPattern, NSHapticFeedbackPerformanceTime,
+            NSHapticFeedbackPerformer,
+        };
+        let performer = NSHapticFeedbackManager::defaultPerformer();
+        performer.performFeedbackPattern_performanceTime(
+            NSHapticFeedbackPattern::Generic,
+            NSHapticFeedbackPerformanceTime::Default,
+        );
     }
     Ok(())
 }
@@ -132,13 +133,45 @@ pub fn run() {
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click { .. } = event {
+                    if let TrayIconEvent::Click { rect, .. } = event {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
                             let is_visible = window.is_visible().unwrap_or(false);
                             if is_visible {
                                 let _ = window.hide();
                             } else {
+                                // Position the popover window just below the tray icon,
+                                // horizontally centered on it.
+                                if let Ok(win_size) = window.outer_size() {
+                                    // Resolve icon rect to physical pixels.
+                                    // Tray icon positions are already in screen physical coords.
+                                    let icon_x = match rect.position {
+                                        Position::Physical(p) => p.x as f64,
+                                        Position::Logical(p) => p.x,
+                                    };
+                                    let icon_y = match rect.position {
+                                        Position::Physical(p) => p.y as f64,
+                                        Position::Logical(p) => p.y,
+                                    };
+                                    let icon_w = match rect.size {
+                                        Size::Physical(s) => s.width as f64,
+                                        Size::Logical(s) => s.width,
+                                    };
+                                    let icon_h = match rect.size {
+                                        Size::Physical(s) => s.height as f64,
+                                        Size::Logical(s) => s.height,
+                                    };
+                                    let win_w = win_size.width as f64;
+
+                                    // Center window horizontally under the icon, clamp to avoid
+                                    // going off the left edge of the screen.
+                                    let x = (icon_x + icon_w / 2.0 - win_w / 2.0).max(0.0) as i32;
+                                    let y = (icon_y + icon_h) as i32;
+
+                                    let _ = window.set_position(
+                                        PhysicalPosition::new(x, y),
+                                    );
+                                }
                                 let _ = window.show();
                                 let _ = window.set_focus();
                             }

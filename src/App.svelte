@@ -190,9 +190,6 @@ import { MAX_RECENT_BATCHES } from "./lib/types";
   async function openFolder(path: string) {
     try {
       await invoke("open_in_finder", { path });
-      try {
-        await invoke("trigger_haptic");
-      } catch {}
     } catch {
       // Fallback to shell open
       const { Command } = await import("@tauri-apps/plugin-shell");
