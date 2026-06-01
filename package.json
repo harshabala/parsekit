@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:sidecar": "TRIPLE=$(rustc -Vv | grep host | awk '{print $2}') && bun build sidecar/index.js --compile --outfile src-tauri/binaries/parsedock-sidecar-$TRIPLE",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri"

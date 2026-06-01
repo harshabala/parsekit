@@ -28,11 +28,7 @@ export function runParse(
 ): Promise<void> {
   return new Promise(async (resolve, reject) => {
     try {
-      // In dev mode, the sidecar script is at the project root's sidecar/ directory
-      // In production, it would be resolved via resolveResource
-      const scriptPath = "sidecar/index.js";
-
-      const command = Command.create("node", [scriptPath]);
+      const command = Command.sidecar("binaries/parsedock-sidecar");
 
       command.on("error", (error) => {
         onEvent({ type: "error", message: String(error) });
