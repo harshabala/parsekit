@@ -5,7 +5,8 @@
 
   let completedCount = $derived(files.filter(f => f.status === "done").length);
   let errorCount = $derived(files.filter(f => f.status === "error").length);
-  let progressPercent = $derived(total > 0 ? Math.round((completedCount + errorCount) / total * 100) : 0);
+  let skippedCount = $derived(files.filter(f => f.status === "skipped").length);
+  let progressPercent = $derived(total > 0 ? Math.round((completedCount + errorCount + skippedCount) / total * 100) : 0);
 
   function statusIcon(status: string): string {
     switch (status) {

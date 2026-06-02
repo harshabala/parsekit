@@ -126,7 +126,7 @@ import { MAX_RECENT_BATCHES } from "./lib/types";
         } else if (event.type === "progress") {
           const name = event.file || "";
           let status: FileProgress["status"] = "pending";
-          if (event.status === "completed" || event.status === "done") status = "done";
+          if (event.status === "completed") status = "done";
           else if (event.status === "parsing") status = "parsing";
           else if (event.status === "error") status = "error";
           else if (event.status === "skipped") status = "skipped";

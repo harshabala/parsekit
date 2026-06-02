@@ -5,7 +5,7 @@
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run build:sidecar && npm run dev",
     "beforeBuildCommand": "npm run build && npm run build:sidecar"
   },
   "app": {

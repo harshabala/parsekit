@@ -27,7 +27,8 @@ ParseDock is a lightweight macOS menu-bar app that batch-converts PDFs, Office d
 ## Prerequisites
 
 - **macOS** 12.0+
-- **Node.js** 20+ (for document parsing engine)
+- **Node.js** 20+ (frontend build tooling)
+- **Bun** (compiles the document-parsing sidecar into a standalone binary)
 - **Rust** (for development only)
 - **LibreOffice** (optional, for Office document conversion)
 
@@ -53,7 +54,7 @@ ParseDock uses [LiteParse](https://github.com/run-llama/liteparse) by LlamaIndex
 
 1. **Tauri v2** — native macOS app with system tray
 2. **Svelte 5** — reactive UI in the popover panel
-3. **Node.js sidecar** — runs LiteParse for document processing
+3. **Compiled sidecar binary** — a Bun-compiled standalone executable that runs LiteParse for document processing (bundled with the app, no Node.js required at runtime)
 4. **Tauri Store** — persists settings and batch history
 
 ## Privacy
