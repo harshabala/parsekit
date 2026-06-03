@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Stop every ParseDock dev/build instance so only one copy can run.
 set -euo pipefail
-
-killall -9 parsedock 2>/dev/null || true
-if command -v lsof >/dev/null 2>&1; then
-  lsof -ti :1420 2>/dev/null | xargs kill -9 2>/dev/null || true
-fi
+pkill -9 parsedock 2>/dev/null || true
+pkill -9 parsedock-sidecar 2>/dev/null || true
+# Kill anything holding port 1420 (vite dev server)
+lsof -ti :1420 2>/dev/null | xargs kill -9 2>/dev/null || true
+# Kill tauri CLI watcher
 pkill -f "tauri dev" 2>/dev/null || true
-pkill -f "vite.*ParseDock" 2>/dev/null || true
-
+pkill -f "cargo run" 2>/dev/null || true
+# Wait for port to free
+sleep 1
 echo "All ParseDock processes stopped."
