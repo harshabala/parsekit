@@ -10,7 +10,7 @@ This product includes software developed by:
 - License: Apache License 2.0
 - Copyright: LlamaIndex Contributors
 
-LiteParse is used as the core document parsing engine. It provides local PDF parsing via PDF.js and OCR via Tesseract.js.
+LiteParse v2 is used as the core document parsing engine. It provides local PDF and multi-format document parsing via a Rust-native core (PDFium + Tesseract OCR).
 
 ## Tauri
 - Project: https://tauri.app

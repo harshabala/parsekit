@@ -82,6 +82,14 @@ import { MAX_RECENT_BATCHES } from "./lib/types";
     await setSetting("workers", workers);
   }
 
+  async function handleOcrEnabledChange() {
+    await setSetting("ocrEnabled", ocrEnabled);
+  }
+
+  async function handleOcrLanguageChange() {
+    await setSetting("ocrLanguage", ocrLanguage);
+  }
+
   async function startParse() {
     if (!inputDir || !outputDir) return;
 
@@ -248,11 +256,20 @@ import { MAX_RECENT_BATCHES } from "./lib/types";
 
         <div class="row">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <input type="checkbox" bind:checked={ocrEnabled} id="ocr-toggle" />
-            <label for="ocr-toggle">OCR (Tesseract)</label>
+            <input
+              type="checkbox"
+              bind:checked={ocrEnabled}
+              id="ocr-toggle"
+              onchange={handleOcrEnabledChange}
+            />
+            <label for="ocr-toggle">OCR (built-in)</label>
           </div>
           {#if ocrEnabled}
-            <select bind:value={ocrLanguage} style="width: 100px;">
+            <select
+              bind:value={ocrLanguage}
+              style="width: 100px;"
+              onchange={handleOcrLanguageChange}
+            >
               <option value="eng">English</option>
               <option value="spa">Spanish</option>
               <option value="fra">French</option>

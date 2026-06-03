@@ -5,13 +5,25 @@ import pLimit from "p-limit";
 import { createInterface } from "readline";
 import { stdin, stdout } from "process";
 
-// NOTE: the format->extension mapping here must stay in sync with the format->content branches in processFile.
+/** Dev-only Node sidecar. Production uses the Rust parsedock-sidecar binary. */
+const SPREADSHEET_EXTENSIONS = new Set([".xls", ".xlsx", ".xlsm", ".ods", ".csv", ".tsv"]);
+
+function isSpreadsheet(filePath) {
+  return SPREADSHEET_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
+function validateFormat(format) {
+  if (!["md", "json", "txt"].includes(format)) {
+    throw new Error(`Invalid format "${format}". Expected md, json, or txt.`);
+  }
+}
+
 function getOutputPath(filePath, outDir, format) {
   const ext = path.extname(filePath).toLowerCase();
   const baseName = path.basename(filePath, ext);
-  const isExcel = [".xlsx", ".xls"].includes(ext);
+  const isSpreadsheetFile = isSpreadsheet(filePath);
   let outExt;
-  if (isExcel) {
+  if (isSpreadsheetFile) {
     outExt = ".json";
   } else if (format === "json") {
     outExt = ".json";
@@ -21,14 +33,40 @@ function getOutputPath(filePath, outDir, format) {
     outExt = ".md";
   }
   const outPath = path.join(outDir, baseName + outExt);
-  return { outPath, baseName, isExcel };
+  return { outPath, baseName, isSpreadsheetFile };
 }
 
-async function processFile(parser, filePath, outDir, format) {
-  const fileName = path.basename(filePath);
-  const { outPath, baseName, isExcel } = getOutputPath(filePath, outDir, format);
+function formatOutput(result, baseName, format, isSpreadsheetFile) {
+  if (isSpreadsheetFile || format === "json") {
+    return JSON.stringify(result, null, 2);
+  }
+  if (format === "txt") {
+    if (result.pages?.length) {
+      return result.pages.map((p) => p.text).join("\n\n---\n\n");
+    }
+    return result.text ?? JSON.stringify(result, null, 2);
+  }
+  if (result.pages?.length) {
+    const pages = result.pages.map((p, i) => `## Page ${i + 1}\n\n${p.text}`);
+    return `# ${baseName}\n\n${pages.join("\n\n---\n\n")}`;
+  }
+  return `# ${baseName}\n\n${JSON.stringify(result, null, 2)}`;
+}
 
-  // Skip if a non-empty output already exists (empty = interrupted/truncated prior run, re-parse it)
+function createParser(ocrEnabled, ocrLanguage, fileConcurrency) {
+  const numWorkers = ocrEnabled && fileConcurrency > 1 ? 1 : Math.max(1, fileConcurrency);
+  return new LiteParse({
+    ocrEnabled,
+    ocrLanguage,
+    quiet: true,
+    numWorkers,
+  });
+}
+
+async function processFile(filePath, outDir, format, ocrEnabled, ocrLanguage, fileConcurrency) {
+  const fileName = path.basename(filePath);
+  const { outPath, baseName, isSpreadsheetFile } = getOutputPath(filePath, outDir, format);
+
   try {
     const stat = await fs.stat(outPath);
     if (stat.size > 0) {
@@ -41,29 +79,9 @@ async function processFile(parser, filePath, outDir, format) {
 
   stdout.write(JSON.stringify({ type: "progress", file: fileName, status: "parsing" }) + "\n");
 
-  // LiteParse takes OCR config in the constructor; the second parse() arg is `quiet`.
-  const result = await parser.parse(filePath, true);
-
-  let outputContent = "";
-
-  if (isExcel) {
-    outputContent = JSON.stringify(result, null, 2);
-  } else if (format === "json") {
-    outputContent = JSON.stringify(result, null, 2);
-  } else if (format === "txt") {
-    if (result.pages) {
-      outputContent = result.pages.map(p => p.text).join("\n\n---\n\n");
-    } else {
-      outputContent = JSON.stringify(result, null, 2);
-    }
-  } else {
-    if (result.pages) {
-      const pages = result.pages.map((p, i) => `## Page ${i + 1}\n\n${p.text}`);
-      outputContent = `# ${baseName}\n\n${pages.join("\n\n---\n\n")}`;
-    } else {
-      outputContent = `# ${baseName}\n\n${JSON.stringify(result, null, 2)}`;
-    }
-  }
+  const parser = createParser(ocrEnabled, ocrLanguage, fileConcurrency);
+  const result = await parser.parse(filePath);
+  const outputContent = formatOutput(result, baseName, format, isSpreadsheetFile);
 
   await fs.writeFile(outPath, outputContent);
 
@@ -75,24 +93,31 @@ async function processFile(parser, filePath, outDir, format) {
 async function run(config) {
   const { files, outputDir, format, ocrEnabled = true, ocrLanguage = "eng", workers = 4 } = config;
 
+  validateFormat(format);
+
   try {
-    const concurrency = Math.max(1, Number(workers) || 4);
-    const parser = new LiteParse({ ocrEnabled, ocrLanguage });
+    const fileConcurrency = Math.max(1, Number(workers) || 4);
 
     await fs.mkdir(outputDir, { recursive: true });
-    const limit = pLimit(concurrency);
+    const limit = pLimit(fileConcurrency);
 
-    // Emit start event with total file count
     stdout.write(JSON.stringify({ type: "start", total: files.length }) + "\n");
 
     let parsed = 0;
     let skipped = 0;
     let errors = 0;
 
-    const tasks = files.map(filePath =>
+    const tasks = files.map((filePath) =>
       limit(async () => {
         try {
-          const result = await processFile(parser, filePath, outputDir, format);
+          const result = await processFile(
+            filePath,
+            outputDir,
+            format,
+            ocrEnabled,
+            ocrLanguage,
+            fileConcurrency
+          );
           if (result === "skipped") {
             skipped++;
           } else {
@@ -100,7 +125,14 @@ async function run(config) {
           }
         } catch (error) {
           errors++;
-          stdout.write(JSON.stringify({ type: "progress", file: path.basename(filePath), status: "error", error: error.message }) + "\n");
+          stdout.write(
+            JSON.stringify({
+              type: "progress",
+              file: path.basename(filePath),
+              status: "error",
+              error: error.message,
+            }) + "\n"
+          );
         }
       })
     );
@@ -112,7 +144,6 @@ async function run(config) {
   }
 }
 
-// Receive config via stdin as a single JSON line
 const rl = createInterface({ input: stdin });
 rl.on("line", (line) => {
   try {

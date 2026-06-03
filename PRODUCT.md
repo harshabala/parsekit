@@ -1,7 +1,7 @@
 # ParseDock – Product Brief
 
 ## Overview
-ParseDock is a lightweight, native-feeling macOS menu-bar app that batch-converts folders of PDFs, Office docs, and images into clean text, Markdown, or JSON — ready to drag into ChatGPT, Claude, Grok, local RAG, or any knowledge tool. It uses LiteParse (@llamaindex/liteparse) under the hood but hides all complexity.
+ParseDock is a lightweight, native-feeling macOS menu-bar app that batch-converts folders of PDFs, Office docs, and images into clean text, Markdown, or JSON — ready to drag into ChatGPT, Claude, Grok, local RAG, or any knowledge tool. It uses LiteParse v2 (Rust-native) under the hood but hides all complexity.
 
 ## One-Line Description
 ParseDock is the fastest way to turn any folder of documents into LLM-ready files with zero terminal and zero cloud.
@@ -28,7 +28,7 @@ Knowledge workers, researchers, lawyers, consultants, and power users who live i
 - Smart Markdown output: # Title + ## Page N markers + --- separators.
 
 ## Non-Functional Requirements
-- 100% local (only LiteParse's optional first-run Tesseract download).
+- 100% local (LiteParse v2 native OCR; optional first-run Tesseract language data).
 - Native macOS look & feel (dark mode, SF Symbols, accessibility, haptics).
 - Zero telemetry, zero network except LiteParse necessities.
 - Minimal CPU/memory; smart concurrency (max 4-6 workers on M-series).

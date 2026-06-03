@@ -9,7 +9,8 @@ ParseDock is a lightweight macOS menu-bar app that batch-converts PDFs, Office d
 - **Menu-bar native** — lives in your tray, one click away
 - **Batch processing** — drop a folder, get clean output in seconds
 - **Smart Markdown** — document titles, page headers, and separators
-- **OCR built-in** — powered by Tesseract.js, works offline
+- **OCR built-in** — powered by LiteParse v2’s native Tesseract engine, works offline
+- **LiteParse v2** — Rust core for up to ~100× faster parsing on small docs
 - **100% local** — your documents never leave your machine
 - **Dark mode** — follows macOS system preference
 
@@ -17,44 +18,61 @@ ParseDock is a lightweight macOS menu-bar app that batch-converts PDFs, Office d
 
 | Input | Output |
 |-------|--------|
-| PDF | Markdown (.md) |
-| DOCX, DOC | Plain Text (.txt) |
-| PPTX, PPT | JSON (.json) |
-| XLSX, XLS | |
-| PNG, JPG, JPEG | |
-| TIFF, BMP | |
+| PDF | Markdown (.md), Plain Text (.txt), or JSON (.json) |
+| Word (DOC, DOCX, ODT, RTF, …) | Same (via LibreOffice) |
+| PowerPoint (PPT, PPTX, ODP, …) | Same (via LibreOffice) |
+| Spreadsheets (XLS, XLSX, CSV, …) | Always JSON (.json) |
+| Images (PNG, JPG, WEBP, SVG, …) | Same (via ImageMagick) |
 
 ## Prerequisites
 
 - **macOS** 12.0+
 - **Node.js** 20+ (frontend build tooling)
-- **Bun** (compiles the document-parsing sidecar into a standalone binary)
-- **Rust** (for development only)
+- **Rust** (Tauri app + LiteParse v2 sidecar)
 - **LibreOffice** (optional, for Office document conversion)
+- **ImageMagick** (optional, for image formats)
 
 ## Development
 
 ```bash
 # Install dependencies
 npm install
-cd sidecar && npm install && cd ..
 
-# Run in development mode
+# Build the LiteParse v2 sidecar (skipped if already up to date)
+npm run build:sidecar
+
+# Run in development mode (rebuilds sidecar only when sources change)
 npm run tauri dev
 
-# Build for production
+# Skip sidecar rebuild if you already built it (faster iteration)
+npm run tauri:dev:fast
+```
+
+**First-time note:** The initial `build:sidecar` compiles LiteParse v2 and Tesseract (~10 minutes on a clean machine). Later runs are incremental and usually instant.
+
+The `sidecar/` Node package is **dev-only** for testing the JSON protocol; the shipped app uses the Rust `parsedock-sidecar` binary.
+
+## Release checklist
+
+`src-tauri/binaries/` is not committed. Before packaging or distributing:
+
+```bash
+npm run build
+npm run build:sidecar   # produces src-tauri/binaries/parsedock-sidecar-<host-triple>
 npm run tauri build
 ```
 
+Build on each target platform (Apple Silicon vs Intel Mac) so the correct host triple is embedded in the sidecar filename.
+
 ## How It Works
 
-ParseDock uses [LiteParse](https://github.com/run-llama/liteparse) by LlamaIndex for document parsing. LiteParse runs entirely locally using PDF.js and Tesseract.js — no cloud APIs, no API keys, no data ever leaves your machine.
+ParseDock uses [LiteParse v2](https://github.com/run-llama/liteparse) by LlamaIndex for document parsing. LiteParse v2 is a Rust-native engine (custom PDFium + built-in Tesseract OCR) — no cloud APIs, no API keys, no data ever leaves your machine.
 
 ### Architecture
 
 1. **Tauri v2** — native macOS app with system tray
 2. **Svelte 5** — reactive UI in the popover panel
-3. **Compiled sidecar binary** — a Bun-compiled standalone executable that runs LiteParse for document processing (bundled with the app, no Node.js required at runtime)
+3. **Rust sidecar binary** — a native `parsedock-sidecar` executable linked against LiteParse v2 (bundled with the app, no Node.js required at runtime)
 4. **Tauri Store** — persists settings and batch history
 
 ## Privacy
@@ -63,7 +81,7 @@ ParseDock is designed with privacy as a core principle:
 
 - All processing happens locally on your machine
 - No telemetry, no analytics, no tracking
-- No network requests (except optional first-run Tesseract model download)
+- No network requests during parsing (optional first-run Tesseract language data may download when OCR is enabled)
 - Your documents are never uploaded anywhere
 
 ## License

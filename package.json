@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "build:sidecar": "bash scripts/build-sidecar.sh",
+    "tauri:dev": "npm run build:sidecar && npm run tauri dev",
+    "tauri:dev:fast": "npm run tauri dev",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri"

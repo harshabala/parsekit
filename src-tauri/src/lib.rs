@@ -1,3 +1,5 @@
+pub mod sidecar_helpers;
+
 use std::path::Path;
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, PhysicalPosition, Position, Size};
@@ -61,8 +63,10 @@ fn trigger_haptic() -> Result<(), String> {
 
 // Canonical list of supported file extensions — single source of truth used for both
 // the preview file count (scan_directory) and the actual parse file set passed to the sidecar.
+// Aligned with LiteParse v2 multi-format support (LibreOffice / ImageMagick where noted).
 const SUPPORTED_EXTENSIONS: &[&str] = &[
-    "pdf", "docx", "doc", "pptx", "ppt", "xlsx", "xls", "png", "jpg", "jpeg", "tiff", "tif", "bmp",
+    "pdf", "doc", "docx", "docm", "odt", "rtf", "ppt", "pptx", "pptm", "odp", "xls", "xlsx", "xlsm",
+    "ods", "csv", "tsv", "png", "jpg", "jpeg", "gif", "bmp", "tiff", "tif", "webp", "svg",
 ];
 
 #[tauri::command]

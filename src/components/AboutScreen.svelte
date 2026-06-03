@@ -41,14 +41,14 @@
 
     <div class="about-section">
       <div class="about-section-title">Powered By</div>
-      <div class="about-text">@llamaindex/liteparse</div>
+      <div class="about-text">LiteParse v2 (Rust)</div>
     </div>
 
     <div class="about-section">
       <div class="about-section-title">License</div>
       <div class="about-text">Apache-2.0</div>
       <div class="about-text-small">
-        ParseDock uses @llamaindex/liteparse, licensed under the Apache License 2.0.
+        ParseDock uses LiteParse v2 by LlamaIndex, licensed under the Apache License 2.0.
       </div>
     </div>
 

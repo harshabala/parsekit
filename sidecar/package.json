@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@llamaindex/liteparse": "latest",
+    "@llamaindex/liteparse": "^2.0.4",
     "p-limit": "^6.0.0"
   }
 }
