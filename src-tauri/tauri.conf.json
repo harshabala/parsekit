@@ -9,6 +9,7 @@
     "beforeBuildCommand": "npm run build && npm run build:sidecar"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",

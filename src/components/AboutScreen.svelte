@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { t } from "../lib/i18n";
+
   let { onClose }: { onClose: () => void } = $props();
 
   function handleKeydown(e: KeyboardEvent) {
@@ -33,25 +35,23 @@
   tabindex="-1"
 >
   <div class="about-panel" role="document">
-    <div class="about-header" id="about-title">ParseDock</div>
+    <div class="about-header" id="about-title">{t("app.name")}</div>
     <div class="about-version">v0.1.0</div>
-    <div class="about-tagline">100% local document processing</div>
+    <div class="about-tagline">{t("about.tagline")}</div>
 
     <div class="about-divider"></div>
 
     <div class="about-section">
-      <div class="about-section-title">Powered By</div>
-      <div class="about-text">LiteParse v2 (Rust)</div>
+      <div class="about-section-title">{t("about.poweredBy")}</div>
+      <div class="about-text">{t("about.poweredByValue")}</div>
     </div>
 
     <div class="about-section">
-      <div class="about-section-title">License</div>
-      <div class="about-text">Apache-2.0</div>
-      <div class="about-text-small">
-        ParseDock uses LiteParse v2 by LlamaIndex, licensed under the Apache License 2.0.
-      </div>
+      <div class="about-section-title">{t("about.license")}</div>
+      <div class="about-text">{t("about.licenseValue")}</div>
+      <div class="about-text-small">{t("about.licenseNote")}</div>
     </div>
 
-    <button class="about-close-btn" onclick={onClose}>Close</button>
+    <button class="about-close-btn" onclick={onClose}>{t("about.close")}</button>
   </div>
 </div>

@@ -1,4 +1,6 @@
 export type OutputFormat = "txt" | "md" | "json";
+export type ThemeMode = "light" | "dark" | "system";
+export type { AppLocale } from "./i18n";
 export type FileStatus = "pending" | "parsing" | "done" | "error" | "skipped";
 
 export interface FileProgress {

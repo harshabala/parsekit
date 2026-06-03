@@ -1,0 +1,92 @@
+{
+  "app": {
+    "name": "ParseDock"
+  },
+  "header": {
+    "settings": "Ajustes",
+    "about": "Acerca de ParseDock"
+  },
+  "config": {
+    "title": "Configuración",
+    "outputFolder": "Carpeta de salida",
+    "change": "Cambiar",
+    "downloads": "Descargas",
+    "format": "Formato",
+    "spreadsheetJsonHint": "Las hojas de cálculo siempre se exportan como JSON.",
+    "ocr": "OCR (integrado)"
+  },
+  "dropzone": {
+    "title": "Arrastra y suelta archivos o carpetas aquí",
+    "hint": "Compatible: .pdf, .csv, .xlsx, .xls, .tsv y más — o haz clic abajo para explorar",
+    "filesReadyOne": "1 archivo listo para analizar",
+    "filesReady": "{count} archivos listos para analizar",
+    "selectFiles": "Seleccionar archivos",
+    "selectFolder": "Seleccionar carpeta"
+  },
+  "run": {
+    "parsing": "Analizando...",
+    "runParse": "Ejecutar análisis",
+    "openOutput": "Abrir salida",
+    "copyLast": "Copiar último archivo"
+  },
+  "progress": {
+    "title": "Procesando",
+    "parsing": "Analizando documentos...",
+    "complete": "Análisis completado",
+    "ofTotal": "{done} de {total}",
+    "completed": "{count} completados",
+    "inProgress": "{count} en curso",
+    "waiting": "{count} en espera",
+    "failed": "{count} fallidos",
+    "skipped": "{count} omitidos",
+    "summary": "{parsed} analizados, {errors} errores de {total} archivos"
+  },
+  "recent": {
+    "title": "Lotes recientes",
+    "batch": "Lote",
+    "open": "Abrir",
+    "meta": "{date} · {count} archivos · {format}",
+    "errorsOne": "1 error",
+    "errors": "{count} errores"
+  },
+  "errors": {
+    "addFiles": "Añade archivos o una carpeta para analizar.",
+    "noSupported": "No se encontraron archivos compatibles.",
+    "parseFailed": "Error al analizar."
+  },
+  "settings": {
+    "title": "Ajustes",
+    "appLanguageTitle": "Idioma de la app",
+    "appLanguageHint": "Idioma de botones, etiquetas y menús de ParseDock. No cambia el contenido de los archivos exportados.",
+    "ocrLanguageTitle": "Idioma OCR (entrada)",
+    "ocrLanguageHint": "Idioma del texto en PDF escaneados e imágenes que analizas. Solo se usa con OCR activado. El formato de salida (TXT/MD/JSON) es aparte; el contenido exportado conserva el idioma del documento.",
+    "ocrLanguageLabel": "Idioma del texto del documento",
+    "appearanceTitle": "Apariencia",
+    "appearanceHint": "Elige cómo se ve ParseDock en tu Mac.",
+    "close": "Cerrar"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文",
+    "es": "Español"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "aria": "Apariencia"
+  },
+  "about": {
+    "tagline": "Procesamiento de documentos 100% local",
+    "poweredBy": "Desarrollado con",
+    "poweredByValue": "LiteParse v2 (Rust)",
+    "license": "Licencia",
+    "licenseValue": "Apache-2.0",
+    "licenseNote": "ParseDock usa LiteParse v2 de LlamaIndex, bajo licencia Apache License 2.0.",
+    "close": "Cerrar"
+  },
+  "tray": {
+    "open": "Abrir ParseDock",
+    "quit": "Salir de ParseDock"
+  }
+}
