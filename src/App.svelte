@@ -4,7 +4,7 @@
   import { downloadDir } from "@tauri-apps/api/path";
   import { writeText } from "@tauri-apps/plugin-clipboard-manager";
   import { getSetting, setSetting } from "./lib/store";
-  import { runParse, type ParseEvent } from "./lib/sidecar";
+  import { runParse, type ParseEvent, type ParseRunHandle } from "./lib/sidecar";
   import type { OutputFormat, FileProgress, BatchResult, ThemeMode } from "./lib/types";
   import { MAX_RECENT_BATCHES } from "./lib/types";
   import {
@@ -48,6 +48,9 @@
   let inputFileCount = $state<number | null>(null);
   let errorMsg = $state<string | null>(null);
   let noticeMsg = $state<string | null>(null);
+  let parseRun = $state<ParseRunHandle | null>(null);
+  let isIngesting = $state(false);
+  let launchAtLogin = $state(false);
 
   let showProgress = $derived(isParsing || files.length > 0);
   let canRunParse = $derived(
@@ -135,6 +138,15 @@
     await setSetting("ocrLanguage", ocrLanguage);
     recentBatches = await getSetting<BatchResult[]>("recentBatches", []);
     await resolveDefaultWorkers(await getSetting<number>("workers", 0));
+    launchAtLogin = await getSetting<boolean>("launchAtLogin", false);
+    if (launchAtLogin) {
+      try {
+        await invoke("set_launch_at_login", { enabled: true });
+      } catch {
+        launchAtLogin = false;
+        await setSetting("launchAtLogin", false);
+      }
+    }
     await syncTrayMenu();
 
     const savedInput = await getSetting("inputDir", "");
@@ -190,6 +202,30 @@
     await setSetting("ocrEnabled", ocrEnabled);
   }
 
+  async function handleWorkersChange(value: number) {
+    workers = value;
+    await setSetting("workers", value);
+  }
+
+  async function handleLaunchAtLoginChange(enabled: boolean) {
+    launchAtLogin = enabled;
+    await invoke("set_launch_at_login", { enabled });
+    await setSetting("launchAtLogin", enabled);
+  }
+
+  function cancelParse() {
+    parseRun?.cancel();
+    parseRun = null;
+    isParsing = false;
+    errorMsg = null;
+    noticeMsg = t("errors.parseCancelled");
+  }
+
+  async function copyOutputPath() {
+    if (!outputDir) return;
+    await writeText(outputDir);
+  }
+
   async function startParse() {
     if (!outputDir || inputFileCount === 0) return;
 
@@ -227,18 +263,17 @@
       status: "pending" as const,
     }));
 
-    try {
-      await runParse(
-        {
-          inputDir: inputDir || filesToParse[0],
-          files: filesToParse,
-          outputDir,
-          format,
-          ocrEnabled,
-          ocrLanguage,
-          workers,
-        },
-        (event: ParseEvent) => {
+    parseRun = runParse(
+      {
+        inputDir: inputDir || filesToParse[0],
+        files: filesToParse,
+        outputDir,
+        format,
+        ocrEnabled,
+        ocrLanguage,
+        workers,
+      },
+      (event: ParseEvent) => {
           if (event.type === "start") {
             totalFiles = event.total || 0;
           } else if (event.type === "progress") {
@@ -277,18 +312,31 @@
           } else if (event.type === "done") {
             isParsing = false;
             totalFiles = totalFiles || files.length;
-            addToHistory();
+            void addToHistory();
+            const parsed = files.filter((f) => f.status === "done").length;
+            const errCount = files.filter((f) => f.status === "error").length;
+            void invoke("show_completion_notification", {
+              title: t("app.name"),
+              body: t("run.notifyDone", { parsed, errors: errCount }),
+            }).catch(() => {});
           } else if (event.type === "error") {
             isParsing = false;
             errorMsg = event.message || t("errors.parseFailed");
             console.error(event.message);
           }
         }
-      );
+    );
+
+    try {
+      await parseRun.promise;
     } catch (e) {
-      isParsing = false;
-      errorMsg = e instanceof Error ? e.message : String(e);
-      console.error(e);
+      if (isParsing) {
+        isParsing = false;
+        errorMsg = e instanceof Error ? e.message : String(e);
+        console.error(e);
+      }
+    } finally {
+      parseRun = null;
     }
   }
 
@@ -426,6 +474,9 @@
 
     <DropZone
       fileCount={inputFileCount}
+      disabled={isIngesting || isParsing}
+      onIngestStart={() => (isIngesting = true)}
+      onIngestEnd={() => (isIngesting = false)}
       onFolder={handleFolderSelected}
       onFiles={handleFilesSelected}
     />
@@ -435,13 +486,20 @@
     {/if}
 
     <div class="section run-section">
-      <button
-        class="run-parse-btn"
-        disabled={!canRunParse}
-        onclick={startParse}
-      >
-        {isParsing ? t("run.parsing") : t("run.runParse")}
-      </button>
+      {#if isParsing}
+        <button type="button" class="secondary run-parse-btn" onclick={cancelParse}>
+          {t("run.cancel")}
+        </button>
+      {:else}
+        <button
+          type="button"
+          class="run-parse-btn"
+          disabled={!canRunParse}
+          onclick={startParse}
+        >
+          {t("run.runParse")}
+        </button>
+      {/if}
       {#if noticeMsg}
         <div class="notice-banner" role="status">{noticeMsg}</div>
       {/if}
@@ -450,10 +508,15 @@
       {/if}
       {#if !isParsing && files.length > 0 && files.some((f) => f.status === "done")}
         <div class="row" style="margin-top: 8px;">
-          <button class="secondary" style="flex: 1" onclick={() => openFolder(outputDir)}>
+          <button type="button" class="secondary" style="flex: 1" onclick={() => openFolder(outputDir)}>
             {t("run.openOutput")}
           </button>
-          <button class="secondary" style="flex: 1" onclick={copyToClipboard}>
+          <button type="button" class="secondary" style="flex: 1" onclick={copyOutputPath}>
+            {t("run.copyOutputPath")}
+          </button>
+        </div>
+        <div class="row" style="margin-top: 8px;">
+          <button type="button" class="secondary" style="flex: 1" onclick={copyToClipboard}>
             {t("run.copyLast")}
           </button>
         </div>
@@ -471,9 +534,13 @@
       {ocrLanguage}
       {ocrEnabled}
       {theme}
+      {workers}
+      {launchAtLogin}
       onLocaleChange={handleLocaleChange}
       onOcrLanguageChange={handleOcrLanguageChange}
       onThemeChange={handleThemeChange}
+      onWorkersChange={handleWorkersChange}
+      onLaunchAtLoginChange={handleLaunchAtLoginChange}
       onClose={() => (showSettings = false)}
     />
   {/if}

@@ -21,13 +21,17 @@
     "filesReadyOne": "1 archivo listo para analizar",
     "filesReady": "{count} archivos listos para analizar",
     "selectFiles": "Seleccionar archivos",
-    "selectFolder": "Seleccionar carpeta"
+    "selectFolder": "Seleccionar carpeta",
+    "scanning": "Escaneando carpeta…"
   },
   "run": {
     "parsing": "Analizando...",
     "runParse": "Ejecutar análisis",
+    "cancel": "Cancelar",
     "openOutput": "Abrir salida",
-    "copyLast": "Copiar último archivo"
+    "copyOutputPath": "Copiar ruta de salida",
+    "copyLast": "Copiar último archivo",
+    "notifyDone": "Listo: {parsed} analizados, {errors} errores"
   },
   "progress": {
     "title": "Procesando",
@@ -53,7 +57,8 @@
   "errors": {
     "addFiles": "Añade archivos o una carpeta para analizar.",
     "noSupported": "No se encontraron archivos compatibles.",
-    "parseFailed": "Error al analizar."
+    "parseFailed": "Error al analizar.",
+    "parseCancelled": "Análisis cancelado."
   },
   "settings": {
     "title": "Ajustes",
@@ -64,6 +69,10 @@
     "ocrLanguageLabel": "Idioma del texto del documento",
     "appearanceTitle": "Apariencia",
     "appearanceHint": "Elige cómo se ve ParseDock en tu Mac.",
+    "workersTitle": "Trabajadores en paralelo",
+    "workersHint": "Cuántos archivos analizar a la vez. Más es más rápido en lotes grandes; menos usa menos CPU.",
+    "launchAtLogin": "Iniciar al iniciar sesión",
+    "launchAtLoginHint": "Inicia ParseDock automáticamente al iniciar sesión en tu Mac.",
     "close": "Cerrar",
     "ocrMigrated": "El idioma OCR se restableció a inglés. Elige un idioma compatible en Ajustes."
   },
@@ -85,6 +94,7 @@
     "license": "Licencia",
     "licenseValue": "Apache-2.0",
     "licenseNote": "ParseDock usa LiteParse v2 de LlamaIndex, bajo licencia Apache License 2.0.",
+    "repository": "Ver en GitHub",
     "close": "Cerrar"
   },
   "tray": {

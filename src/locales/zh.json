@@ -21,13 +21,17 @@
     "filesReadyOne": "1 个文件可供解析",
     "filesReady": "{count} 个文件可供解析",
     "selectFiles": "选择文件",
-    "selectFolder": "选择文件夹"
+    "selectFolder": "选择文件夹",
+    "scanning": "正在扫描文件夹…"
   },
   "run": {
     "parsing": "解析中...",
     "runParse": "开始解析",
+    "cancel": "取消",
     "openOutput": "打开输出",
-    "copyLast": "复制上一个文件"
+    "copyOutputPath": "复制输出路径",
+    "copyLast": "复制上一个文件",
+    "notifyDone": "完成：已解析 {parsed} 个，错误 {errors} 个"
   },
   "progress": {
     "title": "处理中",
@@ -53,7 +57,8 @@
   "errors": {
     "addFiles": "请添加文件或文件夹以解析。",
     "noSupported": "未找到支持的文件。",
-    "parseFailed": "解析失败。"
+    "parseFailed": "解析失败。",
+    "parseCancelled": "已取消解析。"
   },
   "settings": {
     "title": "设置",
@@ -64,6 +69,10 @@
     "ocrLanguageLabel": "文档文字语言",
     "appearanceTitle": "外观",
     "appearanceHint": "选择 ParseDock 在您 Mac 上的显示方式。",
+    "workersTitle": "并行工作线程",
+    "workersHint": "同时解析的文件数量。批量大时可提高速度；降低可减少 CPU 占用。",
+    "launchAtLogin": "登录时启动",
+    "launchAtLoginHint": "登录 Mac 时自动启动 ParseDock。",
     "close": "关闭",
     "ocrMigrated": "OCR 语言已重置为英语。请在设置中选择支持的语言。"
   },
@@ -85,6 +94,7 @@
     "license": "许可证",
     "licenseValue": "Apache-2.0",
     "licenseNote": "ParseDock 使用 LlamaIndex 的 LiteParse v2，基于 Apache License 2.0 许可。",
+    "repository": "在 GitHub 上查看",
     "close": "关闭"
   },
   "tray": {

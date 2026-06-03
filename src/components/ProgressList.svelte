@@ -81,7 +81,12 @@
     <div class="file-list">
       {#each files as file (file.id)}
         <div class="file-item" class:file-item-active={file.status === "parsing"}>
-          <span class="file-name" title={file.name}>{file.name}</span>
+          <div class="file-item-main">
+            <span class="file-name" title={file.name}>{file.name}</span>
+            {#if file.status === "error" && file.error}
+              <span class="file-error" title={file.error}>{file.error}</span>
+            {/if}
+          </div>
           <span class="status-icon status-{file.status}" title={file.status}>
             {statusIcon(file.status)}
           </span>

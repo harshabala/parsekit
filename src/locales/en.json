@@ -21,13 +21,17 @@
     "filesReadyOne": "1 file ready to parse",
     "filesReady": "{count} files ready to parse",
     "selectFiles": "Select Files",
-    "selectFolder": "Select Folder"
+    "selectFolder": "Select Folder",
+    "scanning": "Scanning folder…"
   },
   "run": {
     "parsing": "Parsing...",
     "runParse": "Run Parse",
+    "cancel": "Cancel",
     "openOutput": "Open Output",
-    "copyLast": "Copy Last File"
+    "copyOutputPath": "Copy Output Path",
+    "copyLast": "Copy Last File",
+    "notifyDone": "Done: {parsed} parsed, {errors} errors"
   },
   "progress": {
     "title": "Processing",
@@ -53,7 +57,8 @@
   "errors": {
     "addFiles": "Add files or a folder to parse.",
     "noSupported": "No supported files found.",
-    "parseFailed": "Parsing failed."
+    "parseFailed": "Parsing failed.",
+    "parseCancelled": "Parsing cancelled."
   },
   "settings": {
     "title": "Settings",
@@ -64,6 +69,10 @@
     "ocrLanguageLabel": "Document text language",
     "appearanceTitle": "Appearance",
     "appearanceHint": "Choose how ParseDock looks on your Mac.",
+    "workersTitle": "Parallel workers",
+    "workersHint": "How many files to parse at once. Higher is faster on large batches; lower uses less CPU.",
+    "launchAtLogin": "Launch at login",
+    "launchAtLoginHint": "Start ParseDock automatically when you sign in to your Mac.",
     "close": "Close",
     "ocrMigrated": "OCR language was reset to English. Choose a supported language in Settings."
   },
@@ -85,6 +94,7 @@
     "license": "License",
     "licenseValue": "Apache-2.0",
     "licenseNote": "ParseDock uses LiteParse v2 by LlamaIndex, licensed under the Apache License 2.0.",
+    "repository": "View on GitHub",
     "close": "Close"
   },
   "tray": {

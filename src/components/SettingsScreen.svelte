@@ -12,18 +12,26 @@
     ocrLanguage,
     ocrEnabled,
     theme,
+    workers,
+    launchAtLogin,
     onLocaleChange,
     onOcrLanguageChange,
     onThemeChange,
+    onWorkersChange,
+    onLaunchAtLoginChange,
     onClose,
   }: {
     locale: AppLocale;
     ocrLanguage: OcrLanguageCode;
     ocrEnabled: boolean;
     theme: ThemeMode;
+    workers: number;
+    launchAtLogin: boolean;
     onLocaleChange: (code: AppLocale) => void;
     onOcrLanguageChange: (code: OcrLanguageCode) => void;
     onThemeChange: (mode: ThemeMode) => void;
+    onWorkersChange: (value: number) => void;
+    onLaunchAtLoginChange: (enabled: boolean) => void;
     onClose: () => void;
   } = $props();
 
@@ -84,9 +92,42 @@
     <div class="about-divider"></div>
 
     <div class="settings-section">
+      <div class="about-section-title">{t("settings.workersTitle")}</div>
+      <p class="settings-hint">{t("settings.workersHint")}</p>
+      <div class="workers-row">
+        <input
+          type="range"
+          min="1"
+          max="16"
+          step="1"
+          value={workers}
+          aria-label={t("settings.workersTitle")}
+          oninput={(e) => onWorkersChange(Number((e.currentTarget as HTMLInputElement).value))}
+        />
+        <span class="workers-value">{workers}</span>
+      </div>
+    </div>
+
+    <div class="about-divider"></div>
+
+    <div class="settings-section">
       <div class="about-section-title">{t("settings.appearanceTitle")}</div>
       <p class="settings-hint">{t("settings.appearanceHint")}</p>
       <ThemeSelector value={theme} onChange={onThemeChange} />
+    </div>
+
+    <div class="about-divider"></div>
+
+    <div class="settings-section settings-toggle-row">
+      <label class="settings-launch-label">
+        <input
+          type="checkbox"
+          checked={launchAtLogin}
+          onchange={(e) => onLaunchAtLoginChange((e.currentTarget as HTMLInputElement).checked)}
+        />
+        <span>{t("settings.launchAtLogin")}</span>
+      </label>
+      <p class="settings-hint">{t("settings.launchAtLoginHint")}</p>
     </div>
 
     <button type="button" class="about-close-btn" onclick={onClose}>{t("settings.close")}</button>

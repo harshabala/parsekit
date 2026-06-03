@@ -434,6 +434,7 @@ fn get_optimal_workers() -> usize {
 #[tauri::command]
 fn get_system_info() -> Result<serde_json::Value, String> {
     Ok(serde_json::json!({
+        "version": env!("CARGO_PKG_VERSION"),
         "optimalWorkers": get_optimal_workers(),
         "isAppleSilicon": cfg!(target_os = "macos") && detect_apple_silicon()
     }))
@@ -464,11 +465,10 @@ const SUPPORTED_EXTENSIONS: &[&str] = &[
     "xlsm", "ods", "csv", "tsv", "png", "jpg", "jpeg", "gif", "bmp", "tiff", "tif", "webp", "svg",
 ];
 
-#[tauri::command]
-fn scan_directory(path: String) -> Result<Vec<String>, String> {
+fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
     let dir = Path::new(&path);
     if !dir.is_dir() {
-        return Err(format!("Path is not a directory: {}", path));
+        return Err(format!("Path is not a directory: {path}"));
     }
 
     let mut files = Vec::new();
@@ -487,6 +487,79 @@ fn scan_directory(path: String) -> Result<Vec<String>, String> {
 
     files.sort();
     Ok(files)
+}
+
+#[tauri::command]
+fn path_is_directory(path: String) -> bool {
+    Path::new(&path).is_dir()
+}
+
+/// Walks the tree off the UI thread so large folders do not beach-ball the webview.
+#[tauri::command]
+async fn scan_directory(path: String) -> Result<Vec<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || scan_directory_sync(path))
+        .await
+        .map_err(|e| format!("scan_directory task failed: {e}"))?
+}
+
+#[cfg(target_os = "macos")]
+#[tauri::command]
+fn show_completion_notification(title: String, body: String) -> Result<(), String> {
+    let script = format!(
+        "display notification {} with title {}",
+        serde_json::to_string(&body).map_err(|e| e.to_string())?,
+        serde_json::to_string(&title).map_err(|e| e.to_string())?
+    );
+    std::process::Command::new("osascript")
+        .args(["-e", &script])
+        .spawn()
+        .map_err(|e| format!("notification failed: {e}"))?;
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+fn show_completion_notification(_title: String, _body: String) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+#[tauri::command]
+fn set_launch_at_login(enabled: bool) -> Result<(), String> {
+    use std::process::Command;
+    let home = std::env::var("HOME").map_err(|e| e.to_string())?;
+    let plist_dir = format!("{home}/Library/LaunchAgents");
+    let plist_path = format!("{plist_dir}/com.parsedock.app.plist");
+    if enabled {
+        std::fs::create_dir_all(&plist_dir).map_err(|e| e.to_string())?;
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let plist = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.parsedock.app</string>
+  <key>ProgramArguments</key><array><string>{}</string></array>
+  <key>RunAtLoad</key><true/>
+</dict></plist>"#,
+            exe.display()
+        );
+        std::fs::write(&plist_path, plist).map_err(|e| e.to_string())?;
+        let _ = Command::new("launchctl")
+            .args(["load", "-w", &plist_path])
+            .status();
+    } else {
+        let _ = Command::new("launchctl")
+            .args(["unload", "-w", &plist_path])
+            .status();
+        let _ = std::fs::remove_file(&plist_path);
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+fn set_launch_at_login(_enabled: bool) -> Result<(), String> {
+    Err("Launch at login is only supported on macOS".into())
 }
 
 #[tauri::command]
@@ -511,6 +584,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .invoke_handler(tauri::generate_handler![
             scan_directory,
+            path_is_directory,
             open_in_finder,
             copy_file_to_clipboard,
             get_system_info,
@@ -518,7 +592,9 @@ pub fn run() {
             pick_input_files,
             pick_input_folder,
             pick_output_folder,
-            update_tray_menu_labels
+            update_tray_menu_labels,
+            show_completion_notification,
+            set_launch_at_login,
         ])
         .setup(|app| {
             startup_trace("setup() begin");
@@ -657,10 +733,13 @@ pub fn run() {
                 quit_label: Arc::new(Mutex::new("Quit ParseDock".to_string())),
             });
 
+            #[cfg(debug_assertions)]
             popover_trace(&format!(
                 "Setup complete — trace file: {}",
                 popover_trace::TRACE_FILE
             ));
+            #[cfg(not(debug_assertions))]
+            popover_trace("Setup complete");
             startup_trace("setup() complete");
 
             Ok(())

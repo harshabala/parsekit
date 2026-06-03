@@ -8,53 +8,61 @@
 
   let {
     fileCount = null,
+    disabled = false,
+    onIngestStart,
+    onIngestEnd,
     onFolder,
     onFiles,
   }: {
     fileCount: number | null;
+    disabled?: boolean;
+    onIngestStart?: () => void;
+    onIngestEnd?: () => void;
     onFolder: (path: string, count: number) => void;
     onFiles: (paths: string[]) => void;
   } = $props();
 
   let dragOver = $state(false);
+  let scanning = $state(false);
 
   async function ingestPaths(paths: string[]) {
-    const files: string[] = [];
-    let folderPath: string | null = null;
-    let folderCount = 0;
+    if (disabled || scanning) return;
+    scanning = true;
+    onIngestStart?.();
+    const filePaths: string[] = [];
 
+    try {
     for (const path of paths) {
-      try {
+      const isDir = await invoke<boolean>("path_is_directory", { path });
+      if (isDir) {
         const scanned = await invoke<string[]>("scan_directory", { path });
-        folderPath = path;
-        folderCount = scanned.length;
-        files.length = 0;
-        break;
-      } catch {
-        if (isSupportedFilePath(path)) {
-          files.push(path);
-        }
+        onFolder(path, scanned.length);
+        return;
+      }
+      if (isSupportedFilePath(path)) {
+        filePaths.push(path);
       }
     }
 
-    if (folderPath) {
-      onFolder(folderPath, folderCount);
-      return;
-    }
-
-    const supported = filterSupportedPaths(files);
+    const supported = filterSupportedPaths(filePaths);
     if (supported.length > 0) {
       onFiles(supported);
+    }
+    } finally {
+      scanning = false;
+      onIngestEnd?.();
     }
   }
 
   async function selectFiles() {
+    if (disabled || scanning) return;
     const paths = await pickInputFiles();
     if (!paths?.length) return;
     await ingestPaths(paths);
   }
 
   async function selectFolder() {
+    if (disabled || scanning) return;
     const path = await pickInputFolder();
     if (!path) return;
     await ingestPaths([path]);
@@ -81,7 +89,7 @@
   });
 </script>
 
-<div class="drop-zone" class:drag-over={dragOver}>
+<div class="drop-zone" class:drag-over={dragOver} class:drop-zone-busy={scanning || disabled}>
   <div class="drop-zone-icon" aria-hidden="true">
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="8" y="6" width="24" height="28" rx="3" stroke="currentColor" stroke-width="1.5"/>
@@ -89,7 +97,9 @@
     </svg>
   </div>
   <p class="drop-zone-title">{t("dropzone.title")}</p>
-  <p class="drop-zone-hint">{t("dropzone.hint")}</p>
+  <p class="drop-zone-hint">
+    {scanning ? t("dropzone.scanning") : t("dropzone.hint")}
+  </p>
   {#if fileCount !== null && fileCount > 0}
     <p class="drop-zone-ready">
       {fileCount === 1
@@ -98,7 +108,7 @@
     </p>
   {/if}
   <div class="drop-zone-actions">
-    <button type="button" onclick={selectFiles}>{t("dropzone.selectFiles")}</button>
-    <button type="button" class="secondary" onclick={selectFolder}>{t("dropzone.selectFolder")}</button>
+    <button type="button" disabled={disabled || scanning} onclick={selectFiles}>{t("dropzone.selectFiles")}</button>
+    <button type="button" class="secondary" disabled={disabled || scanning} onclick={selectFolder}>{t("dropzone.selectFolder")}</button>
   </div>
 </div>

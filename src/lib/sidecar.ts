@@ -1,4 +1,4 @@
-import { Command } from "@tauri-apps/plugin-shell";
+import { Command, type Child } from "@tauri-apps/plugin-shell";
 
 export interface ParseConfig {
   /** Informational only — directory scanning is done frontend-side; the sidecar is driven by `files`. */
@@ -26,11 +26,33 @@ export interface ParseEvent {
   error?: string;
 }
 
+export interface ParseRunHandle {
+  promise: Promise<void>;
+  cancel: () => void;
+}
+
+function friendlySidecarMessage(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes("imagemagick")) {
+    return "ImageMagick is required for images. Install with: brew install imagemagick";
+  }
+  if (lower.includes("libreoffice")) {
+    return "LibreOffice is required for Office documents. Install with: brew install --cask libreoffice";
+  }
+  if (lower.includes("sidecar") || lower.includes("spawn") || lower.includes("not found")) {
+    return "Parse engine could not start. Rebuild the app or run npm run build:sidecar in dev.";
+  }
+  return raw;
+}
+
 export function runParse(
   config: ParseConfig,
   onEvent: (event: ParseEvent) => void
-): Promise<void> {
-  return new Promise(async (resolve, reject) => {
+): ParseRunHandle {
+  let child: Child | null = null;
+  let stderrTail = "";
+
+  const promise = new Promise<void>(async (resolve, reject) => {
     let settled = false;
     const finish = (fn: () => void) => {
       if (!settled) {
@@ -43,8 +65,9 @@ export function runParse(
       const command = Command.sidecar("binaries/parsedock-sidecar");
 
       command.on("error", (error) => {
-        onEvent({ type: "error", message: String(error) });
-        finish(() => reject(new Error(String(error))));
+        const message = friendlySidecarMessage(String(error));
+        onEvent({ type: "error", message });
+        finish(() => reject(new Error(message)));
       });
 
       command.stdout.on("data", (line) => {
@@ -57,25 +80,40 @@ export function runParse(
               finish(() => resolve());
             }
           } catch (e) {
-            console.error("Failed to parse sidecar output:", l);
+            console.error("Failed to parse sidecar output:", l, e);
           }
         }
       });
 
       command.stderr.on("data", (line) => {
+        stderrTail = `${stderrTail}${line}`.slice(-2000);
         console.warn("[sidecar stderr]", line);
       });
 
       command.on("close", (data) => {
-        if (data.code !== 0) {
-          finish(() => reject(new Error(`Sidecar exited with code ${data.code}`)));
+        if (data.code !== 0 && data.code !== null) {
+          const message = friendlySidecarMessage(
+            stderrTail.trim() || `Sidecar exited with code ${data.code}`
+          );
+          onEvent({ type: "error", message });
+          finish(() => reject(new Error(message)));
         }
       });
 
-      const child = await command.spawn();
+      child = await command.spawn();
       await child.write(JSON.stringify(config) + "\n");
     } catch (err) {
-      finish(() => reject(err));
+      const message = friendlySidecarMessage(String(err));
+      onEvent({ type: "error", message });
+      finish(() => reject(new Error(message)));
     }
   });
+
+  return {
+    promise,
+    cancel: () => {
+      void child?.kill();
+      child = null;
+    },
+  };
 }
