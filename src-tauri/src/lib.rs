@@ -112,10 +112,10 @@ struct TrayClickGestureGuard {
     ignore_remaining_left_mouse_ups: Arc<AtomicU8>,
 }
 
-/// Spurious left mouse-ups after tray open (intentional Up + these extras per trace).
-const TRAY_SPURIOUS_MOUSE_UPS_AFTER_OPEN: u8 = 2;
-/// Spurious left mouse-up after tray close (one extra toggle reopen in trace).
-const TRAY_SPURIOUS_MOUSE_UPS_AFTER_CLOSE: u8 = 1;
+/// Spurious left mouse-ups after tray open (trace: 2 suppressed + 1 more still hid panel).
+const TRAY_SPURIOUS_MOUSE_UPS_AFTER_OPEN: u8 = 3;
+/// Spurious left mouse-ups after tray close (trace: 1 suppressed + 1 more still reopened).
+const TRAY_SPURIOUS_MOUSE_UPS_AFTER_CLOSE: u8 = 2;
 
 impl TrayClickGestureGuard {
     fn new() -> Self {
