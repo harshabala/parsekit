@@ -11,3 +11,14 @@ src-tauri/gen/
 .env
 src-tauri/com.parsedock.app
 src-tauri/*.app
+
+# macOS Finder duplicate copies (break cargo auto-discovery in src/bin/)
+* 2.rs
+* 2.ts
+* 2.svelte
+* 2.json
+* 2.png
+* 2.icns
+* 2.ico
+* 2.md
+* 2.sh
