@@ -1,12 +1,12 @@
 [package]
 name = "parsedock"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 default-run = "parsedock"
 
 [lib]
 name = "parsedock_lib"
-crate-type = ["lib", "cdylib", "staticlib"]
+crate-type = ["lib"]
 
 [[bin]]
 name = "parsedock-sidecar"

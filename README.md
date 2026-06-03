@@ -64,6 +64,27 @@ npm run tauri build
 
 Build on each target platform (Apple Silicon vs Intel Mac) so the correct host triple is embedded in the sidecar filename.
 
+Output (Apple Silicon example):
+
+- App: `src-tauri/target/release/bundle/macos/ParseDock.app`
+- DMG: `src-tauri/target/release/bundle/dmg/ParseDock_0.1.1_aarch64.dmg` (exact name may vary by Tauri version)
+
+### Install from DMG (unsigned / ad-hoc)
+
+Release builds are not notarized. After opening the DMG, if macOS blocks the app:
+
+1. Drag **ParseDock** to Applications.
+2. Optional ad-hoc sign (reduces Gatekeeper friction for local use):
+
+```bash
+codesign --force --deep --sign - /Applications/ParseDock.app
+xattr -cr /Applications/ParseDock.app
+```
+
+3. First launch: **System Settings → Privacy & Security → Open Anyway**, or right-click the app → **Open**.
+
+Popover debug traces (`/tmp/parsedock-popover-trace.log`) are written only in **debug** builds, not in release.
+
 ## How It Works
 
 ParseDock uses [LiteParse v2](https://github.com/run-llama/liteparse) by LlamaIndex for document parsing. LiteParse v2 is a Rust-native engine (custom PDFium + built-in Tesseract OCR) — no cloud APIs, no API keys, no data ever leaves your machine.
