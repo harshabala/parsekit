@@ -7,6 +7,9 @@
     "store:default",
     "dialog:default",
     "shell:default",
+    "shell:allow-spawn",
+    "shell:allow-stdin-write",
+    "shell:allow-kill",
     "clipboard-manager:default",
     "core:event:default",
     {

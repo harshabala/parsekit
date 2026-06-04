@@ -39,7 +39,15 @@ function friendlySidecarMessage(raw: string): string {
   if (lower.includes("libreoffice")) {
     return "LibreOffice is required for Office documents. Install with: brew install --cask libreoffice";
   }
-  if (lower.includes("sidecar") || lower.includes("spawn") || lower.includes("not found")) {
+  if (
+    lower.includes("not allowed") ||
+    lower.includes("permission") ||
+    lower.includes("shell:allow-spawn") ||
+    lower.includes("shell:allow-stdin-write")
+  ) {
+    return "Parse engine permission denied. Restart the app after rebuilding (npm run tauri:dev).";
+  }
+  if (lower.includes("sidecar") || lower.includes("not found")) {
     return "Parse engine could not start. Rebuild the app or run npm run build:sidecar in dev.";
   }
   return raw;
