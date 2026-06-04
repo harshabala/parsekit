@@ -10,7 +10,16 @@ fn main() {
         parsedock_lib::startup_trace(
             "single-instance guard: another ParseDock is running, exiting",
         );
-        eprintln!("ParseDock is already running. Quit other copies in Activity Monitor, then try again.");
+        #[cfg(target_os = "macos")]
+        {
+            let _ = std::process::Command::new("osascript").args([
+                "-e",
+                r#"display notification "ParseDock is already running. Click the blue P icon in the menu bar (top-right of your screen)." with title "ParseDock""#,
+            ]).spawn();
+        }
+        eprintln!(
+            "ParseDock is already running. Look for the blue P icon in the menu bar (top-right), or quit ParseDock in Activity Monitor."
+        );
         std::process::exit(0);
     }
     parsedock_lib::startup_trace("single-instance OK, entering tauri::run");

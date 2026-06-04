@@ -1,6 +1,6 @@
 {
   "name": "parsedock",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "tauri:dev:fast": "bash scripts/kill-parsedock.sh && npm run tauri dev",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "release:macos": "npm run tauri build && bash scripts/postbuild-macos.sh"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",

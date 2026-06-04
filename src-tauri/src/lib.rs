@@ -18,7 +18,9 @@ use tauri::{AppHandle, Manager, PhysicalPosition, Position, Rect, Runtime, Size,
 use tauri_plugin_dialog::DialogExt;
 use walkdir::WalkDir;
 
-const TRAY_ICON: tauri::image::Image<'static> = tauri::include_image!("icons/tray/icon@2x.png");
+/// Colored app mark — `icons/tray/icon@2x.png` was a solid black square and was invisible
+/// in the menu bar when used as a template image.
+const TRAY_ICON: tauri::image::Image<'static> = tauri::include_image!("icons/32x32.png");
 /// Ignore focus-loss hides briefly after `Window.show()` so activation does not collapse the panel.
 /// Just long enough to ride out activation focus churn; short enough that click-away still dismisses.
 const POPOVER_SHOW_GRACE_MS: u64 = 500;
@@ -533,6 +535,25 @@ async fn scan_directory(path: String) -> Result<Vec<String>, String> {
 }
 
 #[cfg(target_os = "macos")]
+fn maybe_show_menu_bar_hint() {
+    let Ok(home) = std::env::var("HOME") else {
+        return;
+    };
+    let marker = format!("{home}/Library/Application Support/ParseDock/.menu_bar_hint_shown");
+    if Path::new(&marker).exists() {
+        return;
+    }
+    if let Some(parent) = Path::new(&marker).parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let _ = std::fs::write(&marker, "");
+    let _ = show_completion_notification(
+        "ParseDock".to_string(),
+        "Look for the blue P icon in your menu bar (top-right). Click it to open.".to_string(),
+    );
+}
+
+#[cfg(target_os = "macos")]
 #[tauri::command]
 fn show_completion_notification(title: String, body: String) -> Result<(), String> {
     let script = format!(
@@ -663,7 +684,7 @@ pub fn run() {
 
             let tray = TrayIconBuilder::new()
                 .icon(TRAY_ICON)
-                .icon_as_template(true)
+                .icon_as_template(false)
                 .show_menu_on_left_click(false)
                 .tooltip("ParseDock")
                 // Do NOT attach .menu() — macOS captures left-clicks for the status item menu.
@@ -771,6 +792,9 @@ pub fn run() {
             #[cfg(not(debug_assertions))]
             popover_trace("Setup complete");
             startup_trace("setup() complete");
+
+            #[cfg(target_os = "macos")]
+            maybe_show_menu_bar_hint();
 
             Ok(())
         })
