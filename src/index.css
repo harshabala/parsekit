@@ -71,8 +71,8 @@
   --shadow-color: oklch(0 0 0 / 0.35);
   --shadow-color-strong: oklch(0 0 0 / 0.5);
   --focus-ring: oklch(0.78 0.08 75 / 0.25);
-  --icon-btn-border: oklch(0.52 0.02 85 / 0.88);
-  --icon-btn-bg: oklch(0.22 0.012 85 / 0.55);
+  --icon-btn-border: oklch(0.62 0.03 85 / 0.95);
+  --icon-btn-bg: oklch(0.24 0.015 85 / 0.72);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -96,8 +96,8 @@
     --shadow-color: oklch(0 0 0 / 0.35);
     --shadow-color-strong: oklch(0 0 0 / 0.5);
     --focus-ring: oklch(0.78 0.08 75 / 0.25);
-    --icon-btn-border: oklch(0.52 0.02 85 / 0.88);
-    --icon-btn-bg: oklch(0.22 0.012 85 / 0.55);
+    --icon-btn-border: oklch(0.62 0.03 85 / 0.95);
+    --icon-btn-bg: oklch(0.24 0.015 85 / 0.72);
   }
 }
 
@@ -1456,10 +1456,12 @@ label {
 }
 
 :root[data-theme="dark"] .header-actions .icon-btn {
-  opacity: 0.92;
+  opacity: 1;
   background: var(--icon-btn-bg);
-  border-color: var(--icon-btn-border);
-  box-shadow: 0 0 0 0.5px oklch(0.62 0.02 85 / 0.35);
+  border: 1px solid var(--icon-btn-border);
+  box-shadow:
+    0 0 0 1px oklch(0.48 0.02 85 / 0.4),
+    inset 0 1px 0 oklch(1 0 0 / 0.06);
 }
 
 :root[data-theme="dark"] .header-actions .icon-btn:hover,
@@ -1472,10 +1474,12 @@ label {
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] .header-actions .icon-btn {
-    opacity: 0.92;
+    opacity: 1;
     background: var(--icon-btn-bg);
-    border-color: var(--icon-btn-border);
-    box-shadow: 0 0 0 0.5px oklch(0.62 0.02 85 / 0.35);
+    border: 1px solid var(--icon-btn-border);
+    box-shadow:
+      0 0 0 1px oklch(0.48 0.02 85 / 0.4),
+      inset 0 1px 0 oklch(1 0 0 / 0.06);
   }
 
   :root[data-theme="system"] .header-actions .icon-btn:hover,
