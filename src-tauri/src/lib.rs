@@ -1098,6 +1098,17 @@ pub fn run() {
                 macos_open_files::start_open_queue_watcher(app.handle().clone());
             }
 
+            // Test-only: same `install_update` path as the gold banner "Install & Restart" button.
+            if std::env::var("PARSEKIT_E2E_INSTALL_UPDATE").as_deref() == Ok("1") {
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    tokio::time::sleep(std::time::Duration::from_secs(12)).await;
+                    if let Err(e) = install_update(handle).await {
+                        eprintln!("PARSEKIT_E2E_INSTALL_UPDATE failed: {e}");
+                    }
+                });
+            }
+
             Ok(())
         })
         .build(tauri::generate_context!())

@@ -47,7 +47,8 @@ rm -f "$SIG_FILE"
 echo "[4/6] Sign updater tarball with minisign ..."
 (
   cd "$ROOT"
-  npx tauri signer sign -f "$KEY_PATH" -p "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}" "$UPDATER_STAGED"
+  # Avoid TAURI_SIGNING_PRIVATE_KEY path conflicting with -f (tauri signer rejects both).
+  env -u TAURI_SIGNING_PRIVATE_KEY npx tauri signer sign -f "$KEY_PATH" -p "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}" "$UPDATER_STAGED"
 )
 
 if [[ ! -f "$SIG_FILE" ]]; then
