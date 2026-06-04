@@ -52,7 +52,8 @@
     "checkButton": "Check for updates",
     "checking": "Checking…",
     "upToDate": "Up to date (v{version})",
-    "checkFailed": "Could not check for updates. Try again when online."
+    "checkFailed": "Could not check for updates. Try again when online.",
+    "releaseNote021": "Automatic updates via GitHub Releases."
   },
   "gatekeeper": {
     "title": "First launch blocked?",

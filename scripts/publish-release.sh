@@ -13,7 +13,7 @@ DMG_DIR="$ROOT/src-tauri/target/release/bundle/dmg"
 DMG="$DMG_DIR/ParseKit_${VERSION}_aarch64.dmg"
 UPDATER_NAME="ParseKit_${VERSION}_aarch64.app.tar.gz"
 UPDATER_STAGED="$DMG_DIR/$UPDATER_NAME"
-LATEST_JSON="$DMG_DIR/latest.json"
+LATEST_JSON="$DMG_DIR/parsekit-latest.json"
 
 if [[ ! -f "$KEY_PATH" ]]; then
   echo "error: missing private key at $KEY_PATH" >&2
@@ -21,7 +21,7 @@ if [[ ! -f "$KEY_PATH" ]]; then
   exit 1
 fi
 
-export TAURI_SIGNING_PRIVATE_KEY_PATH="$KEY_PATH"
+export TAURI_SIGNING_PRIVATE_KEY="${TAURI_SIGNING_PRIVATE_KEY:-$KEY_PATH}"
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}"
 
 echo "== publish-release: ParseKit v${VERSION} → ${REPO} ${TAG} =="
@@ -57,7 +57,7 @@ if [[ ! -f "$SIG_FILE" ]]; then
   exit 1
 fi
 
-echo "[3/5] Write latest.json ..."
+echo "[3/5] Write parsekit-latest.json ..."
 RELEASE_NOTES="${RELEASE_NOTES:-ParseKit v${VERSION}}"
 export VERSION SIG_FILE LATEST_JSON UPDATER_NAME RELEASE_NOTES
 node <<'NODE'
@@ -78,7 +78,7 @@ const json = {
 fs.writeFileSync(process.env.LATEST_JSON, JSON.stringify(json, null, 2) + "\n");
 NODE
 
-echo "latest.json:"
+echo "parsekit-latest.json:"
 cat "$LATEST_JSON"
 
 if [[ ! -f "$DMG" ]]; then
