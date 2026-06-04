@@ -3,6 +3,7 @@
   import { fade, fly } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
+  import { listen } from "@tauri-apps/api/event";
   import { downloadDir } from "@tauri-apps/api/path";
 
   import { getSetting, setSetting } from "./lib/store";
@@ -35,6 +36,11 @@
   import RecentBatches from "./components/RecentBatches.svelte";
   import HistoryScreen from "./components/HistoryScreen.svelte";
   import SettingsScreen from "./components/SettingsScreen.svelte";
+  import AboutScreen from "./components/AboutScreen.svelte";
+  import OnboardingChecklist from "./components/OnboardingChecklist.svelte";
+  import UpdateBanner from "./components/UpdateBanner.svelte";
+  import { checkForUpdate, installUpdate, type UpdateInfo } from "./lib/update";
+  import { pickOutputFolder } from "./lib/picker";
   import {
     bannerFlyIn,
     bannerFlyOut,
@@ -74,6 +80,7 @@
   let totalFiles = $state(0);
   let recentBatches = $state<BatchResult[]>([]);
   let showSettings = $state(false);
+  let showAbout = $state(false);
   let showHistory = $state(false);
   let theme = $state<ThemeMode>(DEFAULT_THEME);
   let inputFileCount = $state<number | null>(null);
@@ -82,6 +89,24 @@
   let parseRun = $state<ParseRunHandle | null>(null);
   let isIngesting = $state(false);
   let launchAtLogin = $state(false);
+  let finderActionInstalled = $state(false);
+  let finderActionBusy = $state(false);
+  let finderActionNotice = $state<string | null>(null);
+  let showOnboarding = $state(false);
+  let showInstallHint = $state(false);
+  let configCollapsed = $state(false);
+  let hasSuccessfulParse = $state(false);
+  let appVersion = $state("0.2.0");
+  let updateAvailable = $state<UpdateInfo | null>(null);
+  let isInstallingUpdate = $state(false);
+  let updateError = $state<string | null>(null);
+  let updateCheckBusy = $state(false);
+  let updateStatusNote = $state<string | null>(null);
+  let updateStatusOk = $state(false);
+
+  const PARSE_STALL_MS = 90_000;
+  let lastParseEventAt = 0;
+  let parseStallTimer: ReturnType<typeof setInterval> | null = null;
 
   let showProgress = $derived(isParsing || files.length > 0);
   let canRunParse = $derived(
@@ -90,6 +115,8 @@
       inputFileCount !== null &&
       inputFileCount > 0
   );
+  let outputDirConfigured = $derived(!!outputDir);
+  let filesReady = $derived((inputFileCount ?? 0) > 0);
 
   async function resolveDefaultWorkers(savedWorkers: number) {
     if (savedWorkers > 0) {
@@ -134,12 +161,89 @@
 
   function openSettings() {
     showHistory = false;
+    showAbout = false;
     showSettings = true;
+    void refreshFinderActionStatus();
+  }
+
+  async function refreshFinderActionStatus() {
+    try {
+      finderActionInstalled = await invoke<boolean>("finder_quick_action_installed");
+    } catch {
+      finderActionInstalled = false;
+    }
+  }
+
+  async function installFinderQuickAction() {
+    finderActionBusy = true;
+    finderActionNotice = null;
+    try {
+      const msg = await invoke<string>("install_finder_quick_action");
+      finderActionNotice = msg || t("settings.finderInstalled");
+      await refreshFinderActionStatus();
+    } catch (e) {
+      finderActionNotice =
+        (e instanceof Error ? e.message : String(e)) || t("settings.finderInstallFailed");
+    } finally {
+      finderActionBusy = false;
+    }
+  }
+
+  async function ingestExternalPaths(paths: string[]) {
+    const supported = filterSupportedPaths(paths);
+    if (supported.length === 0) {
+      errorMsg = t("errors.noSupported");
+      return;
+    }
+    selectedFiles = supported;
+    inputDir = "";
+    await setSetting("inputDir", "");
+    updateInputCount(supported.length);
+    errorMsg = null;
+    noticeMsg = null;
+    showSettings = false;
+    showAbout = false;
+    showHistory = false;
+    try {
+      await invoke("trigger_haptic");
+    } catch {}
+    void openPopoverFromExternal();
+  }
+
+  async function openPopoverFromExternal() {
+    try {
+      await invoke("show_main_window");
+    } catch {
+      /* dev / web */
+    }
   }
 
   function openHistory() {
     showSettings = false;
     showHistory = true;
+  }
+
+  async function rerunBatch(batch: BatchResult) {
+    showHistory = false;
+    showSettings = false;
+    showAbout = false;
+    outputDir = batch.outputDir;
+    format = batch.format;
+    await setSetting("outputDir", outputDir);
+    await setSetting("format", format);
+
+    if (batch.sourcePaths && batch.sourcePaths.length > 0) {
+      await ingestExternalPaths(batch.sourcePaths);
+      return;
+    }
+
+    const selectedLabel = t("recent.selectedFiles");
+    if (batch.inputDir && batch.inputDir !== selectedLabel) {
+      await handleFolderSelected(batch.inputDir, null);
+      return;
+    }
+
+    noticeMsg = t("errors.addFiles");
   }
 
   let latestBatch = $derived(recentBatches[0] ?? null);
@@ -152,7 +256,62 @@
     }
   }
 
-  onMount(async () => {
+  function scheduleBackgroundUpdateCheck() {
+    void checkForUpdate()
+      .then((info) => {
+        if (info.available) {
+          updateAvailable = info;
+        }
+      })
+      .catch(() => {
+        /* silent — offline or misconfigured endpoint */
+      });
+  }
+
+  async function handleCheckForUpdates() {
+    updateStatusNote = null;
+    updateStatusOk = false;
+    updateError = null;
+    updateCheckBusy = true;
+    try {
+      const info = await checkForUpdate();
+      if (info.available) {
+        updateAvailable = info;
+        showSettings = false;
+        showAbout = false;
+        updateStatusNote = null;
+      } else {
+        updateStatusNote = t("update.upToDate", { version: appVersion });
+        updateStatusOk = true;
+      }
+    } catch {
+      updateStatusNote = t("update.checkFailed");
+    } finally {
+      updateCheckBusy = false;
+    }
+  }
+
+  async function installAvailableUpdate() {
+    isInstallingUpdate = true;
+    updateError = null;
+    try {
+      await installUpdate();
+    } catch (e) {
+      updateError =
+        e instanceof Error ? e.message : String(e) || t("update.installFailed");
+      isInstallingUpdate = false;
+    }
+  }
+
+  function dismissUpdateBanner() {
+    updateAvailable = null;
+    updateError = null;
+  }
+
+  onMount(() => {
+    let unlistenOpen: (() => void) | undefined;
+
+    void (async () => {
     theme = normalizeThemeMode(await getSetting("theme", DEFAULT_THEME));
     applyTheme(theme);
 
@@ -178,6 +337,18 @@
     ocrLanguage = normalizeOcrLanguage(rawOcr);
     await setSetting("ocrLanguage", ocrLanguage);
     recentBatches = await getSetting<BatchResult[]>("recentBatches", []);
+    hasSuccessfulParse = await getSetting("hasSuccessfulParse", false);
+    configCollapsed = hasSuccessfulParse;
+    const onboardingDone = await getSetting("hasCompletedOnboarding", false);
+    if (!onboardingDone) {
+      showOnboarding = true;
+      try {
+        showInstallHint = !(await invoke<boolean>("is_installed_in_applications"));
+      } catch {
+        showInstallHint = false;
+      }
+      void openPopoverFromExternal();
+    }
     await resolveDefaultWorkers(await getSetting<number>("workers", 0));
     launchAtLogin = await getSetting<boolean>("launchAtLogin", false);
     if (launchAtLogin) {
@@ -190,10 +361,31 @@
     }
     await syncTrayMenu();
 
+    try {
+      const info = await invoke<{ version?: string }>("get_system_info");
+      if (info.version) appVersion = info.version;
+    } catch {
+      /* keep default */
+    }
+
+    scheduleBackgroundUpdateCheck();
+
     const savedInput = await getSetting("inputDir", "");
     if (savedInput) {
       await handleFolderSelected(savedInput, null, { silent: true });
     }
+
+    unlistenOpen = await listen<string[]>("open-files", (event) => {
+      const paths = event.payload;
+      if (paths?.length) {
+        void ingestExternalPaths(paths);
+      }
+    });
+    })();
+
+    return () => {
+      unlistenOpen?.();
+    };
   });
 
   function updateInputCount(count: number) {
@@ -263,6 +455,22 @@
     await setSetting("outputDir", outputDir);
   }
 
+  async function dismissOnboarding() {
+    showOnboarding = false;
+    await setSetting("hasCompletedOnboarding", true);
+  }
+
+  async function onboardingPickOutput() {
+    const selected = await pickOutputFolder();
+    if (selected) {
+      await handleOutputSelect(selected);
+    }
+  }
+
+  function toggleConfigCollapsed() {
+    configCollapsed = !configCollapsed;
+  }
+
   async function handleFormatChange(f: OutputFormat) {
     format = f;
     await setSetting("format", format);
@@ -283,7 +491,31 @@
     await setSetting("launchAtLogin", enabled);
   }
 
+  function clearParseStallWatchdog() {
+    if (parseStallTimer) {
+      clearInterval(parseStallTimer);
+      parseStallTimer = null;
+    }
+  }
+
+  function touchParseActivity() {
+    lastParseEventAt = Date.now();
+  }
+
+  function startParseStallWatchdog() {
+    clearParseStallWatchdog();
+    touchParseActivity();
+    parseStallTimer = setInterval(() => {
+      if (!isParsing) return;
+      if (Date.now() - lastParseEventAt < PARSE_STALL_MS) return;
+      parseRun?.cancel();
+      parseRun = null;
+      stopParseUi(t("errors.engineStalled"), t("errors.engineStalled"));
+    }, 5000);
+  }
+
   function stopParseUi(notice: string, error: string | null = null) {
+    clearParseStallWatchdog();
     isParsing = false;
     files = settleInFlightOnAbort(files, t("errors.batchInterrupted"));
     lastParsingId = null;
@@ -327,6 +559,7 @@
     } catch {}
 
     isParsing = true;
+    startParseStallWatchdog();
     lastParsingId = null;
     totalFiles = filesToParse.length;
     files = filesToParse.map((path) => ({
@@ -346,6 +579,7 @@
         workers,
       },
       (event: ParseEvent) => {
+          touchParseActivity();
           if (event.type === "start") {
             totalFiles = event.total || 0;
           } else if (event.type === "progress") {
@@ -364,10 +598,16 @@
             files = applied.files;
             lastParsingId = applied.lastParsingId;
           } else if (event.type === "done") {
+            clearParseStallWatchdog();
             isParsing = false;
             lastParsingId = null;
             totalFiles = totalFiles || files.length;
             void addToHistory();
+            if (!hasSuccessfulParse) {
+              hasSuccessfulParse = true;
+              configCollapsed = true;
+              void setSetting("hasSuccessfulParse", true);
+            }
             const parsed = files.filter((f) => f.status === "done").length;
             const errCount = files.filter((f) => f.status === "error").length;
             void invoke("show_completion_notification", {
@@ -396,6 +636,7 @@
         console.error(e);
       }
     } finally {
+      clearParseStallWatchdog();
       parseRun = null;
     }
   }
@@ -412,6 +653,8 @@
       fileCount: files.length,
       parsed,
       errors,
+      sourcePaths:
+        selectedFiles.length > 0 ? [...selectedFiles] : undefined,
     };
     recentBatches = [newBatch, ...recentBatches.slice(0, MAX_RECENT_BATCHES - 1)];
     await setSetting("recentBatches", recentBatches);
@@ -434,7 +677,8 @@
       }
     }
     if (e.key === "Escape") {
-      if (showSettings) showSettings = false;
+      if (showAbout) showAbout = false;
+      else if (showSettings) showSettings = false;
       else if (showHistory) showHistory = false;
     }
   }
@@ -490,38 +734,86 @@
     </div>
   </header>
 
+  {#if updateAvailable}
+    <div in:fly={bannerFlyInParams} out:fly={bannerFlyOutParams}>
+      <UpdateBanner
+        info={updateAvailable}
+        installing={isInstallingUpdate}
+        error={updateError}
+        onInstall={installAvailableUpdate}
+        onDismiss={dismissUpdateBanner}
+      />
+    </div>
+  {/if}
+
   <main>
+    {#if showOnboarding}
+      <OnboardingChecklist
+        outputDirSet={outputDirConfigured}
+        filesReady={filesReady}
+        {showInstallHint}
+        onDismiss={dismissOnboarding}
+        onPickOutput={onboardingPickOutput}
+      />
+    {/if}
+
     <div class="section">
-      <div class="section-title">{t("config.title")}</div>
-      <div class="card">
-        <OutputFolderPicker value={outputDir} onSelect={handleOutputSelect} />
-
-        <div class="row">
-          <span>{t("config.format")}</span>
-          <FormatSelector value={format} onChange={handleFormatChange} />
-        </div>
-        {#if format !== "json"}
-          <div
-            class="file-count-preview caption-hint"
-            in:fade={mainFadeIn}
-            out:fade={mainFadeOut}
+      <div class="section-title config-section-header">
+        <span>{t("config.title")}</span>
+        {#if hasSuccessfulParse}
+          <button
+            type="button"
+            class="config-collapse-btn"
+            onclick={toggleConfigCollapsed}
+            aria-expanded={!configCollapsed}
           >
-            {t("config.spreadsheetJsonHint")}
-          </div>
+            {configCollapsed ? t("config.expand") : t("config.collapse")}
+          </button>
         {/if}
-
-        <div class="row ocr-row">
-          <div class="ocr-toggle">
-            <input
-              type="checkbox"
-              bind:checked={ocrEnabled}
-              id="ocr-toggle"
-              onchange={handleOcrEnabledChange}
-            />
-            <label for="ocr-toggle">{t("config.ocr")}</label>
-          </div>
-        </div>
       </div>
+      {#if !configCollapsed}
+        <div class="card">
+          <OutputFolderPicker value={outputDir} onSelect={handleOutputSelect} />
+
+          <div class="row">
+            <span>{t("config.format")}</span>
+            <FormatSelector value={format} onChange={handleFormatChange} />
+          </div>
+          {#if format !== "json"}
+            <div
+              class="file-count-preview caption-hint"
+              in:fade={mainFadeIn}
+              out:fade={mainFadeOut}
+            >
+              {t("config.spreadsheetJsonHint")}
+            </div>
+          {/if}
+
+          <div class="row ocr-row">
+            <div class="ocr-toggle">
+              <input
+                type="checkbox"
+                bind:checked={ocrEnabled}
+                id="ocr-toggle"
+                onchange={handleOcrEnabledChange}
+              />
+              <label for="ocr-toggle">{t("config.ocr")}</label>
+            </div>
+          </div>
+          {#if ocrEnabled}
+            <p class="caption-hint ocr-workers-hint">{t("config.ocrWorkersHint")}</p>
+          {/if}
+        </div>
+      {:else}
+        <button
+          type="button"
+          class="secondary config-collapsed-summary"
+          onclick={toggleConfigCollapsed}
+        >
+          {outputDir ? outputDir : t("config.downloads")} · {format.toUpperCase()}
+          {#if ocrEnabled} · OCR{/if}
+        </button>
+      {/if}
     </div>
 
     <DropZone
@@ -619,6 +911,7 @@
           <HistoryScreen
             batches={recentBatches}
             onOpenFolder={openFolder}
+            onRerun={rerunBatch}
             onClose={() => (showHistory = false)}
           />
         </div>
@@ -630,20 +923,34 @@
     {#key "settings"}
       <div class="motion-panel" in:fly={mainFlyIn} out:fly={mainFlyOut}>
         <div class="motion-panel-content" in:fade={mainFadeIn} out:fade={mainFadeOut}>
-    <SettingsScreen
-      locale={getLocale()}
-      {ocrLanguage}
-      {ocrEnabled}
-      {theme}
-      {workers}
-      {launchAtLogin}
-      onLocaleChange={handleLocaleChange}
-      onOcrLanguageChange={handleOcrLanguageChange}
-      onThemeChange={handleThemeChange}
-      onWorkersChange={handleWorkersChange}
-      onLaunchAtLoginChange={handleLaunchAtLoginChange}
-      onClose={() => (showSettings = false)}
-    />
+    {#if showAbout}
+      <AboutScreen onClose={() => (showAbout = false)} />
+    {:else}
+      <SettingsScreen
+        locale={getLocale()}
+        {ocrLanguage}
+        {ocrEnabled}
+        {theme}
+        {workers}
+        {launchAtLogin}
+        onLocaleChange={handleLocaleChange}
+        onOcrLanguageChange={handleOcrLanguageChange}
+        onThemeChange={handleThemeChange}
+        onWorkersChange={handleWorkersChange}
+        onLaunchAtLoginChange={handleLaunchAtLoginChange}
+        onOpenAbout={() => (showAbout = true)}
+        {finderActionInstalled}
+        {finderActionBusy}
+        finderActionNotice={finderActionNotice}
+        onInstallFinderAction={installFinderQuickAction}
+        {appVersion}
+        {updateCheckBusy}
+        updateStatusNote={updateStatusNote}
+        {updateStatusOk}
+        onCheckForUpdates={handleCheckForUpdates}
+        onClose={() => (showSettings = false)}
+      />
+    {/if}
         </div>
       </div>
     {/key}

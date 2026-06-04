@@ -14,7 +14,53 @@
     "downloads": "下载",
     "format": "格式",
     "spreadsheetJsonHint": "电子表格始终导出为 JSON。",
-    "ocr": "OCR（内置）"
+    "ocr": "OCR（内置）",
+    "ocrWorkersHint": "扫描 PDF 占用更多 CPU — 大批量 OCR 建议将并行 worker 设为 1–2。",
+    "expand": "显示配置",
+    "collapse": "隐藏配置"
+  },
+  "onboarding": {
+    "title": "快速上手",
+    "lead": "ParseKit 在菜单栏运行。完成以下步骤即可开始第一批解析。",
+    "dismiss": "知道了",
+    "installHint": "请将 ParseKit 拖到「应用程序」（不要放在桌面），退出后从应用程序重新打开。若 macOS 阻止启动，请右键 → 打开一次。",
+    "chooseOutput": "选择输出文件夹",
+    "stepOutput": "选择 Markdown 保存位置",
+    "stepFiles": "在下方拖放文件或文件夹",
+    "stepRun": "点击开始解析",
+    "trayHint": "提示：随时点击菜单栏（右上角）的 ParseKit 图标可重新打开此面板。"
+  },
+  "deps": {
+    "title": "可选转换工具",
+    "hint": "解析 PDF 无需这些工具。仅在解析 Office 或图片时需要安装。",
+    "checking": "正在检查…",
+    "recheck": "重新检查",
+    "missingNote": "缺少的工具仅影响对应文件类型，其他格式仍可解析。",
+    "libreoffice": "LibreOffice（Word、PowerPoint）",
+    "imagemagick": "ImageMagick（PNG、JPG、SVG 等）",
+    "tesseract": "Tesseract OCR（ParseKit 内置）"
+  },
+  "update": {
+    "bannerAria": "有可用更新：版本 {version}",
+    "available": "ParseKit {version} 可用",
+    "installRestart": "安装并重启",
+    "installing": "正在下载…",
+    "later": "稍后",
+    "installFailed": "更新失败。请重试或从 GitHub 下载。",
+    "settingsTitle": "更新",
+    "settingsHint": "ParseKit 启动时会检查 GitHub Releases。也可在此手动检查。",
+    "checkButton": "检查更新",
+    "checking": "正在检查…",
+    "upToDate": "已是最新 (v{version})",
+    "checkFailed": "无法检查更新。请联网后重试。"
+  },
+  "gatekeeper": {
+    "title": "首次打开被阻止？",
+    "hint": "将 ParseKit 拖到应用程序后，macOS 可能阻止未公证应用。在终端运行一次以下命令，或在隐私与安全性中点「仍要打开」。",
+    "copyCommand": "复制修复命令",
+    "copied": "已复制到剪贴板",
+    "copyFailed": "无法复制到剪贴板，请重试。",
+    "openSettings": "打开隐私与安全性"
   },
   "dropzone": {
     "title": "拖放文件或文件夹到此处",
@@ -60,21 +106,27 @@
     "open": "打开",
     "viewHistory": "查看批次历史",
     "meta": "{date} · {count} 个文件 · {format}",
+    "metaOne": "{date} · 1 个文件 · {format}",
     "errorsOne": "1 个错误",
     "errors": "{count} 个错误"
+  },
+  "about": {
+    "back": "返回"
   },
   "history": {
     "title": "历史",
     "back": "返回",
     "empty": "暂无批次。运行解析后会显示在这里。",
-    "hint": "最近 {count} 个批次（新的在前）。"
+    "hint": "最近 {count} 个批次（新的在前）。",
+    "rerun": "重新运行"
   },
   "errors": {
     "addFiles": "请添加文件或文件夹以解析。",
     "noSupported": "未找到支持的文件。",
     "parseFailed": "解析失败。",
     "parseCancelled": "已取消解析。",
-    "batchInterrupted": "批次已停止，此文件未完成。"
+    "batchInterrupted": "批次已停止，此文件未完成。",
+    "engineStalled": "解析引擎无响应。请减少并行 worker 后重试。"
   },
   "settings": {
     "title": "设置",
@@ -90,8 +142,15 @@
     "workersHint": "同时解析的文件数量。批量大时可提高速度；降低可减少 CPU 占用。",
     "launchAtLogin": "登录时启动",
     "launchAtLoginHint": "登录 Mac 时自动启动 ParseKit。",
+    "finderTitle": "Finder",
+    "finderHint": "在 Finder 中右键 → 快速操作 → Parse to Markdown with ParseKit。若已在 ParseKit 中设置输出文件夹，将静默解析到该处；否则打开 ParseKit 并载入文件。",
+    "finderInstall": "安装 Finder 快速操作",
+    "finderInstalling": "正在安装…",
+    "finderInstalled": "已安装。如未显示，请在系统设置 → 键盘 → 键盘快捷键 → 服务 中启用。",
+    "finderInstallFailed": "无法安装 Finder 快速操作。",
     "aboutTitle": "关于 ParseKit",
-    "aboutTagline": "100% 本地文档处理",
+    "aboutTagline": "本机解析 — 不上传云端",
+    "aboutPrivacy": "文件仅在本 Mac 上读取和写入。开启 OCR 时使用本机 Tesseract（首次使用某语言时可能会下载一次语言数据）。",
     "aboutDescription": "ParseKit — 文档解析工具包。",
     "aboutPoweredBy": "技术支持",
     "aboutPoweredByValue": "LiteParse v2 (Rust)",

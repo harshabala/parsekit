@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { invoke } from "@tauri-apps/api/core";
   import type { AppLocale } from "../lib/i18n.svelte";
   import { t } from "../lib/i18n.svelte";
   import type { OcrLanguageCode } from "../lib/ocrLanguages";
@@ -8,8 +6,9 @@
   import LanguageSelector from "./LanguageSelector.svelte";
   import OcrLanguageSelector from "./OcrLanguageSelector.svelte";
   import ThemeSelector from "./ThemeSelector.svelte";
-
-  const REPO_URL = "https://github.com/harshabala/parsedock";
+  import WorkersSlider from "./WorkersSlider.svelte";
+  import DependencyPreflight from "./DependencyPreflight.svelte";
+  import { invoke } from "@tauri-apps/api/core";
 
   let {
     locale: localeValue,
@@ -23,6 +22,16 @@
     onThemeChange,
     onWorkersChange,
     onLaunchAtLoginChange,
+    onOpenAbout,
+    finderActionInstalled = false,
+    finderActionBusy = false,
+    finderActionNotice = null,
+    onInstallFinderAction,
+    appVersion = "0.2.0",
+    updateCheckBusy = false,
+    updateStatusNote = null,
+    updateStatusOk = false,
+    onCheckForUpdates,
     onClose,
   }: {
     locale: AppLocale;
@@ -36,23 +45,54 @@
     onThemeChange: (mode: ThemeMode) => void;
     onWorkersChange: (value: number) => void;
     onLaunchAtLoginChange: (enabled: boolean) => void;
+    onOpenAbout: () => void;
+    finderActionInstalled?: boolean;
+    finderActionBusy?: boolean;
+    finderActionNotice?: string | null;
+    onInstallFinderAction?: () => void;
+    appVersion?: string;
+    updateCheckBusy?: boolean;
+    updateStatusNote?: string | null;
+    updateStatusOk?: boolean;
+    onCheckForUpdates?: () => void;
     onClose: () => void;
   } = $props();
 
-  let version = $state("0.2.0");
-
-  onMount(async () => {
-    try {
-      const info = await invoke<{ version?: string }>("get_system_info");
-      if (info.version) version = info.version;
-    } catch {
-      /* keep default */
-    }
-  });
+  let gatekeeperCopied = $state(false);
+  let gatekeeperCopyError = $state<string | null>(null);
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") {
       onClose();
+    }
+  }
+
+  async function copyGatekeeperCommand() {
+    gatekeeperCopyError = null;
+    try {
+      const cmd = await invoke<string>("gatekeeper_fix_command");
+      await invoke("copy_text_to_clipboard", { text: cmd });
+      try {
+        await invoke("trigger_haptic");
+      } catch {
+        /* optional */
+      }
+      gatekeeperCopied = true;
+      setTimeout(() => {
+        gatekeeperCopied = false;
+      }, 2500);
+    } catch (e) {
+      gatekeeperCopied = false;
+      gatekeeperCopyError =
+        e instanceof Error ? e.message : String(e) || t("gatekeeper.copyFailed");
+    }
+  }
+
+  async function openPrivacySettings() {
+    try {
+      await invoke("open_privacy_security_settings");
+    } catch {
+      /* dev */
     }
   }
 </script>
@@ -89,18 +129,11 @@
     <div class="settings-section">
       <div class="settings-section-title">{t("settings.workersTitle")}</div>
       <p class="settings-hint">{t("settings.workersHint")}</p>
-      <div class="workers-row">
-        <input
-          type="range"
-          min="1"
-          max="16"
-          step="1"
-          value={workers}
-          aria-label={t("settings.workersTitle")}
-          oninput={(e) => onWorkersChange(Number((e.currentTarget as HTMLInputElement).value))}
-        />
-        <span class="workers-value">{workers}</span>
-      </div>
+      <WorkersSlider
+        value={workers}
+        label={t("settings.workersTitle")}
+        onChange={onWorkersChange}
+      />
     </div>
 
     <div class="settings-divider"></div>
@@ -127,24 +160,87 @@
 
     <div class="settings-divider"></div>
 
-    <div class="settings-section settings-about">
-      <div class="settings-section-title">{t("settings.aboutTitle")}</div>
-      <p class="settings-about-version">v{version}</p>
-      <p class="settings-hint">{t("settings.aboutDescription")}</p>
-      <p class="settings-hint">{t("settings.aboutTagline")}</p>
-      <p class="settings-hint">{t("settings.aboutFormats")}</p>
-      <div class="settings-about-meta">
-        <span class="settings-meta-label">{t("settings.aboutPoweredBy")}</span>
-        <span>{t("settings.aboutPoweredByValue")}</span>
+    <div class="settings-section">
+      <DependencyPreflight />
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">{t("gatekeeper.title")}</div>
+      <p class="settings-hint">{t("gatekeeper.hint")}</p>
+      <div class="gatekeeper-actions">
+        <button
+          type="button"
+          class="secondary gatekeeper-copy-btn"
+          class:gatekeeper-copy-success={gatekeeperCopied}
+          onclick={copyGatekeeperCommand}
+        >
+          {gatekeeperCopied ? t("gatekeeper.copied") : t("gatekeeper.copyCommand")}
+        </button>
+        {#if gatekeeperCopyError}
+          <p class="settings-hint deps-error">{gatekeeperCopyError}</p>
+        {/if}
+        <button type="button" class="secondary" onclick={openPrivacySettings}>
+          {t("gatekeeper.openSettings")}
+        </button>
       </div>
-      <div class="settings-about-meta">
-        <span class="settings-meta-label">{t("settings.aboutLicense")}</span>
-        <span>{t("settings.aboutLicenseValue")}</span>
-      </div>
-      <p class="settings-hint settings-license-note">{t("settings.aboutLicenseNote")}</p>
-      <a class="settings-repo-link" href={REPO_URL} target="_blank" rel="noopener noreferrer">
-        {t("settings.aboutRepository")}
-      </a>
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">{t("settings.finderTitle")}</div>
+      <p class="settings-hint">{t("settings.finderHint")}</p>
+      {#if finderActionInstalled}
+        <p class="settings-hint settings-finder-status">{t("settings.finderInstalled")}</p>
+      {:else if onInstallFinderAction}
+        <button
+          type="button"
+          class="secondary settings-finder-install-btn"
+          disabled={finderActionBusy}
+          onclick={onInstallFinderAction}
+        >
+          {finderActionBusy ? t("settings.finderInstalling") : t("settings.finderInstall")}
+        </button>
+      {/if}
+      {#if finderActionNotice}
+        <p class="settings-hint settings-finder-notice">{finderActionNotice}</p>
+      {/if}
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">{t("update.settingsTitle")}</div>
+      <p class="settings-hint">{t("update.settingsHint")}</p>
+      {#if onCheckForUpdates}
+        <button
+          type="button"
+          class="secondary"
+          disabled={updateCheckBusy}
+          onclick={onCheckForUpdates}
+        >
+          {updateCheckBusy ? t("update.checking") : t("update.checkButton")}
+        </button>
+      {/if}
+      {#if updateStatusNote}
+        <p
+          class="settings-update-status"
+          class:settings-update-status-ok={updateStatusOk}
+        >
+          {updateStatusNote}
+        </p>
+      {/if}
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
+      <button type="button" class="settings-link-card" onclick={onOpenAbout}>
+        <span class="settings-link-text">{t("settings.aboutTitle")}</span>
+        <span class="settings-link-chevron" aria-hidden="true">›</span>
+      </button>
     </div>
   </div>
 </div>
