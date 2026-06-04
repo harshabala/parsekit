@@ -18,12 +18,36 @@
     disabled?: boolean;
     onIngestStart?: () => void;
     onIngestEnd?: () => void;
-    onFolder: (path: string, count: number) => void;
+    onFolder: (path: string, count: number, scanError?: string) => void;
     onFiles: (paths: string[]) => void;
   } = $props();
 
   let dragOver = $state(false);
   let scanning = $state(false);
+
+  /** Normalize paths from drag-drop (may be file:// URLs on macOS). */
+  function normalizePath(path: string): string {
+    const trimmed = path.trim();
+    if (!trimmed.startsWith("file://")) return trimmed;
+    try {
+      return decodeURIComponent(new URL(trimmed).pathname);
+    } catch {
+      return trimmed;
+    }
+  }
+
+  async function ingestFolder(path: string) {
+    const normalized = normalizePath(path);
+    let count = 0;
+    try {
+      const scanned = await invoke<string[]>("scan_directory", { path: normalized });
+      count = scanned.length;
+    } catch (e) {
+      onFolder(normalized, 0, e instanceof Error ? e.message : String(e));
+      return;
+    }
+    onFolder(normalized, count);
+  }
 
   async function ingestPaths(paths: string[]) {
     if (disabled || scanning) return;
@@ -32,22 +56,24 @@
     const filePaths: string[] = [];
 
     try {
-    for (const path of paths) {
-      const isDir = await invoke<boolean>("path_is_directory", { path });
-      if (isDir) {
-        const scanned = await invoke<string[]>("scan_directory", { path });
-        onFolder(path, scanned.length);
-        return;
+      for (const raw of paths) {
+        const path = normalizePath(raw);
+        const isDir = await invoke<boolean>("path_is_directory", { path });
+        if (isDir) {
+          await ingestFolder(path);
+          return;
+        }
+        if (isSupportedFilePath(path)) {
+          filePaths.push(path);
+        }
       }
-      if (isSupportedFilePath(path)) {
-        filePaths.push(path);
-      }
-    }
 
-    const supported = filterSupportedPaths(filePaths);
-    if (supported.length > 0) {
-      onFiles(supported);
-    }
+      const supported = filterSupportedPaths(filePaths);
+      if (supported.length > 0) {
+        onFiles(supported);
+      } else if (paths.length > 0) {
+        onFiles([]);
+      }
     } finally {
       scanning = false;
       onIngestEnd?.();
@@ -65,7 +91,14 @@
     if (disabled || scanning) return;
     const path = await pickInputFolder();
     if (!path) return;
-    await ingestPaths([path]);
+    scanning = true;
+    onIngestStart?.();
+    try {
+      await ingestFolder(path);
+    } finally {
+      scanning = false;
+      onIngestEnd?.();
+    }
   }
 
   onMount(() => {

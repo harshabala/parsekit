@@ -306,10 +306,23 @@ fn restore_accessory_app_policy<R: Runtime>(app: &AppHandle<R>) {
     let _ = app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 }
 
+fn normalize_user_path(path: String) -> String {
+    let trimmed = path.trim();
+    if trimmed.starts_with("file://") {
+        if let Ok(url) = url::Url::parse(trimmed) {
+            if let Ok(p) = url.to_file_path() {
+                return p.to_string_lossy().into_owned();
+            }
+        }
+    }
+    trimmed.to_string()
+}
+
 fn file_path_to_string(path: tauri_plugin_dialog::FilePath) -> Option<String> {
     path.into_path()
         .ok()
         .and_then(|p| p.into_os_string().into_string().ok())
+        .map(normalize_user_path)
 }
 
 /// Open native pickers without a parent window. Borderless accessory popovers cannot host
@@ -495,6 +508,7 @@ const SUPPORTED_EXTENSIONS: &[&str] = &[
 ];
 
 fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
+    let path = normalize_user_path(path);
     let dir = Path::new(&path);
     if !dir.is_dir() {
         return Err(format!("Path is not a directory: {path}"));
@@ -505,7 +519,8 @@ fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
         let entry_path = entry.path();
         if entry_path.is_file() {
             if let Some(ext) = entry_path.extension().and_then(|e| e.to_str()) {
-                if SUPPORTED_EXTENSIONS.contains(&ext.to_lowercase().as_str()) {
+                let ext_lower = ext.to_lowercase();
+                if SUPPORTED_EXTENSIONS.contains(&ext_lower.as_str()) {
                     if let Some(s) = entry_path.to_str() {
                         files.push(s.to_string());
                     }
@@ -520,7 +535,7 @@ fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
 
 #[tauri::command]
 fn path_is_directory(path: String) -> bool {
-    Path::new(&path).is_dir()
+    Path::new(&normalize_user_path(path)).is_dir()
 }
 
 /// Walks the tree off the UI thread so large folders do not beach-ball the webview.

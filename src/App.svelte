@@ -177,7 +177,7 @@
 
     const savedInput = await getSetting("inputDir", "");
     if (savedInput) {
-      await handleFolderSelected(savedInput, null);
+      await handleFolderSelected(savedInput, null, { silent: true });
     }
   });
 
@@ -185,20 +185,49 @@
     inputFileCount = count;
   }
 
-  async function handleFolderSelected(path: string, count: number | null) {
+  async function handleFolderSelected(
+    path: string,
+    count: number | null,
+    options?: { silent?: boolean }
+  ) {
     inputDir = path;
     selectedFiles = [];
     await setSetting("inputDir", path);
-    if (count !== null) {
-      updateInputCount(count);
+
+    let resolved = count;
+    if (count === null) {
+      try {
+        const scanned = await invoke<string[]>("scan_directory", { path });
+        resolved = scanned.length;
+      } catch (e) {
+        updateInputCount(0);
+        if (!options?.silent) {
+          errorMsg = e instanceof Error ? e.message : String(e);
+        }
+        return;
+      }
+    }
+
+    updateInputCount(resolved ?? 0);
+    if ((resolved ?? 0) === 0 && !options?.silent) {
+      errorMsg = t("errors.noSupported");
+      noticeMsg = null;
+    } else if ((resolved ?? 0) > 0) {
+      errorMsg = null;
+    }
+  }
+
+  function handleFolderFromDropZone(path: string, count: number, scanError?: string) {
+    if (scanError) {
+      inputDir = path;
+      selectedFiles = [];
+      void setSetting("inputDir", path);
+      updateInputCount(0);
+      errorMsg = scanError;
+      noticeMsg = null;
       return;
     }
-    try {
-      const scanned = await invoke<string[]>("scan_directory", { path });
-      updateInputCount(scanned.length);
-    } catch {
-      updateInputCount(0);
-    }
+    void handleFolderSelected(path, count);
   }
 
   async function handleFilesSelected(paths: string[]) {
@@ -512,7 +541,7 @@
       disabled={isIngesting || isParsing}
       onIngestStart={() => (isIngesting = true)}
       onIngestEnd={() => (isIngesting = false)}
-      onFolder={handleFolderSelected}
+      onFolder={handleFolderFromDropZone}
       onFiles={handleFilesSelected}
     />
 
