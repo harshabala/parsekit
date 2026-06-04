@@ -130,3 +130,22 @@ export function buttonFadeIn(prefersReduced: boolean) {
 export function buttonFadeOut(prefersReduced: boolean) {
   return panelFadeOut(prefersReduced);
 }
+
+export const MOTION_ICON_ENTER_MS = 100;
+export const MOTION_ICON_EXIT_MS = 80;
+
+/** Status icon crossfade enter: 100ms decelerate */
+export function iconFadeIn(prefersReduced: boolean) {
+  return {
+    duration: prefersReduced ? 0 : MOTION_ICON_ENTER_MS,
+    easing: easingDecelerate,
+  };
+}
+
+/** Status icon crossfade exit: 80ms accelerate */
+export function iconFadeOut(prefersReduced: boolean) {
+  return {
+    duration: prefersReduced ? 0 : MOTION_ICON_EXIT_MS,
+    easing: easingAccelerate,
+  };
+}

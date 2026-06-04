@@ -1,6 +1,13 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import { t } from "../lib/i18n.svelte";
+  import { iconFadeIn, iconFadeOut } from "../lib/motion";
   import type { FileProgress } from "../lib/types";
+
+  const reducedMotion = $derived(prefersReducedMotion.current);
+  const iconFadeInParams = $derived(iconFadeIn(reducedMotion));
+  const iconFadeOutParams = $derived(iconFadeOut(reducedMotion));
 
   let { files, total, isParsing }: { files: FileProgress[]; total: number; isParsing: boolean } = $props();
 
@@ -87,9 +94,16 @@
               <span class="file-error" title={file.error}>{file.error}</span>
             {/if}
           </div>
-          <span class="status-icon status-{file.status}" title={file.status}>
-            {statusIcon(file.status)}
-          </span>
+          {#key file.status}
+            <span
+              class="status-icon status-{file.status}"
+              title={file.status}
+              in:fade={iconFadeInParams}
+              out:fade={iconFadeOutParams}
+            >
+              {statusIcon(file.status)}
+            </span>
+          {/key}
         </div>
       {/each}
     </div>
