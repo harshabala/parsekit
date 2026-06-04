@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { fade, fly } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
   import { downloadDir } from "@tauri-apps/api/path";
   import { writeText } from "@tauri-apps/plugin-clipboard-manager";
@@ -28,7 +30,19 @@
   import ProgressList from "./components/ProgressList.svelte";
   import RecentBatches from "./components/RecentBatches.svelte";
   import SettingsScreen from "./components/SettingsScreen.svelte";
+  import {
+    panelFadeIn,
+    panelFadeOut,
+    panelFlyIn,
+    panelFlyOut,
+  } from "./lib/motion";
   import "./index.css";
+
+  const reducedMotion = $derived(prefersReducedMotion.current);
+  const mainFlyIn = $derived(panelFlyIn(reducedMotion));
+  const mainFlyOut = $derived(panelFlyOut(reducedMotion));
+  const mainFadeIn = $derived(panelFadeIn(reducedMotion));
+  const mainFadeOut = $derived(panelFadeOut(reducedMotion));
 
   let inputDir = $state("");
   let selectedFiles = $state<string[]>([]);
@@ -401,6 +415,9 @@
 
 <div class="shell">
   {#if !showSettings}
+    {#key "main"}
+      <div class="motion-panel" in:fly={mainFlyIn} out:fly={mainFlyOut}>
+        <div class="motion-panel-content" in:fade={mainFadeIn} out:fade={mainFadeOut}>
   <header>
     <span>{t("app.name")}</span>
     <div class="header-actions">
@@ -527,9 +544,15 @@
       <RecentBatches batches={recentBatches} onOpenFolder={openFolder} />
     {/if}
   </main>
+        </div>
+      </div>
+    {/key}
   {/if}
 
   {#if showSettings}
+    {#key "settings"}
+      <div class="motion-panel" in:fly={mainFlyIn} out:fly={mainFlyOut}>
+        <div class="motion-panel-content" in:fade={mainFadeIn} out:fade={mainFadeOut}>
     <SettingsScreen
       locale={getLocale()}
       {ocrLanguage}
@@ -544,5 +567,8 @@
       onLaunchAtLoginChange={handleLaunchAtLoginChange}
       onClose={() => (showSettings = false)}
     />
+        </div>
+      </div>
+    {/key}
   {/if}
 </div>
