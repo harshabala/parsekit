@@ -42,7 +42,7 @@
     </div>
 
     <div class="progress-bar" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100}>
-      <div class="progress-fill" style="width: {progressPercent}%"></div>
+      <div class="progress-fill" style="transform: scaleX({progressPercent / 100})"></div>
     </div>
     <div class="progress-percent">{progressPercent}%</div>
 

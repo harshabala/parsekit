@@ -37,6 +37,8 @@
     panelFadeOut,
     panelFlyIn,
     panelFlyOut,
+    sectionFlyIn,
+    sectionFlyOut,
   } from "./lib/motion";
   import "./index.css";
 
@@ -47,6 +49,8 @@
   const mainFadeOut = $derived(panelFadeOut(reducedMotion));
   const bannerFlyInParams = $derived(bannerFlyIn(reducedMotion));
   const bannerFlyOutParams = $derived(bannerFlyOut(reducedMotion));
+  const sectionFlyInParams = $derived(sectionFlyIn(reducedMotion));
+  const sectionFlyOutParams = $derived(sectionFlyOut(reducedMotion));
 
   let inputDir = $state("");
   let selectedFiles = $state<string[]>([]);
@@ -503,7 +507,9 @@
     />
 
     {#if showProgress}
-      <ProgressList {files} total={totalFiles || files.length} {isParsing} />
+      <div in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
+        <ProgressList {files} total={totalFiles || files.length} {isParsing} />
+      </div>
     {/if}
 
     <div class="section run-section">

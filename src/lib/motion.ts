@@ -102,3 +102,21 @@ export function bannerFlyOut(prefersReduced: boolean) {
     easing: easingAccelerate,
   };
 }
+
+/** Progress section enter: y 8, 180ms decelerate */
+export function sectionFlyIn(prefersReduced: boolean) {
+  return {
+    y: prefersReduced ? 0 : MOTION_ENTER_Y,
+    duration: prefersReduced ? 0 : MOTION_ENTER_MS,
+    easing: easingDecelerate,
+  };
+}
+
+/** Progress section exit: y -4, 120ms accelerate */
+export function sectionFlyOut(prefersReduced: boolean) {
+  return {
+    y: prefersReduced ? 0 : MOTION_EXIT_Y,
+    duration: prefersReduced ? 0 : MOTION_EXIT_MS,
+    easing: easingAccelerate,
+  };
+}

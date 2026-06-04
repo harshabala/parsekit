@@ -364,8 +364,11 @@ label {
 
 .progress-fill {
   height: 100%;
+  width: 100%;
   background: var(--accent-color);
-  transition: width var(--timing-slow) var(--easing-decelerate);
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform var(--timing-slow) var(--easing-decelerate);
 }
 
 .progress-header {
