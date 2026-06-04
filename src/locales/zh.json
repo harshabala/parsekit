@@ -44,7 +44,14 @@
     "waiting": "等待中 {count}",
     "failed": "失败 {count}",
     "skipped": "跳过 {count}",
-    "summary": "共 {total} 个文件，已解析 {parsed}，错误 {errors}"
+    "summary": "共 {total} 个文件，已解析 {parsed}，错误 {errors}",
+    "nowParsing": "正在解析 {name}",
+    "andMore": "另有 {count} 个",
+    "statusParsing": "解析中",
+    "statusDone": "完成",
+    "statusError": "失败",
+    "statusSkipped": "跳过",
+    "statusWaiting": "等待"
   },
   "recent": {
     "title": "最近",
@@ -66,7 +73,8 @@
     "addFiles": "请添加文件或文件夹以解析。",
     "noSupported": "未找到支持的文件。",
     "parseFailed": "解析失败。",
-    "parseCancelled": "已取消解析。"
+    "parseCancelled": "已取消解析。",
+    "batchInterrupted": "批次已停止，此文件未完成。"
   },
   "settings": {
     "title": "设置",

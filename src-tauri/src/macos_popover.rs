@@ -16,12 +16,17 @@ use tauri::WebviewWindow;
 
 /// Apply NSWindow popover settings once (defer until first open so webview init is stable).
 pub fn ensure_popover_window_configured<R: tauri::Runtime>(window: &WebviewWindow<R>) {
-    if WINDOW_CONFIGURED.swap(true, Ordering::SeqCst) {
+    if WINDOW_CONFIGURED.load(Ordering::SeqCst) {
         popover_trace("Activation: NSWindow already configured");
         return;
     }
     popover_trace("Activation: configure_popover_window (first open)");
-    configure_popover_window(window);
+    if window.ns_window().is_ok() {
+        configure_popover_window(window);
+        WINDOW_CONFIGURED.store(true, Ordering::SeqCst);
+    } else {
+        popover_trace("Activation: configure deferred (ns_window unavailable)");
+    }
 }
 
 /// Raise the app and popover window so a borderless panel is actually visible.

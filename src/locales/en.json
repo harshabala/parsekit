@@ -44,7 +44,14 @@
     "waiting": "{count} waiting",
     "failed": "{count} failed",
     "skipped": "{count} skipped",
-    "summary": "{parsed} parsed, {errors} errors out of {total} files"
+    "summary": "{parsed} parsed, {errors} errors out of {total} files",
+    "nowParsing": "Parsing {name}",
+    "andMore": "+{count} more",
+    "statusParsing": "Parsing",
+    "statusDone": "Done",
+    "statusError": "Failed",
+    "statusSkipped": "Skipped",
+    "statusWaiting": "Waiting"
   },
   "recent": {
     "title": "Recent",
@@ -66,7 +73,8 @@
     "addFiles": "Add files or a folder to parse.",
     "noSupported": "No supported files found.",
     "parseFailed": "Parsing failed.",
-    "parseCancelled": "Parsing cancelled."
+    "parseCancelled": "Parsing cancelled.",
+    "batchInterrupted": "Batch stopped before this file finished."
   },
   "settings": {
     "title": "Settings",

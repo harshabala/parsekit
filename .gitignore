@@ -26,3 +26,5 @@ com.parsedock.app.lock
 * 2.sh
 com.parsedock.app
 com.parsedock 2.app
+**/ParseKit*.app
+!src-tauri/target/release/bundle/**/*.app

@@ -23,6 +23,10 @@
     type OcrLanguageCode,
   } from "./lib/ocrLanguages";
   import { fileBaseName, filterSupportedPaths } from "./lib/supportedExtensions";
+  import {
+    applyParseProgressEvent,
+    settleInFlightOnAbort,
+  } from "./lib/progress";
   import { applyTheme, DEFAULT_THEME, normalizeThemeMode } from "./lib/theme";
   import DropZone from "./components/DropZone.svelte";
   import OutputFolderPicker from "./components/OutputFolderPicker.svelte";
@@ -66,6 +70,7 @@
   let ocrLanguage = $state<OcrLanguageCode>("eng");
   let workers = $state(4);
   let files = $state<FileProgress[]>([]);
+  let lastParsingId = $state<string | null>(null);
   let totalFiles = $state(0);
   let recentBatches = $state<BatchResult[]>([]);
   let showSettings = $state(false);
@@ -278,12 +283,18 @@
     await setSetting("launchAtLogin", enabled);
   }
 
+  function stopParseUi(notice: string, error: string | null = null) {
+    isParsing = false;
+    files = settleInFlightOnAbort(files, t("errors.batchInterrupted"));
+    lastParsingId = null;
+    errorMsg = error;
+    noticeMsg = notice;
+  }
+
   function cancelParse() {
     parseRun?.cancel();
     parseRun = null;
-    isParsing = false;
-    errorMsg = null;
-    noticeMsg = t("errors.parseCancelled");
+    stopParseUi(t("errors.parseCancelled"));
   }
 
   async function startParse() {
@@ -316,6 +327,7 @@
     } catch {}
 
     isParsing = true;
+    lastParsingId = null;
     totalFiles = filesToParse.length;
     files = filesToParse.map((path) => ({
       id: path,
@@ -337,40 +349,23 @@
           if (event.type === "start") {
             totalFiles = event.total || 0;
           } else if (event.type === "progress") {
-            const sourcePath = event.sourcePath;
-            const displayName = event.file || (sourcePath ? fileBaseName(sourcePath) : "");
-            let status: FileProgress["status"] = "pending";
-            if (event.status === "completed") status = "done";
-            else if (event.status === "parsing") status = "parsing";
-            else if (event.status === "error") status = "error";
-            else if (event.status === "skipped") status = "skipped";
-
-            const existingIndex = sourcePath
-              ? files.findIndex((f) => f.id === sourcePath)
-              : files.findIndex(
-                  (f) => f.name === displayName && f.status !== "done" && f.status !== "error"
-                );
-            if (existingIndex !== -1) {
-              files[existingIndex] = {
-                ...files[existingIndex],
-                status,
-                outputPath: event.path || files[existingIndex].outputPath,
+            const applied = applyParseProgressEvent(
+              files,
+              {
+                type: "progress",
+                file: event.file,
+                sourcePath: event.sourcePath,
+                status: event.status,
+                path: event.path,
                 error: event.error,
-              };
-            } else if (sourcePath) {
-              files = [
-                {
-                  id: sourcePath,
-                  name: displayName,
-                  status,
-                  outputPath: event.path,
-                  error: event.error,
-                },
-                ...files,
-              ];
-            }
+              },
+              lastParsingId
+            );
+            files = applied.files;
+            lastParsingId = applied.lastParsingId;
           } else if (event.type === "done") {
             isParsing = false;
+            lastParsingId = null;
             totalFiles = totalFiles || files.length;
             void addToHistory();
             const parsed = files.filter((f) => f.status === "done").length;
@@ -380,8 +375,11 @@
               body: t("run.notifyDone", { parsed, errors: errCount }),
             }).catch(() => {});
           } else if (event.type === "error") {
-            isParsing = false;
-            errorMsg = event.message || t("errors.parseFailed");
+            parseRun = null;
+            stopParseUi(
+              t("errors.parseFailed"),
+              event.message || t("errors.parseFailed")
+            );
             console.error(event.message);
           }
         }
@@ -391,8 +389,10 @@
       await parseRun.promise;
     } catch (e) {
       if (isParsing) {
-        isParsing = false;
-        errorMsg = e instanceof Error ? e.message : String(e);
+        stopParseUi(
+          t("errors.parseFailed"),
+          e instanceof Error ? e.message : String(e)
+        );
         console.error(e);
       }
     } finally {
@@ -535,7 +535,12 @@
 
     {#if showProgress}
       <div in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
-        <ProgressList {files} total={totalFiles || files.length} {isParsing} />
+        <ProgressList
+          {files}
+          total={totalFiles || files.length}
+          {isParsing}
+          {lastParsingId}
+        />
       </div>
     {/if}
 

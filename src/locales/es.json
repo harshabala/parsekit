@@ -44,7 +44,14 @@
     "waiting": "{count} en espera",
     "failed": "{count} fallidos",
     "skipped": "{count} omitidos",
-    "summary": "{parsed} analizados, {errors} errores de {total} archivos"
+    "summary": "{parsed} analizados, {errors} errores de {total} archivos",
+    "nowParsing": "Analizando {name}",
+    "andMore": "+{count} más",
+    "statusParsing": "En curso",
+    "statusDone": "Listo",
+    "statusError": "Error",
+    "statusSkipped": "Omitido",
+    "statusWaiting": "En espera"
   },
   "recent": {
     "title": "Reciente",
@@ -66,7 +73,8 @@
     "addFiles": "Añade archivos o una carpeta para analizar.",
     "noSupported": "No se encontraron archivos compatibles.",
     "parseFailed": "Error al analizar.",
-    "parseCancelled": "Análisis cancelado."
+    "parseCancelled": "Análisis cancelado.",
+    "batchInterrupted": "El lote se detuvo antes de terminar este archivo."
   },
   "settings": {
     "title": "Ajustes",

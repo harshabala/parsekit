@@ -1,0 +1,114 @@
+import { describe, expect, it } from "vitest";
+import {
+  applyParseProgressEvent,
+  resolvePrimaryParsingId,
+  settleInFlightOnAbort,
+} from "./progress";
+import type { FileProgress } from "./types";
+
+function row(id: string, status: FileProgress["status"]): FileProgress {
+  return { id, name: id.split("/").pop() ?? id, status };
+}
+
+describe("applyParseProgressEvent", () => {
+  it("updates by sourcePath", () => {
+    const files = [row("/a/one.pdf", "pending"), row("/a/two.pdf", "pending")];
+    const { files: next } = applyParseProgressEvent(files, {
+      type: "progress",
+      sourcePath: "/a/one.pdf",
+      file: "one.pdf",
+      status: "parsing",
+    });
+    expect(next[0].status).toBe("parsing");
+    expect(next[1].status).toBe("pending");
+  });
+
+  it("tracks lastParsingId on parse start", () => {
+    const files = [row("/a/one.pdf", "pending")];
+    const r1 = applyParseProgressEvent(files, {
+      type: "progress",
+      sourcePath: "/a/one.pdf",
+      status: "parsing",
+    });
+    expect(r1.lastParsingId).toBe("/a/one.pdf");
+
+    const withTwo = [
+      ...r1.files,
+      row("/a/two.pdf", "pending"),
+    ];
+    const r2 = applyParseProgressEvent(withTwo, {
+      type: "progress",
+      sourcePath: "/a/two.pdf",
+      status: "parsing",
+    }, r1.lastParsingId);
+    expect(r2.lastParsingId).toBe("/a/two.pdf");
+  });
+
+  it("continues after one file errors", () => {
+    let files = [row("/a/one.pdf", "pending"), row("/a/two.pdf", "pending")];
+    let last: string | null = null;
+
+    ({ files, lastParsingId: last } = applyParseProgressEvent(files, {
+      type: "progress",
+      sourcePath: "/a/one.pdf",
+      status: "parsing",
+    }, last));
+
+    ({ files, lastParsingId: last } = applyParseProgressEvent(files, {
+      type: "progress",
+      sourcePath: "/a/one.pdf",
+      status: "error",
+      error: "bad pdf",
+    }, last));
+
+    ({ files, lastParsingId: last } = applyParseProgressEvent(files, {
+      type: "progress",
+      sourcePath: "/a/two.pdf",
+      status: "parsing",
+    }, last));
+
+    expect(files[0].status).toBe("error");
+    expect(files[1].status).toBe("parsing");
+    expect(last).toBe("/a/two.pdf");
+  });
+
+  it("returns new array reference on update", () => {
+    const files = [row("/a/one.pdf", "pending")];
+    const { files: next } = applyParseProgressEvent(files, {
+      type: "progress",
+      sourcePath: "/a/one.pdf",
+      status: "done",
+    });
+    expect(next).not.toBe(files);
+  });
+});
+
+describe("settleInFlightOnAbort", () => {
+  it("marks parsing as error and leaves pending", () => {
+    const files = [
+      row("/a/done.pdf", "done"),
+      row("/a/active.pdf", "parsing"),
+      row("/a/wait.pdf", "pending"),
+    ];
+    const next = settleInFlightOnAbort(files, "Stopped");
+    expect(next[0].status).toBe("done");
+    expect(next[1].status).toBe("error");
+    expect(next[1].error).toBe("Stopped");
+    expect(next[2].status).toBe("pending");
+  });
+});
+
+describe("resolvePrimaryParsingId", () => {
+  it("prefers lastParsingId when still parsing", () => {
+    const files = [
+      { ...row("/a/one.pdf", "parsing") },
+      { ...row("/a/two.pdf", "parsing") },
+    ];
+    expect(resolvePrimaryParsingId(files, "/a/two.pdf")).toBe("/a/two.pdf");
+  });
+
+  it("falls back to first parsing row", () => {
+    const files = [row("/a/one.pdf", "parsing")];
+    expect(resolvePrimaryParsingId(files, null)).toBe("/a/one.pdf");
+  });
+});

@@ -29,6 +29,9 @@ const FOCUS_LOSS_AUTO_HIDE_ENABLED: bool = true;
 
 #[derive(Clone)]
 pub(crate) struct PopoverState {
+    /// Authoritative open/closed state — do not use `window.is_visible()` for toggling;
+    /// macOS can report visible=true while the accessory popover is not on screen.
+    is_open: Arc<AtomicBool>,
     last_opened_at: Arc<Mutex<Option<Instant>>>,
     picker_active: Arc<AtomicBool>,
 }
@@ -36,8 +39,22 @@ pub(crate) struct PopoverState {
 impl PopoverState {
     fn new() -> Self {
         Self {
+            is_open: Arc::new(AtomicBool::new(false)),
             last_opened_at: Arc::new(Mutex::new(None)),
             picker_active: Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    fn is_open(&self) -> bool {
+        self.is_open.load(Ordering::SeqCst)
+    }
+
+    fn set_open(&self, open: bool) {
+        self.is_open.store(open, Ordering::SeqCst);
+        if !open {
+            if let Ok(mut last_opened_at) = self.last_opened_at.lock() {
+                *last_opened_at = None;
+            }
         }
     }
 
@@ -61,6 +78,9 @@ impl PopoverState {
         if !FOCUS_LOSS_AUTO_HIDE_ENABLED {
             return false;
         }
+        if !self.is_open() {
+            return false;
+        }
         if self.picker_active.load(Ordering::SeqCst) {
             return false;
         }
@@ -82,7 +102,7 @@ struct TrayHandle<R: Runtime> {
 
 #[derive(Clone)]
 struct TrayMenuState {
-    tray_id: TrayIconId,
+    tray_id: Arc<Mutex<TrayIconId>>,
     open_label: Arc<Mutex<String>>,
     quit_label: Arc<Mutex<String>>,
 }
@@ -224,11 +244,17 @@ fn show_popover<R: Runtime>(
     }
 
     macos_popover::activate_app_for_popover(window, popover);
+    let visible = window.is_visible().unwrap_or(false);
+    popover.set_open(visible);
+    if !visible {
+        popover_trace("PopoverManager.show(): window not visible after activate — is_open=false");
+    }
     log_window_visibility(window, "after show_popover");
 }
 
-fn hide_popover<R: Runtime>(window: &WebviewWindow<R>) {
+fn hide_popover<R: Runtime>(window: &WebviewWindow<R>, popover: &PopoverState) {
     popover_trace("PopoverManager.hide()");
+    popover.set_open(false);
     let _ = window.hide();
     log_window_visibility(window, "after hide_popover");
 }
@@ -255,11 +281,11 @@ fn toggle_popover_from_tray<R: Runtime>(
     popover: &PopoverState,
 ) {
     popover_trace("PopoverManager.toggle()");
-    if window.is_visible().unwrap_or(false) {
-        popover_trace("toggle: branch hide (visible)");
-        hide_popover(window);
+    if popover.is_open() {
+        popover_trace("toggle: branch hide (open)");
+        hide_popover(window, popover);
     } else {
-        popover_trace("toggle: branch show (hidden)");
+        popover_trace("toggle: branch show (closed)");
         show_popover(window, Some(rect), popover);
     }
 }
@@ -271,8 +297,12 @@ fn open_popover_from_menu<R: Runtime>(
     popover: &PopoverState,
 ) {
     popover_trace("Tray menu: Open ParseKit → show");
+    let Ok(tray_id) = tray_state.tray_id.lock().map(|id| id.clone()) else {
+        popover_trace("Tray menu: ABORT (tray_id lock poisoned)");
+        return;
+    };
     let rect = app
-        .tray_by_id(&tray_state.tray_id)
+        .tray_by_id(&tray_id)
         .and_then(|t| t.rect().ok().flatten());
     show_popover(window, rect.as_ref(), popover);
 }
@@ -347,10 +377,7 @@ where
 
     #[cfg(target_os = "macos")]
     {
-        let popover_still_open = app
-            .get_webview_window("main")
-            .map(|w| w.is_visible().unwrap_or(false))
-            .unwrap_or(false);
+        let popover_still_open = popover.is_open();
         if !popover_still_open {
             restore_accessory_app_policy(&app);
             popover_trace("File picker: activation policy → Accessory (popover closed)");
@@ -677,7 +704,16 @@ pub fn run() {
             app.manage(popover_state.clone());
             let tray_click_debounce = TrayClickDebounce::new();
 
+            // Tray menu labels (tray_id filled in after the icon is built).
+            app.manage(TrayMenuState {
+                tray_id: Arc::new(Mutex::new(TrayIconId::new("pending"))),
+                open_label: Arc::new(Mutex::new("Open ParseKit".to_string())),
+                quit_label: Arc::new(Mutex::new("Quit ParseKit".to_string())),
+            });
+
             let window = app.get_webview_window("main").expect("main window");
+            let _ = window.hide();
+            popover_state.set_open(false);
             let w = window.clone();
             let popover_for_events = popover_state.clone();
             if let Ok(url) = window.url() {
@@ -693,7 +729,7 @@ pub fn run() {
                     ));
                     if should_hide {
                         popover_trace("Focus-loss: → hide");
-                        hide_popover(&w);
+                        hide_popover(&w, &popover_for_events);
                     } else {
                         popover_trace("Focus-loss: suppressed (grace or picker active)");
                     }
@@ -730,11 +766,6 @@ pub fn run() {
                     let tray_click_debounce = tray_click_debounce.clone();
                     move |tray, event| {
                     let app = tray.app_handle();
-                    let Some(tray_state) = app.try_state::<TrayMenuState>() else {
-                        popover_trace("Tray Click: ABORT (TrayMenuState missing)");
-                        return;
-                    };
-                    let tray_state = tray_state.inner().clone();
 
                     match event {
                         TrayIconEvent::Click {
@@ -762,7 +793,11 @@ pub fn run() {
                                 }
                                 MouseButton::Right => {
                                     popover_trace("Tray Click: right → menu");
-                                    let _ = popup_tray_menu(&app, &tray_state);
+                                    let Some(tray_state) = app.try_state::<TrayMenuState>() else {
+                                        popover_trace("Tray Click: ABORT (TrayMenuState missing)");
+                                        return;
+                                    };
+                                    let _ = popup_tray_menu(&app, tray_state.inner());
                                 }
                                 _ => {
                                     popover_trace("Tray Click: ignored (other button)");
@@ -780,6 +815,11 @@ pub fn run() {
                 })?;
 
             let tray_id = tray.id().clone();
+            if let Some(tray_state) = app.try_state::<TrayMenuState>() {
+                if let Ok(mut id) = tray_state.inner().tray_id.lock() {
+                    *id = tray_id.clone();
+                }
+            }
             app.manage(TrayHandle { icon: tray.clone() });
             startup_trace(&format!("tray created and retained id={}", tray_id.0));
 
@@ -795,12 +835,6 @@ pub fn run() {
             } else {
                 startup_trace("tray lookup by id FAILED immediately after build");
             }
-
-            app.manage(TrayMenuState {
-                tray_id,
-                open_label: Arc::new(Mutex::new("Open ParseKit".to_string())),
-                quit_label: Arc::new(Mutex::new("Quit ParseKit".to_string())),
-            });
 
             #[cfg(debug_assertions)]
             popover_trace(&format!(
