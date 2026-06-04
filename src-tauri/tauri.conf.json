@@ -1,6 +1,6 @@
 {
   "productName": "ParseKit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "identifier": "com.harshabala.parsekit",
   "build": {
     "frontendDist": "../dist",
@@ -41,7 +41,7 @@
   },
   "bundle": {
     "active": true,
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "targets": ["app", "dmg"],
     "macOS": {
       "infoPlist": "Info.plist",

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build ParseKit, sign updater bundle, write latest.json, upload to GitHub Releases.
+# Build ParseKit, seal-sign .app (postbuild-macos), tar signed .app, sign tarball, upload.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -8,7 +8,7 @@ TAG="v${VERSION}"
 REPO="harshabala/parsedock"
 KEY_PATH="${TAURI_SIGNING_PRIVATE_KEY_PATH:-$HOME/.tauri/parsekit.key}"
 
-MACOS_DIR="$ROOT/src-tauri/target/release/bundle/macos"
+APP="$ROOT/src-tauri/target/release/bundle/macos/ParseKit.app"
 DMG_DIR="$ROOT/src-tauri/target/release/bundle/dmg"
 DMG="$DMG_DIR/ParseKit_${VERSION}_aarch64.dmg"
 UPDATER_NAME="ParseKit_${VERSION}_aarch64.app.tar.gz"
@@ -26,39 +26,37 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:
 
 echo "== publish-release: ParseKit v${VERSION} → ${REPO} ${TAG} =="
 
-echo "[1/5] Build release (updater .tar.gz + DMG) ..."
+echo "[1/6] tauri build + postbuild-macos (whole-bundle codesign + DMG) ..."
 cd "$ROOT"
 npm run release:macos
 
-UPDATER_PKG="$(find "$MACOS_DIR" -maxdepth 1 -name '*.app.tar.gz' ! -name '*.sig' -print -quit)"
-if [[ -z "$UPDATER_PKG" ]]; then
-  echo "error: no .app.tar.gz in $MACOS_DIR (is createUpdaterArtifacts enabled?)" >&2
+if [[ ! -d "$APP" ]]; then
+  echo "error: signed app missing at $APP" >&2
   exit 1
 fi
 
-echo "[2/5] Stage updater bundle as $UPDATER_NAME ..."
-mkdir -p "$DMG_DIR"
-cp "$UPDATER_PKG" "$UPDATER_STAGED"
+echo "[2/6] Fail-fast codesign on release .app ..."
+xattr -cr "$APP" 2>/dev/null || true
+codesign --verify --deep --strict --verbose=2 "$APP"
+
+echo "[3/6] Create updater .tar.gz from signed .app (not Tauri pre-sign artifact) ..."
+bash "$ROOT/scripts/create-updater-tarball.sh" "$APP" "$UPDATER_STAGED"
 
 SIG_FILE="${UPDATER_STAGED}.sig"
-if [[ -f "${UPDATER_PKG}.sig" ]]; then
-  cp "${UPDATER_PKG}.sig" "$SIG_FILE"
-  echo "Using signature from build: ${UPDATER_PKG}.sig"
-else
-  echo "Signing updater bundle ..."
-  (
-    cd "$ROOT"
-    npx tauri signer sign -f "$KEY_PATH" -p "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}" "$UPDATER_STAGED"
-  )
-fi
+rm -f "$SIG_FILE"
+echo "[4/6] Sign updater tarball with minisign ..."
+(
+  cd "$ROOT"
+  npx tauri signer sign -f "$KEY_PATH" -p "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}" "$UPDATER_STAGED"
+)
 
 if [[ ! -f "$SIG_FILE" ]]; then
   echo "error: missing signature file $SIG_FILE" >&2
   exit 1
 fi
 
-echo "[3/5] Write parsekit-latest.json ..."
-RELEASE_NOTES="${RELEASE_NOTES:-ParseKit v${VERSION}}"
+echo "[5/6] Write parsekit-latest.json ..."
+RELEASE_NOTES="${RELEASE_NOTES:-ParseKit v${VERSION} — updater ships post-sign sealed .app bundle.}"
 export VERSION SIG_FILE LATEST_JSON UPDATER_NAME RELEASE_NOTES
 node <<'NODE'
 const fs = require("fs");
@@ -86,10 +84,11 @@ if [[ ! -f "$DMG" ]]; then
   exit 1
 fi
 
-echo "[4/5] Upload to GitHub release ${TAG} ..."
+echo "[6/6] Upload to GitHub release ${TAG} (manifest + signed tar.gz + DMG only) ..."
 if gh release view "$TAG" --repo "$REPO" &>/dev/null; then
   gh release upload "$TAG" "$DMG" --repo "$REPO" --clobber
   gh release upload "$TAG" "$UPDATER_STAGED" --repo "$REPO" --clobber
+  gh release upload "$TAG" "$SIG_FILE" --repo "$REPO" --clobber 2>/dev/null || true
   gh release upload "$TAG" "$LATEST_JSON" --repo "$REPO" --clobber
   echo "Updated existing release ${TAG}"
 else
@@ -103,7 +102,13 @@ else
   echo "Created release ${TAG}"
 fi
 
-echo "[5/5] Done."
+# Remove stray latest.json if a prior upload added it.
+if gh release view "$TAG" --repo "$REPO" --json assets -q '.assets[].name' 2>/dev/null | grep -qx 'latest.json'; then
+  echo "Removing duplicate asset latest.json from ${TAG} ..."
+  gh release delete-asset "$TAG" latest.json --repo "$REPO" --yes 2>/dev/null || true
+fi
+
+echo "Done."
 echo "  DMG:          $DMG"
 echo "  Updater:      $UPDATER_STAGED"
 echo "  Manifest:     $LATEST_JSON"

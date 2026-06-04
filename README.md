@@ -72,6 +72,8 @@ ParseKit includes the [Tauri v2 updater](https://v2.tauri.app/plugin/updater/). 
 
 When a newer version is available, a gold banner appears in the popover: **Install & Restart** or **Later**. Updates download a signed `.app.tar.gz` and replace the app bundle (not the DMG installer flow).
 
+The updater tarball is built **after** `postbuild-macos.sh` seals the `.app` with `codesign --deep` (`createUpdaterArtifacts` is **off** so Tauri does not emit a pre-sign tar.gz).
+
 **Publishing a release (maintainers):**
 
 1. Generate a signing key once (keep private key local, never commit):
