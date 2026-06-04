@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Simplified menu-bar mark: 4 bold flowing parse lines, ~70% of square -->
+<!-- Menu-bar template: bold filled strokes for reliable rasterization at 18pt -->
 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-  <path d="M 5 7 Q 18 4 31 7" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
-  <path d="M 5 13 Q 18 16 31 13" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
-  <path d="M 5 19 Q 18 16 31 19" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
-  <path d="M 5 25 Q 18 28 31 25" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+  <rect width="36" height="36" fill="none"/>
+  <path d="M 4 8 Q 18 5 32 8 L 32 11 Q 18 8 4 11 Z" fill="#000000"/>
+  <path d="M 4 14 Q 18 17 32 14 L 32 17 Q 18 14 4 17 Z" fill="#000000"/>
+  <path d="M 4 20 Q 18 17 32 20 L 32 23 Q 18 20 4 23 Z" fill="#000000"/>
+  <path d="M 4 26 Q 18 29 32 26 L 32 29 Q 18 26 4 29 Z" fill="#000000"/>
 </svg>

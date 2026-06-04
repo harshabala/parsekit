@@ -1,39 +1,42 @@
 #!/usr/bin/env bash
-# Build macOS template tray icons from menubar-icon.png (black glyph, transparent background).
+# Build macOS template tray icons: solid black glyph, fully transparent background.
+# Uses ImageMagick draw (reliable) — menubar PNGs often lack a real alpha mask at 18pt.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SOURCE="$ROOT/assets/branding/menubar-icon.png"
 TRAY="$ROOT/src-tauri/icons/tray"
 
 command -v magick >/dev/null || { echo "error: ImageMagick (magick) required" >&2; exit 1; }
 
-if [[ ! -f "$SOURCE" ]]; then
-  echo "error: $SOURCE not found" >&2
-  exit 1
-fi
-
 mkdir -p "$TRAY"
 
-# Pad to square, resize to menu-bar sizes; force black glyph on transparent alpha.
-for spec in "36:icon@2x.png" "18:icon.png"; do
-  size="${spec%%:*}"
-  out="${spec##*:}"
-  magick "$SOURCE" \
-    -alpha on \
-    -background none \
-    -gravity center \
-    -extent "${size}x${size}" \
-    -resize "${size}x${size}!" \
-    -colorspace Gray \
-    -negate \
-    -channel RGB \
-    -fill black \
-    -colorize 100 \
-    -channel A \
-    +channel \
-    PNG32:"$TRAY/$out"
-done
+# Four bold parse-line bands — solid #000 on transparent for NSStatusItem template tinting.
+draw_glyph() {
+  local size="$1"
+  local out="$2"
+  local m=2
+  local w=$((size - m))
+  local h=3
+  if [[ "$size" -ge 32 ]]; then
+    h=4
+    m=3
+    w=$((size - m))
+  fi
+  local y1=$((m + 1))
+  local y2=$((y1 + h + 2))
+  local y3=$((y2 + h + 2))
+  local y4=$((y3 + h + 2))
+  magick -size "${size}x${size}" xc:none \
+    -fill '#000000' \
+    -draw "roundrectangle ${m},${y1} ${w},$((y1 + h)) 1,1" \
+    -draw "roundrectangle ${m},${y2} ${w},$((y2 + h)) 1,1" \
+    -draw "roundrectangle ${m},${y3} ${w},$((y3 + h)) 1,1" \
+    -draw "roundrectangle ${m},${y4} ${w},$((y4 + h)) 1,1" \
+    PNG32:"$out"
+}
+
+draw_glyph 18 "$TRAY/icon.png"
+draw_glyph 36 "$TRAY/icon@2x.png"
 
 echo "Wrote $TRAY/icon.png (18) and $TRAY/icon@2x.png (36)"
 
@@ -76,7 +79,10 @@ def check(path: Path) -> None:
 
     corners = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
     alphas = [alpha_at(x, y) for x, y in corners]
-    print(f"{path.name} {w}x{h} corner alpha: {alphas}")
+    visible = sum(1 for y in range(h) for x in range(w) if alpha_at(x, y) > 128)
+    print(f"{path.name} {w}x{h} corner alpha: {alphas} visible pixels: {visible}")
+    if visible < 20:
+        raise SystemExit(f"{path}: glyph too faint ({visible} visible pixels)")
     if any(a != 0 for a in alphas):
         raise SystemExit(f"{path}: corner pixels must be transparent (alpha=0)")
 
