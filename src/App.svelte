@@ -31,6 +31,8 @@
   import RecentBatches from "./components/RecentBatches.svelte";
   import SettingsScreen from "./components/SettingsScreen.svelte";
   import {
+    bannerFlyIn,
+    bannerFlyOut,
     panelFadeIn,
     panelFadeOut,
     panelFlyIn,
@@ -43,6 +45,8 @@
   const mainFlyOut = $derived(panelFlyOut(reducedMotion));
   const mainFadeIn = $derived(panelFadeIn(reducedMotion));
   const mainFadeOut = $derived(panelFadeOut(reducedMotion));
+  const bannerFlyInParams = $derived(bannerFlyIn(reducedMotion));
+  const bannerFlyOutParams = $derived(bannerFlyOut(reducedMotion));
 
   let inputDir = $state("");
   let selectedFiles = $state<string[]>([]);
@@ -518,10 +522,24 @@
         </button>
       {/if}
       {#if noticeMsg}
-        <div class="notice-banner" role="status">{noticeMsg}</div>
+        <div
+          class="notice-banner"
+          role="status"
+          in:fly={bannerFlyInParams}
+          out:fly={bannerFlyOutParams}
+        >
+          {noticeMsg}
+        </div>
       {/if}
       {#if errorMsg}
-        <div class="error-banner" role="alert">{errorMsg}</div>
+        <div
+          class="error-banner"
+          role="alert"
+          in:fly={bannerFlyInParams}
+          out:fly={bannerFlyOutParams}
+        >
+          {errorMsg}
+        </div>
       {/if}
       {#if !isParsing && files.length > 0 && files.some((f) => f.status === "done")}
         <div class="row" style="margin-top: 8px;">

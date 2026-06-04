@@ -52,6 +52,8 @@ export const easingAccelerate = cubicBezier(0.4, 0, 1, 1);
 
 export const MOTION_ENTER_Y = 8;
 export const MOTION_EXIT_Y = -4;
+export const MOTION_BANNER_ENTER_Y = 4;
+export const MOTION_BANNER_EXIT_Y = -2;
 export const MOTION_ENTER_MS = 180;
 export const MOTION_EXIT_MS = 120;
 
@@ -80,6 +82,22 @@ export function panelFadeIn(prefersReduced: boolean) {
 
 export function panelFadeOut(prefersReduced: boolean) {
   return {
+    duration: prefersReduced ? 0 : MOTION_EXIT_MS,
+    easing: easingAccelerate,
+  };
+}
+
+export function bannerFlyIn(prefersReduced: boolean) {
+  return {
+    y: prefersReduced ? 0 : MOTION_BANNER_ENTER_Y,
+    duration: prefersReduced ? 0 : MOTION_ENTER_MS,
+    easing: easingDecelerate,
+  };
+}
+
+export function bannerFlyOut(prefersReduced: boolean) {
+  return {
+    y: prefersReduced ? 0 : MOTION_BANNER_EXIT_Y,
     duration: prefersReduced ? 0 : MOTION_EXIT_MS,
     easing: easingAccelerate,
   };
