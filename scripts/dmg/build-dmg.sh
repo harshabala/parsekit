@@ -43,14 +43,14 @@ chflags hidden "$DMG_STAGE/.install-readme.txt" 2>/dev/null || true
 
 rm -f "$DMG_OUT"
 
-# Window 640×440 — must match tauri.conf bundle.macOS.dmg + GenerateBackground.swift (1280×880 @2x PNG).
+# Window 640×440 — must match tauri.conf + dmg-background.png pixel size (1:1, not @2x).
 DMG_W=640
 DMG_H=440
-# Icon positions (Finder top-left origin); tuned to center card columns in dmg-background.png.
-APP_ICON_X=178
-APP_ICON_Y=198
-APPS_LINK_X=478
-APPS_LINK_Y=198
+# Icon positions (create-dmg: top-left origin). Middle band is icon-only on the background.
+APP_ICON_X=155
+APP_ICON_Y=210
+APPS_LINK_X=455
+APPS_LINK_Y=210
 
 "$BUNDLE_DMG" \
   --volname "ParseKit" \
