@@ -15,25 +15,34 @@ fi
 
 echo "== create-updater-tarball: $(basename "$APP") → $(basename "$OUT") =="
 
-echo "[1/4] Verify signed .app (strict) ..."
+echo "[1/5] Verify signed .app in bundle/macos (strict) ..."
 xattr -cr "$APP" 2>/dev/null || true
 codesign --verify --deep --strict --verbose=2 "$APP"
 
-echo "[2/4] Remove stale Tauri auto-generated updater archives ..."
+echo "[2/5] Remove stale Tauri auto-generated updater archives ..."
 MACOS_DIR="$(dirname "$APP")"
 rm -f "$MACOS_DIR"/*.app.tar.gz "$MACOS_DIR"/*.app.tar.gz.sig
 
-echo "[3/4] tar.gz from signed bundle ..."
+echo "[3/5] Stage clean copy + re-seal (avoids FinderInfo in tarball) ..."
 mkdir -p "$(dirname "$OUT")"
 rm -f "$OUT"
-(
-  cd "$(dirname "$APP")"
-  tar -czf "$OUT" "$(basename "$APP")"
-)
+TAR_STAGE="$(mktemp -d)"
+VERIFY_DIR=""
+cleanup() { rm -rf "$TAR_STAGE" "$VERIFY_DIR"; }
+trap cleanup EXIT
 
-echo "[4/4] Verify extracted .app from tarball ..."
+ditto --norsrc "$APP" "$TAR_STAGE/ParseKit.app"
+xattr -cr "$TAR_STAGE/ParseKit.app" 2>/dev/null || true
+xattr -d com.apple.FinderInfo "$TAR_STAGE/ParseKit.app" 2>/dev/null || true
+codesign --force --deep --sign - "$TAR_STAGE/ParseKit.app"
+codesign --verify --deep --strict --verbose=2 "$TAR_STAGE/ParseKit.app"
+
+echo "[4/5] tar.gz (COPYFILE_DISABLE, no mac metadata) ..."
+COPYFILE_DISABLE=1 tar --no-mac-metadata -czf "$OUT" -C "$TAR_STAGE" ParseKit.app 2>/dev/null \
+  || COPYFILE_DISABLE=1 tar -czf "$OUT" -C "$TAR_STAGE" ParseKit.app
+
+echo "[5/5] Verify extracted .app from tarball (no post-extract xattr strip) ..."
 VERIFY_DIR="$(mktemp -d)"
-trap 'rm -rf "$VERIFY_DIR"' EXIT
 tar -xzf "$OUT" -C "$VERIFY_DIR"
 codesign --verify --deep --strict --verbose=2 "$VERIFY_DIR/ParseKit.app"
 codesign -dv --verbose=2 "$VERIFY_DIR/ParseKit.app" 2>&1 | head -8
