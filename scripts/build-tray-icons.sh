@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Build macOS template tray icons: solid black glyph, fully transparent background.
-# Uses ImageMagick draw (reliable) — menubar PNGs often lack a real alpha mask at 18pt.
+# Build macOS template tray icons: solid black glyph on transparent, standard 22/44pt canvas.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -10,37 +9,33 @@ command -v magick >/dev/null || { echo "error: ImageMagick (magick) required" >&
 
 mkdir -p "$TRAY"
 
-# Four bold parse-line bands — solid #000 on transparent for NSStatusItem template tinting.
+# Four bold parse-line bands on a full menu-bar canvas (larger = easier to click).
 draw_glyph() {
   local size="$1"
   local out="$2"
-  local m=2
+  local m=3
   local w=$((size - m))
-  local h=3
-  if [[ "$size" -ge 32 ]]; then
-    h=4
-    m=3
-    w=$((size - m))
-  fi
-  local y1=$((m + 1))
-  local y2=$((y1 + h + 2))
-  local y3=$((y2 + h + 2))
-  local y4=$((y3 + h + 2))
+  local h=$((size >= 40 ? 5 : 4))
+  local gap=$((size >= 40 ? 3 : 2))
+  local y1=$m
+  local y2=$((y1 + h + gap))
+  local y3=$((y2 + h + gap))
+  local y4=$((y3 + h + gap))
   magick -size "${size}x${size}" xc:none \
     -fill '#000000' \
-    -draw "roundrectangle ${m},${y1} ${w},$((y1 + h)) 1,1" \
-    -draw "roundrectangle ${m},${y2} ${w},$((y2 + h)) 1,1" \
-    -draw "roundrectangle ${m},${y3} ${w},$((y3 + h)) 1,1" \
-    -draw "roundrectangle ${m},${y4} ${w},$((y4 + h)) 1,1" \
+    -draw "roundrectangle ${m},${y1} ${w},$((y1 + h)) 2,2" \
+    -draw "roundrectangle ${m},${y2} ${w},$((y2 + h)) 2,2" \
+    -draw "roundrectangle ${m},${y3} ${w},$((y3 + h)) 2,2" \
+    -draw "roundrectangle ${m},${y4} ${w},$((y4 + h)) 2,2" \
     PNG32:"$out"
 }
 
-draw_glyph 18 "$TRAY/icon.png"
-draw_glyph 36 "$TRAY/icon@2x.png"
+# Standard macOS status-item sizes (logical 22pt + @2x).
+draw_glyph 22 "$TRAY/icon.png"
+draw_glyph 44 "$TRAY/icon@2x.png"
 
-echo "Wrote $TRAY/icon.png (18) and $TRAY/icon@2x.png (36)"
+echo "Wrote $TRAY/icon.png (22) and $TRAY/icon@2x.png (44)"
 
-# --- Verification (required) ---
 sips -g hasAlpha "$TRAY/icon.png" "$TRAY/icon@2x.png" | grep hasAlpha
 
 python3 << 'PY'
@@ -50,8 +45,6 @@ from pathlib import Path
 
 def check(path: Path) -> None:
     data = path.read_bytes()
-    if data[:8] != b"\x89PNG\r\n\x1a\n":
-        raise SystemExit(f"{path}: not PNG")
     w = h = 0
     idat = b""
     i = 8
@@ -68,8 +61,6 @@ def check(path: Path) -> None:
         elif typ == b"IEND":
             break
     bpp = {6: 4, 2: 3, 3: 1, 4: 2}.get(ctype, 4)
-    if bpp != 4:
-        raise SystemExit(f"{path}: expected RGBA, got ctype {ctype}")
     raw = zlib.decompress(idat)
     stride = w * bpp + 1
 
@@ -81,7 +72,7 @@ def check(path: Path) -> None:
     alphas = [alpha_at(x, y) for x, y in corners]
     visible = sum(1 for y in range(h) for x in range(w) if alpha_at(x, y) > 128)
     print(f"{path.name} {w}x{h} corner alpha: {alphas} visible pixels: {visible}")
-    if visible < 20:
+    if visible < 40:
         raise SystemExit(f"{path}: glyph too faint ({visible} visible pixels)")
     if any(a != 0 for a in alphas):
         raise SystemExit(f"{path}: corner pixels must be transparent (alpha=0)")

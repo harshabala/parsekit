@@ -22,7 +22,7 @@ use walkdir::WalkDir;
 const TRAY_ICON: tauri::image::Image<'static> = tauri::include_image!("icons/tray/icon.png");
 /// Ignore focus-loss hides briefly after `Window.show()` so activation does not collapse the panel.
 /// Just long enough to ride out activation focus churn; short enough that click-away still dismisses.
-const POPOVER_SHOW_GRACE_MS: u64 = 500;
+const POPOVER_SHOW_GRACE_MS: u64 = 750;
 
 /// Set `false` only when diagnosing focus-loss; production should keep `true`.
 const FOCUS_LOSS_AUTO_HIDE_ENABLED: bool = true;
@@ -195,13 +195,9 @@ fn position_popover_under_tray<R: Runtime>(window: &WebviewWindow<R>, rect: &Rec
         .min(monitor_width - win_w) as i32;
     let y = (icon_y + icon_h) as i32;
 
-    // Reject coordinates that would place the window off-screen (bad tray rect).
-    if y < 0 || y as f64 > monitor_height - 80.0 || x < -win_w as i32 / 2 {
-        popover_trace(&format!(
-            "Positioning: REJECTED x={x} y={y} monitor={monitor_width}x{monitor_height}"
-        ));
-        return false;
-    }
+    // Clamp to visible menu-bar region; never push the panel off-screen.
+    let y = y.clamp(24, (monitor_height - win_h - 8.0).max(24.0) as i32);
+    let x = x.clamp(8, (monitor_width - win_w - 8.0).max(8.0) as i32);
 
     let _ = window.set_position(PhysicalPosition::new(x, y));
     popover_trace(&format!("Positioning: OK x={x} y={y} win={win_w}x{win_h}"));
@@ -257,11 +253,13 @@ fn toggle_popover_from_tray<R: Runtime>(
     popover: &PopoverState,
 ) {
     popover_trace("PopoverManager.toggle()");
-    if window.is_visible().unwrap_or(false) {
-        popover_trace("toggle: branch hide (already visible)");
+    let visible = window.is_visible().unwrap_or(false);
+    let focused = window.is_focused().unwrap_or(false);
+    if visible && focused {
+        popover_trace("toggle: branch hide (visible and focused)");
         hide_popover(window);
     } else {
-        popover_trace("toggle: branch show (not visible)");
+        popover_trace("toggle: branch show (hidden or not focused)");
         show_popover(window, Some(rect), popover);
     }
 }

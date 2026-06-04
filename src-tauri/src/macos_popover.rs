@@ -43,9 +43,18 @@ pub(crate) fn activate_app_for_popover<R: tauri::Runtime>(
         return;
     };
     let app = NSApplication::sharedApplication(mtm);
-    popover_trace("Activation: NSApplication.activate()");
+    popover_trace("Activation: NSApplication.activate(front)");
+    #[allow(deprecated)]
+    app.activateIgnoringOtherApps(true);
     app.activate();
     let _ = window.set_always_on_top(true);
+    if let Ok(ns_ptr) = window.ns_window() {
+        unsafe {
+            let ns_window: &NSWindow = &*ns_ptr.cast();
+            ns_window.makeKeyAndOrderFront(None);
+        }
+        popover_trace("Activation: NSWindow.makeKeyAndOrderFront");
+    }
     popover_trace("Window.show()");
     let _ = window.show();
     popover_trace("Window.focus()");
