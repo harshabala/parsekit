@@ -15,34 +15,41 @@ fi
 
 echo "== postbuild-macos: ParseDock v${VERSION} =="
 
-echo "[1/5] Stage bundle outside target/ (avoids FinderInfo on bundle wrapper) ..."
+echo "[1/6] Stage bundle outside target/ (avoids FinderInfo on bundle wrapper) ..."
 STAGE_DIR="$(mktemp -d)"
 STAGE_APP="$STAGE_DIR/ParseDock.app"
 ditto --norsrc "$APP" "$STAGE_APP"
 
-echo "[2/5] Strip extended attributes on staged bundle ..."
+echo "[2/6] Strip extended attributes on staged bundle ..."
 xattr -cr "$STAGE_APP" || true
 xattr -d com.apple.FinderInfo "$STAGE_APP" 2>/dev/null || true
 xattr -d 'com.apple.fileprovider.fpfs#P' "$STAGE_APP" 2>/dev/null || true
 
-echo "[3/5] Ad-hoc sign staged bundle as a unit (--deep) ..."
+echo "[3/6] Ad-hoc sign staged bundle as a unit (--deep) ..."
 codesign --force --deep --sign - "$STAGE_APP"
 
-echo "[4/5] Verify signature (strict) ..."
+echo "[4/6] Verify signature (strict) ..."
 codesign --verify --deep --strict --verbose=2 "$STAGE_APP"
 codesign -dv --verbose=2 "$STAGE_APP" 2>&1
 
-echo "[5/5] Install signed bundle into bundle/macos (mv, no in-place Mach-O edits) ..."
+# DMG from staged signed copy (target/ path picks up FinderInfo and breaks strict verify).
+if [[ -d "$DMG_DIR" ]]; then
+  echo "[5/6] Recreate DMG from signed staged .app ..."
+  rm -f "$DMG_OUT"
+  VOLNAME="ParseDock-${VERSION}"
+  hdiutil create -volname "$VOLNAME" -srcfolder "$STAGE_APP" -ov -format UDZO "$DMG_OUT"
+  echo "DMG written: $DMG_OUT"
+  DMG_MOUNT="$(mktemp -d /tmp/parsedock-dmg-verify.XXXXXX)"
+  hdiutil attach -nobrowse -readonly -mountpoint "$DMG_MOUNT" "$DMG_OUT" >/dev/null
+  codesign --verify --deep --strict --verbose=2 "$DMG_MOUNT/ParseDock.app"
+  codesign -dv --verbose=2 "$DMG_MOUNT/ParseDock.app" 2>&1 | head -12
+  hdiutil detach "$DMG_MOUNT" -quiet
+  rmdir "$DMG_MOUNT"
+fi
+
+echo "[6/6] Install signed bundle into bundle/macos (mv, no Mach-O edits) ..."
 rm -rf "$APP"
 mv "$STAGE_APP" "$APP"
 rmdir "$STAGE_DIR"
-
-# Tauri DMG was built from the pre-sign tree; recreate from the signed .app only.
-if [[ -d "$DMG_DIR" ]]; then
-  echo "Recreating DMG from signed .app ..."
-  rm -f "$DMG_OUT"
-  hdiutil create -volname "ParseDock" -srcfolder "$APP" -ov -format UDZO "$DMG_OUT"
-  echo "DMG written: $DMG_OUT"
-fi
 
 echo "postbuild-macos: OK"
