@@ -7,11 +7,17 @@
     "store:default",
     "dialog:default",
     "shell:default",
-    "shell:allow-spawn",
     "shell:allow-stdin-write",
     "shell:allow-kill",
     "clipboard-manager:default",
     "core:event:default",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        { "name": "binaries/parsedock-sidecar", "sidecar": true, "args": false },
+        { "name": "open", "cmd": "open", "args": true }
+      ]
+    },
     {
       "identifier": "shell:allow-execute",
       "allow": [

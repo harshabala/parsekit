@@ -40,6 +40,11 @@ function friendlySidecarMessage(raw: string): string {
   if (lower.includes("libreoffice")) {
     return "LibreOffice is required for Office documents. Install with: brew install --cask libreoffice";
   }
+  if (
+    lower.includes("scoped command") && lower.includes("not found")
+  ) {
+    return `Parse engine scope missing in this build. Install ParseDock v0.1.4+ from the Desktop DMG. (${trimmed})`;
+  }
   if (lower.includes("not allowed by acl") || lower.includes("shell:allow-spawn")) {
     return `Parse engine blocked by app permissions. Quit ParseDock, reinstall the latest build, then try again. (${trimmed})`;
   }
