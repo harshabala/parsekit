@@ -47,13 +47,20 @@
     "summary": "共 {total} 个文件，已解析 {parsed}，错误 {errors}"
   },
   "recent": {
-    "title": "最近批次",
+    "title": "最近",
     "selectedFiles": "已选文件",
     "batch": "批次",
     "open": "打开",
+    "viewHistory": "查看批次历史",
     "meta": "{date} · {count} 个文件 · {format}",
     "errorsOne": "1 个错误",
     "errors": "{count} 个错误"
+  },
+  "history": {
+    "title": "历史",
+    "back": "返回",
+    "empty": "暂无批次。运行解析后会显示在这里。",
+    "hint": "最近 {count} 个批次（新的在前）。"
   },
   "errors": {
     "addFiles": "请添加文件或文件夹以解析。",

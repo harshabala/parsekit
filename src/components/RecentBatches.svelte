@@ -1,56 +1,52 @@
 <script lang="ts">
-  import { getLocale, t } from "../lib/i18n.svelte";
+  import { t } from "../lib/i18n.svelte";
   import type { BatchResult } from "../lib/types";
+  import BatchHistoryList from "./BatchHistoryList.svelte";
 
-  let { batches, onOpenFolder }: { batches: BatchResult[]; onOpenFolder: (path: string) => void } = $props();
-
-  function formatDate(timestamp: string): string {
-    try {
-      const d = new Date(timestamp);
-      const loc = getLocale();
-      const localeTag = loc === "zh" ? "zh-Hans" : loc;
-      return d.toLocaleDateString(localeTag, {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return timestamp;
-    }
-  }
+  let {
+    latestBatch,
+    showHistoryButton = false,
+    onOpenFolder,
+    onOpenHistory,
+  }: {
+    latestBatch: BatchResult | null;
+    showHistoryButton?: boolean;
+    onOpenFolder: (path: string) => void;
+    onOpenHistory: () => void;
+  } = $props();
 </script>
 
-{#if batches.length > 0}
+{#if latestBatch}
   <div class="section">
-    <div class="section-title">{t("recent.title")}</div>
-    <div class="card" style="padding: 0; overflow: hidden;">
-      {#each batches as batch}
-        <div class="history-item">
-          <div class="history-top">
-            <div class="history-info">
-              <span class="history-name">{batch.inputDir.split("/").pop() || t("recent.batch")}</span>
-              <span class="history-meta">
-                {t("recent.meta", {
-                  date: formatDate(batch.timestamp),
-                  count: batch.fileCount,
-                  format: batch.format.toUpperCase(),
-                })}
-              </span>
-            </div>
-            <button class="secondary history-open-btn" onclick={() => onOpenFolder(batch.outputDir)}>
-              {t("recent.open")}
-            </button>
-          </div>
-          {#if batch.errors > 0}
-            <span class="history-meta" style="color: #ff3b30;">
-              {batch.errors === 1
-                ? t("recent.errorsOne")
-                : t("recent.errors", { count: batch.errors })}
-            </span>
-          {/if}
-        </div>
-      {/each}
+    <div class="section-header-row">
+      <div class="section-title">{t("recent.title")}</div>
+      {#if showHistoryButton}
+        <button
+          type="button"
+          class="icon-btn section-history-btn"
+          onclick={onOpenHistory}
+          title={t("recent.viewHistory")}
+          aria-label={t("recent.viewHistory")}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M3 3v5h5M12 7v5l4 2"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      {/if}
     </div>
+    <BatchHistoryList batches={[latestBatch]} {onOpenFolder} />
   </div>
 {/if}

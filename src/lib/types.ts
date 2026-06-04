@@ -25,4 +25,4 @@ export interface BatchResult {
   errors: number;
 }
 
-export const MAX_RECENT_BATCHES = 5;
+export const MAX_RECENT_BATCHES = 10;

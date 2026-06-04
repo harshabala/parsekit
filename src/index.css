@@ -236,6 +236,48 @@ main {
   padding-left: 4px;
 }
 
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.section-header-row .section-title {
+  padding-left: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.section-history-btn {
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+.section-history-btn:hover {
+  opacity: 1;
+}
+
+.post-parse-actions {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.post-parse-open-btn {
+  width: 100%;
+  min-height: 36px;
+}
+
+.history-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.history-meta-error {
+  color: var(--status-error);
+}
+
 .card {
   background: var(--secondary-bg);
   border: 0.5px solid var(--border-color);

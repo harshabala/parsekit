@@ -4,7 +4,7 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
   import { downloadDir } from "@tauri-apps/api/path";
-  import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+
   import { getSetting, setSetting } from "./lib/store";
   import { runParse, type ParseEvent, type ParseRunHandle } from "./lib/sidecar";
   import type { OutputFormat, FileProgress, BatchResult, ThemeMode } from "./lib/types";
@@ -29,6 +29,7 @@
   import FormatSelector from "./components/FormatSelector.svelte";
   import ProgressList from "./components/ProgressList.svelte";
   import RecentBatches from "./components/RecentBatches.svelte";
+  import HistoryScreen from "./components/HistoryScreen.svelte";
   import SettingsScreen from "./components/SettingsScreen.svelte";
   import {
     bannerFlyIn,
@@ -68,6 +69,7 @@
   let totalFiles = $state(0);
   let recentBatches = $state<BatchResult[]>([]);
   let showSettings = $state(false);
+  let showHistory = $state(false);
   let theme = $state<ThemeMode>(DEFAULT_THEME);
   let inputFileCount = $state<number | null>(null);
   let errorMsg = $state<string | null>(null);
@@ -126,8 +128,16 @@
   }
 
   function openSettings() {
+    showHistory = false;
     showSettings = true;
   }
+
+  function openHistory() {
+    showSettings = false;
+    showHistory = true;
+  }
+
+  let latestBatch = $derived(recentBatches[0] ?? null);
 
   async function quitApp() {
     try {
@@ -276,11 +286,6 @@
     noticeMsg = t("errors.parseCancelled");
   }
 
-  async function copyOutputPath() {
-    if (!outputDir) return;
-    await writeText(outputDir);
-  }
-
   async function startParse() {
     if (!outputDir || inputFileCount === 0) return;
 
@@ -412,24 +417,6 @@
     await setSetting("recentBatches", recentBatches);
   }
 
-  async function copyToClipboard() {
-    const lastFile = files.find((f) => f.status === "done");
-    if (lastFile?.outputPath) {
-      try {
-        const bytes = await invoke<number[]>("copy_file_to_clipboard", {
-          path: lastFile.outputPath,
-        });
-        const content = new TextDecoder().decode(new Uint8Array(bytes));
-        await writeText(content);
-        try {
-          await invoke("trigger_haptic");
-        } catch {}
-      } catch {
-        await writeText(lastFile.outputPath);
-      }
-    }
-  }
-
   async function openFolder(path: string) {
     try {
       await invoke("open_in_finder", { path });
@@ -446,8 +433,9 @@
         startParse();
       }
     }
-    if (e.key === "Escape" && showSettings) {
-      showSettings = false;
+    if (e.key === "Escape") {
+      if (showSettings) showSettings = false;
+      else if (showHistory) showHistory = false;
     }
   }
 </script>
@@ -455,7 +443,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="shell">
-  {#if !showSettings}
+  {#if !showSettings && !showHistory}
     {#key "main"}
       <div class="motion-panel" in:fly={mainFlyIn} out:fly={mainFlyOut}>
         <div class="motion-panel-content" in:fade={mainFadeIn} out:fade={mainFadeOut}>
@@ -591,32 +579,43 @@
         </div>
       {/if}
       {#if !isParsing && files.length > 0 && files.some((f) => f.status === "done")}
-        <div in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
-          <div class="row" style="margin-top: 8px;">
-            <button type="button" class="secondary" style="flex: 1" onclick={() => openFolder(outputDir)}>
-              {t("run.openOutput")}
-            </button>
-            <button type="button" class="secondary" style="flex: 1" onclick={copyOutputPath}>
-              {t("run.copyOutputPath")}
-            </button>
-          </div>
-        </div>
-        <div in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
-          <div class="row" style="margin-top: 8px;">
-            <button type="button" class="secondary" style="flex: 1" onclick={copyToClipboard}>
-              {t("run.copyLast")}
-            </button>
-          </div>
+        <div class="post-parse-actions" in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
+          <button
+            type="button"
+            class="secondary post-parse-open-btn"
+            onclick={() => openFolder(outputDir)}
+          >
+            {t("run.openOutput")}
+          </button>
         </div>
       {/if}
     </div>
 
     {#if !isParsing}
       <div in:fade={mainFadeIn} out:fade={mainFadeOut}>
-        <RecentBatches batches={recentBatches} onOpenFolder={openFolder} />
+        <RecentBatches
+          {latestBatch}
+          showHistoryButton={recentBatches.length > 0}
+          onOpenFolder={openFolder}
+          onOpenHistory={openHistory}
+        />
       </div>
     {/if}
   </main>
+        </div>
+      </div>
+    {/key}
+  {/if}
+
+  {#if showHistory}
+    {#key "history"}
+      <div class="motion-panel" in:fly={mainFlyIn} out:fly={mainFlyOut}>
+        <div class="motion-panel-content" in:fade={mainFadeIn} out:fade={mainFadeOut}>
+          <HistoryScreen
+            batches={recentBatches}
+            onOpenFolder={openFolder}
+            onClose={() => (showHistory = false)}
+          />
         </div>
       </div>
     {/key}

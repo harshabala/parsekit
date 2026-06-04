@@ -47,13 +47,20 @@
     "summary": "{parsed} parsed, {errors} errors out of {total} files"
   },
   "recent": {
-    "title": "Recent Batches",
+    "title": "Recent",
     "selectedFiles": "Selected files",
     "batch": "Batch",
     "open": "Open",
+    "viewHistory": "View batch history",
     "meta": "{date} · {count} files · {format}",
     "errorsOne": "1 error",
     "errors": "{count} errors"
+  },
+  "history": {
+    "title": "History",
+    "back": "Back",
+    "empty": "No batches yet. Run a parse to see history here.",
+    "hint": "Last {count} batches (newest first)."
   },
   "errors": {
     "addFiles": "Add files or a folder to parse.",

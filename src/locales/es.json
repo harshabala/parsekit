@@ -47,13 +47,20 @@
     "summary": "{parsed} analizados, {errors} errores de {total} archivos"
   },
   "recent": {
-    "title": "Lotes recientes",
+    "title": "Reciente",
     "selectedFiles": "Archivos seleccionados",
     "batch": "Lote",
     "open": "Abrir",
+    "viewHistory": "Ver historial de lotes",
     "meta": "{date} · {count} archivos · {format}",
     "errorsOne": "1 error",
     "errors": "{count} errores"
+  },
+  "history": {
+    "title": "Historial",
+    "back": "Atrás",
+    "empty": "Aún no hay lotes. Ejecuta un análisis para ver el historial.",
+    "hint": "Últimos {count} lotes (más recientes primero)."
   },
   "errors": {
     "addFiles": "Añade archivos o una carpeta para analizar.",
