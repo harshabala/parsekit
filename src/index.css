@@ -965,12 +965,33 @@ label {
 .settings-back-btn {
   position: absolute;
   left: 8px;
-  background: none;
+  background: transparent;
   border: none;
+  border-radius: 8px;
   color: var(--accent-color);
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 10px;
+  box-shadow: none;
+  min-width: auto;
+  min-height: auto;
+  transition:
+    background-color var(--timing-fast) var(--easing-standard),
+    color var(--timing-fast) var(--easing-standard);
+}
+
+.settings-back-btn:hover {
+  background: var(--secondary-bg);
+  color: var(--accent-color);
+}
+
+.settings-back-btn:active {
+  background: var(--secondary-bg);
+  color: var(--accent-color);
+  transform: none;
+  box-shadow: none;
+  opacity: 0.85;
 }
 
 .settings-header-title {
