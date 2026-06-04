@@ -43,10 +43,10 @@ function friendlySidecarMessage(raw: string): string {
   if (
     lower.includes("scoped command") && lower.includes("not found")
   ) {
-    return `Parse engine scope missing in this build. Install ParseDock v0.1.4+ from the Desktop DMG. (${trimmed})`;
+    return `Parse engine scope missing in this build. Install ParseKit from the latest DMG. (${trimmed})`;
   }
   if (lower.includes("not allowed by acl") || lower.includes("shell:allow-spawn")) {
-    return `Parse engine blocked by app permissions. Quit ParseDock, reinstall the latest build, then try again. (${trimmed})`;
+    return `Parse engine blocked by app permissions. Quit ParseKit, reinstall the latest build, then try again. (${trimmed})`;
   }
   if (lower.includes("sidecar not configured")) {
     return `Parse engine misconfigured. Rebuild with npm run build:sidecar. (${trimmed})`;
@@ -74,7 +74,7 @@ export function runParse(
     };
 
     try {
-      const command = Command.sidecar("binaries/parsedock-sidecar");
+      const command = Command.sidecar("binaries/parsekit-sidecar");
 
       command.on("error", (error) => {
         const raw = String(error);

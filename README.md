@@ -1,8 +1,8 @@
-# ParseDock
+# ParseKit
 
 The fastest way to turn any folder of documents into LLM-ready files — zero terminal, zero cloud.
 
-ParseDock is a lightweight macOS menu-bar app that batch-converts PDFs, Office docs, and images into clean Markdown, text, or JSON. Built for knowledge workers who need instant, private document preprocessing before feeding LLMs or building RAG indexes.
+ParseKit — a toolkit for parsing documents. A lightweight macOS menu-bar app that batch-converts PDFs, Office docs, and images into clean Markdown, text, or JSON. Built for knowledge workers who need instant, private document preprocessing before feeding LLMs or building RAG indexes.
 
 ## Features
 
@@ -50,7 +50,7 @@ npm run tauri:dev:fast
 
 **First-time note:** The initial `build:sidecar` compiles LiteParse v2 and Tesseract (~10 minutes on a clean machine). Later runs are incremental and usually instant.
 
-The `sidecar/` Node package is **dev-only** for testing the JSON protocol; the shipped app uses the Rust `parsedock-sidecar` binary.
+The `sidecar/` Node package is **dev-only** for testing the JSON protocol; the shipped app uses the Rust `parsekit-sidecar` binary.
 
 ## Release checklist
 
@@ -64,40 +64,40 @@ Build on each target platform (Apple Silicon vs Intel Mac) so the correct host t
 
 Output (Apple Silicon example):
 
-- App: `src-tauri/target/release/bundle/macos/ParseDock.app`
-- DMG: `src-tauri/target/release/bundle/dmg/ParseDock_<version>_aarch64.dmg`
+- App: `src-tauri/target/release/bundle/macos/ParseKit.app`
+- DMG: `src-tauri/target/release/bundle/dmg/ParseKit_<version>_aarch64.dmg`
 
 ### Install from DMG (ad-hoc signed, not notarized)
 
 The release `.app` is ad-hoc signed with sealed resources (`codesign --verify --deep --strict` passes on the build artifact). Gatekeeper may still require a one-time approval for downloaded DMGs.
 
-1. Drag **ParseDock** to **Applications**.
+1. Drag **ParseKit** to **Applications**.
 2. Clear Finder xattrs the installer adds (does not modify Mach-O):
 
 ```bash
-xattr -cr /Applications/ParseDock.app
-xattr -d com.apple.FinderInfo /Applications/ParseDock.app 2>/dev/null || true
+xattr -cr /Applications/ParseKit.app
+xattr -d com.apple.FinderInfo /Applications/ParseKit.app 2>/dev/null || true
 ```
 
-3. **First launch:** Right-click **ParseDock** → **Open** → confirm, or use **Privacy & Security → Open Anyway**.
-4. Use the **blue P** icon in the **menu bar** (top-right). ParseDock is menu-bar-only (`LSUIElement`); it does not remain in the Dock.
+3. **First launch:** Right-click **ParseKit** → **Open** → confirm, or use **Privacy & Security → Open Anyway**.
+4. Use the **ParseKit** icon in the **menu bar** (top-right). ParseKit is menu-bar-only (`LSUIElement`); it does not remain in the Dock.
 
-Popover debug traces (`/tmp/parsedock-popover-trace.log`) are written only in **debug** builds, not in release.
+Popover debug traces (`/tmp/parsekit-popover-trace.log`) are written only in **debug** builds, not in release.
 
 ## How It Works
 
-ParseDock uses [LiteParse v2](https://github.com/run-llama/liteparse) by LlamaIndex for document parsing. LiteParse v2 is a Rust-native engine (custom PDFium + built-in Tesseract OCR) — no cloud APIs, no API keys, no data ever leaves your machine.
+ParseKit uses [LiteParse v2](https://github.com/run-llama/liteparse) by LlamaIndex for document parsing. LiteParse v2 is a Rust-native engine (custom PDFium + built-in Tesseract OCR) — no cloud APIs, no API keys, no data ever leaves your machine.
 
 ### Architecture
 
 1. **Tauri v2** — native macOS app with system tray
 2. **Svelte 5** — reactive UI in the popover panel
-3. **Rust sidecar binary** — a native `parsedock-sidecar` executable linked against LiteParse v2 (bundled with the app, no Node.js required at runtime)
+3. **Rust sidecar binary** — a native `parsekit-sidecar` executable linked against LiteParse v2 (bundled with the app, no Node.js required at runtime)
 4. **Tauri Store** — persists settings and batch history
 
 ## Privacy
 
-ParseDock is designed with privacy as a core principle:
+ParseKit is designed with privacy as a core principle:
 
 - All processing happens locally on your machine
 - No telemetry, no analytics, no tracking

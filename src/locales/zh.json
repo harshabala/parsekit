@@ -1,10 +1,11 @@
 {
   "app": {
-    "name": "ParseDock"
+    "name": "ParseKit",
+    "tagline": "ParseKit — 文档解析工具包。"
   },
   "header": {
     "settings": "设置",
-    "about": "关于 ParseDock"
+    "quit": "退出 ParseKit"
   },
   "config": {
     "title": "配置",
@@ -16,10 +17,10 @@
     "ocr": "OCR（内置）"
   },
   "dropzone": {
-    "title": "将文件或文件夹拖放到此处",
+    "title": "拖放文件或文件夹到此处",
     "hint": "支持：.pdf、.csv、.xlsx、.xls、.tsv 等 — 或点击下方浏览",
-    "filesReadyOne": "1 个文件可供解析",
-    "filesReady": "{count} 个文件可供解析",
+    "filesReadyOne": "1 个文件待解析",
+    "filesReady": "{count} 个文件待解析",
     "selectFiles": "选择文件",
     "selectFolder": "选择文件夹",
     "scanning": "正在扫描文件夹…"
@@ -31,7 +32,7 @@
     "openOutput": "打开输出",
     "copyOutputPath": "复制输出路径",
     "copyLast": "复制上一个文件",
-    "notifyDone": "完成：已解析 {parsed} 个，错误 {errors} 个"
+    "notifyDone": "完成：已解析 {parsed}，错误 {errors}"
   },
   "progress": {
     "title": "处理中",
@@ -42,12 +43,12 @@
     "inProgress": "进行中 {count}",
     "waiting": "等待中 {count}",
     "failed": "失败 {count}",
-    "skipped": "已跳过 {count}",
-    "summary": "共 {total} 个文件，已解析 {parsed} 个，错误 {errors} 个"
+    "skipped": "跳过 {count}",
+    "summary": "共 {total} 个文件，已解析 {parsed}，错误 {errors}"
   },
   "recent": {
     "title": "最近批次",
-    "selectedFiles": "所选文件",
+    "selectedFiles": "已选文件",
     "batch": "批次",
     "open": "打开",
     "meta": "{date} · {count} 个文件 · {format}",
@@ -62,19 +63,28 @@
   },
   "settings": {
     "title": "设置",
+    "back": "返回",
     "appLanguageTitle": "应用语言",
-    "appLanguageHint": "ParseDock 界面（按钮、标签、菜单）的语言。不会改变导出文件的内容。",
+    "appLanguageHint": "ParseKit 界面（按钮、标签、菜单）的语言。不会改变导出文件的内容。",
     "ocrLanguageTitle": "OCR 语言（输入）",
     "ocrLanguageHint": "待解析的扫描 PDF 或图片中文本的语言。仅在开启 OCR 时使用。输出格式（TXT/MD/JSON）单独设置；导出内容仍保留文档原有语言。",
     "ocrLanguageLabel": "文档文字语言",
     "appearanceTitle": "外观",
-    "appearanceHint": "选择 ParseDock 在您 Mac 上的显示方式。",
+    "appearanceHint": "选择 ParseKit 在您 Mac 上的显示方式。",
     "workersTitle": "并行工作线程",
     "workersHint": "同时解析的文件数量。批量大时可提高速度；降低可减少 CPU 占用。",
     "launchAtLogin": "登录时启动",
-    "launchAtLoginHint": "登录 Mac 时自动启动 ParseDock。",
-    "close": "关闭",
-    "ocrMigrated": "OCR 语言已重置为英语。请在设置中选择支持的语言。"
+    "launchAtLoginHint": "登录 Mac 时自动启动 ParseKit。",
+    "aboutTitle": "关于 ParseKit",
+    "aboutTagline": "100% 本地文档处理",
+    "aboutDescription": "ParseKit — 文档解析工具包。",
+    "aboutPoweredBy": "技术支持",
+    "aboutPoweredByValue": "LiteParse v2 (Rust)",
+    "aboutFormats": "PDF、Office、电子表格、图片 → Markdown、文本或 JSON。",
+    "aboutLicense": "许可证",
+    "aboutLicenseValue": "Apache-2.0",
+    "aboutLicenseNote": "ParseKit 使用 LlamaIndex 的 LiteParse v2，基于 Apache License 2.0 许可。",
+    "aboutRepository": "在 GitHub 上查看"
   },
   "language": {
     "en": "English",
@@ -87,18 +97,8 @@
     "system": "跟随系统",
     "aria": "外观"
   },
-  "about": {
-    "tagline": "100% 本地文档处理",
-    "poweredBy": "技术支持",
-    "poweredByValue": "LiteParse v2 (Rust)",
-    "license": "许可证",
-    "licenseValue": "Apache-2.0",
-    "licenseNote": "ParseDock 使用 LlamaIndex 的 LiteParse v2，基于 Apache License 2.0 许可。",
-    "repository": "在 GitHub 上查看",
-    "close": "关闭"
-  },
   "tray": {
-    "open": "打开 ParseDock",
-    "quit": "退出 ParseDock"
+    "open": "打开 ParseKit",
+    "quit": "退出 ParseKit"
   }
 }

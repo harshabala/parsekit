@@ -943,6 +943,91 @@ label {
   opacity: 0.5;
 }
 
+.settings-screen {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.settings-header {
+  flex-shrink: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.settings-back-btn {
+  position: absolute;
+  left: 8px;
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.settings-header-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+
+.settings-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.settings-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 16px 0;
+  opacity: 0.6;
+}
+
+.settings-about-version {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-about-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.settings-meta-label {
+  color: var(--text-secondary);
+  min-width: 72px;
+}
+
+.settings-repo-link {
+  color: var(--accent-color);
+  font-size: 12px;
+  text-decoration: none;
+  margin-top: 4px;
+}
+
+.settings-repo-link:hover {
+  text-decoration: underline;
+}
+
+.settings-license-note {
+  margin-top: 4px;
+}
+
 .settings-panel {
   align-items: stretch;
   text-align: left;

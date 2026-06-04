@@ -3,21 +3,21 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP="$ROOT/src-tauri/target/release/bundle/macos/ParseDock.app"
+APP="$ROOT/src-tauri/target/release/bundle/macos/ParseKit.app"
 VERSION="$(node -p "require('$ROOT/package.json').version")"
 DMG_DIR="$ROOT/src-tauri/target/release/bundle/dmg"
-DMG_OUT="$DMG_DIR/ParseDock_${VERSION}_aarch64.dmg"
+DMG_OUT="$DMG_DIR/ParseKit_${VERSION}_aarch64.dmg"
 
 if [[ ! -d "$APP" ]]; then
   echo "error: $APP not found — run npm run tauri build first" >&2
   exit 1
 fi
 
-echo "== postbuild-macos: ParseDock v${VERSION} =="
+echo "== postbuild-macos: ParseKit v${VERSION} =="
 
 echo "[1/6] Stage bundle outside target/ (avoids FinderInfo on bundle wrapper) ..."
 STAGE_DIR="$(mktemp -d)"
-STAGE_APP="$STAGE_DIR/ParseDock.app"
+STAGE_APP="$STAGE_DIR/ParseKit.app"
 ditto --norsrc "$APP" "$STAGE_APP"
 
 echo "[2/6] Strip extended attributes on staged bundle ..."
@@ -36,13 +36,13 @@ codesign -dv --verbose=2 "$STAGE_APP" 2>&1
 if [[ -d "$DMG_DIR" ]]; then
   echo "[5/6] Recreate DMG from signed staged .app ..."
   rm -f "$DMG_OUT"
-  VOLNAME="ParseDock-${VERSION}"
+  VOLNAME="ParseKit-${VERSION}"
   hdiutil create -volname "$VOLNAME" -srcfolder "$STAGE_APP" -ov -format UDZO "$DMG_OUT"
   echo "DMG written: $DMG_OUT"
-  DMG_MOUNT="$(mktemp -d /tmp/parsedock-dmg-verify.XXXXXX)"
+  DMG_MOUNT="$(mktemp -d /tmp/parsekit-dmg-verify.XXXXXX)"
   hdiutil attach -nobrowse -readonly -mountpoint "$DMG_MOUNT" "$DMG_OUT" >/dev/null
-  codesign --verify --deep --strict --verbose=2 "$DMG_MOUNT/ParseDock.app"
-  codesign -dv --verbose=2 "$DMG_MOUNT/ParseDock.app" 2>&1 | head -12
+  codesign --verify --deep --strict --verbose=2 "$DMG_MOUNT/ParseKit.app"
+  codesign -dv --verbose=2 "$DMG_MOUNT/ParseKit.app" 2>&1 | head -12
   hdiutil detach "$DMG_MOUNT" -quiet
   rmdir "$DMG_MOUNT"
 fi

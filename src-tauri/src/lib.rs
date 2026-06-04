@@ -19,7 +19,7 @@ use tauri_plugin_dialog::DialogExt;
 use walkdir::WalkDir;
 
 /// Menu bar template glyph (black on transparent); see `icons/tray/icon*.png`.
-const TRAY_ICON: tauri::image::Image<'static> = tauri::include_image!("icons/tray/icon@2x.png");
+const TRAY_ICON: tauri::image::Image<'static> = tauri::include_image!("icons/tray/icon.png");
 /// Ignore focus-loss hides briefly after `Window.show()` so activation does not collapse the panel.
 /// Just long enough to ride out activation focus churn; short enough that click-away still dismisses.
 const POPOVER_SHOW_GRACE_MS: u64 = 500;
@@ -133,7 +133,7 @@ fn build_tray_menu<R: Runtime>(
     open_label: &str,
     quit_label: &str,
 ) -> tauri::Result<Menu<R>> {
-    let open_item = MenuItem::with_id(app, "open_parsedock", open_label, true, None::<&str>)?;
+    let open_item = MenuItem::with_id(app, "open_parsekit", open_label, true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit_item = PredefinedMenuItem::quit(app, Some(quit_label))?;
     Menu::with_items(app, &[&open_item, &separator, &quit_item])
@@ -272,7 +272,7 @@ fn open_popover_from_menu<R: Runtime>(
     tray_state: &TrayMenuState,
     popover: &PopoverState,
 ) {
-    popover_trace("Tray menu: Open ParseDock → show");
+    popover_trace("Tray menu: Open ParseKit → show");
     let rect = app
         .tray_by_id(&tray_state.tray_id)
         .and_then(|t| t.rect().ok().flatten());
@@ -538,7 +538,7 @@ fn maybe_show_menu_bar_hint() {
     let Ok(home) = std::env::var("HOME") else {
         return;
     };
-    let marker = format!("{home}/Library/Application Support/ParseDock/.menu_bar_hint_shown");
+    let marker = format!("{home}/Library/Application Support/com.harshabala.parsekit/.menu_bar_hint_shown");
     if Path::new(&marker).exists() {
         return;
     }
@@ -547,8 +547,8 @@ fn maybe_show_menu_bar_hint() {
     }
     let _ = std::fs::write(&marker, "");
     let _ = show_completion_notification(
-        "ParseDock".to_string(),
-        "Look for the ParseDock icon in your menu bar (top-right). Click it to open.".to_string(),
+        "ParseKit".to_string(),
+        "Look for the ParseKit icon in your menu bar (top-right). Click it to open.".to_string(),
     );
 }
 
@@ -579,7 +579,7 @@ fn set_launch_at_login(enabled: bool) -> Result<(), String> {
     use std::process::Command;
     let home = std::env::var("HOME").map_err(|e| e.to_string())?;
     let plist_dir = format!("{home}/Library/LaunchAgents");
-    let plist_path = format!("{plist_dir}/com.parsedock.app.plist");
+    let plist_path = format!("{plist_dir}/com.harshabala.parsekit.plist");
     if enabled {
         std::fs::create_dir_all(&plist_dir).map_err(|e| e.to_string())?;
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
@@ -587,7 +587,7 @@ fn set_launch_at_login(enabled: bool) -> Result<(), String> {
             r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>Label</key><string>com.parsedock.app</string>
+  <key>Label</key><string>com.harshabala.parsekit</string>
   <key>ProgramArguments</key><array><string>{}</string></array>
   <key>RunAtLoad</key><true/>
 </dict></plist>"#,
@@ -626,6 +626,11 @@ fn copy_file_to_clipboard(path: String) -> Result<Vec<u8>, String> {
     std::fs::read(&path).map_err(|e| format!("Failed to read file: {}", e))
 }
 
+#[tauri::command]
+fn quit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())
@@ -645,6 +650,7 @@ pub fn run() {
             update_tray_menu_labels,
             show_completion_notification,
             set_launch_at_login,
+            quit_app,
         ])
         .setup(|app| {
             startup_trace("setup() begin");
@@ -685,11 +691,11 @@ pub fn run() {
                 .icon(TRAY_ICON)
                 .icon_as_template(true)
                 .show_menu_on_left_click(false)
-                .tooltip("ParseDock")
+                .tooltip("ParseKit")
                 // Do NOT attach .menu() — macOS captures left-clicks for the status item menu.
                 .on_menu_event(|app, event| {
-                    if event.id().as_ref() == "open_parsedock" {
-                        popover_trace("Tray menu event: open_parsedock");
+                    if event.id().as_ref() == "open_parsekit" {
+                        popover_trace("Tray menu event: open_parsekit");
                         if let (Some(window), Some(tray_state), Some(popover)) = (
                             app.get_webview_window("main"),
                             app.try_state::<TrayMenuState>(),
@@ -779,8 +785,8 @@ pub fn run() {
 
             app.manage(TrayMenuState {
                 tray_id,
-                open_label: Arc::new(Mutex::new("Open ParseDock".to_string())),
-                quit_label: Arc::new(Mutex::new("Quit ParseDock".to_string())),
+                open_label: Arc::new(Mutex::new("Open ParseKit".to_string())),
+                quit_label: Arc::new(Mutex::new("Quit ParseKit".to_string())),
             });
 
             #[cfg(debug_assertions)]
@@ -798,5 +804,5 @@ pub fn run() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("error while running ParseDock");
+        .expect("error while running ParseKit");
 }

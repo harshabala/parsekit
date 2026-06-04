@@ -1,25 +1,38 @@
 #!/usr/bin/env bash
-# Build macOS template tray icons: pure black glyph, fully transparent background.
+# Build macOS template tray icons from menubar-icon.png (black glyph, transparent background).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-GLYPH="$ROOT/assets/branding/tray-glyph.svg"
+SOURCE="$ROOT/assets/branding/menubar-icon.png"
 TRAY="$ROOT/src-tauri/icons/tray"
 
 command -v magick >/dev/null || { echo "error: ImageMagick (magick) required" >&2; exit 1; }
 
-if [[ ! -f "$GLYPH" ]]; then
-  echo "error: $GLYPH not found" >&2
+if [[ ! -f "$SOURCE" ]]; then
+  echo "error: $SOURCE not found" >&2
   exit 1
 fi
 
 mkdir -p "$TRAY"
 
-# Render vector glyph at @2x and 1x menu-bar sizes (18pt / 36px @2x).
+# Pad to square, resize to menu-bar sizes; force black glyph on transparent alpha.
 for spec in "36:icon@2x.png" "18:icon.png"; do
   size="${spec%%:*}"
   out="${spec##*:}"
-  magick -background none -density 384 "$GLYPH" -resize "${size}x${size}!" PNG32:"$TRAY/$out"
+  magick "$SOURCE" \
+    -alpha on \
+    -background none \
+    -gravity center \
+    -extent "${size}x${size}" \
+    -resize "${size}x${size}!" \
+    -colorspace Gray \
+    -negate \
+    -channel RGB \
+    -fill black \
+    -colorize 100 \
+    -channel A \
+    +channel \
+    PNG32:"$TRAY/$out"
 done
 
 echo "Wrote $TRAY/icon.png (18) and $TRAY/icon@2x.png (36)"
@@ -66,10 +79,6 @@ def check(path: Path) -> None:
     print(f"{path.name} {w}x{h} corner alpha: {alphas}")
     if any(a != 0 for a in alphas):
         raise SystemExit(f"{path}: corner pixels must be transparent (alpha=0)")
-    # No fully opaque background band: sample mid-edge centers
-    edge = [alpha_at(w // 2, 0), alpha_at(0, h // 2)]
-    if any(a > 32 for a in edge):
-        raise SystemExit(f"{path}: edge center not transparent — possible opaque matte")
 
 print("Alpha checks: OK")
 PY

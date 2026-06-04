@@ -8,7 +8,7 @@ use std::io::Write;
 use std::sync::Mutex;
 
 #[cfg(debug_assertions)]
-pub const TRACE_FILE: &str = "/tmp/parsedock-popover-trace.log";
+pub const TRACE_FILE: &str = "/tmp/parsekit-popover-trace.log";
 
 #[cfg(debug_assertions)]
 static TRACE_LOCK: Mutex<()> = Mutex::new(());
@@ -50,7 +50,7 @@ pub fn tray_guard_trace(_step: &str) {}
 
 #[cfg(debug_assertions)]
 pub fn startup_trace(step: &str) {
-    write_trace(&format!("[ParseDock] {step}"));
+    write_trace(&format!("[ParseKit] {step}"));
 }
 
 #[cfg(not(debug_assertions))]

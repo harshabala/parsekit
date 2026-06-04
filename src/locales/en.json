@@ -1,10 +1,11 @@
 {
   "app": {
-    "name": "ParseDock"
+    "name": "ParseKit",
+    "tagline": "ParseKit — a toolkit for parsing documents."
   },
   "header": {
     "settings": "Settings",
-    "about": "About ParseDock"
+    "quit": "Quit ParseKit"
   },
   "config": {
     "title": "Configuration",
@@ -62,19 +63,28 @@
   },
   "settings": {
     "title": "Settings",
+    "back": "Back",
     "appLanguageTitle": "App language",
-    "appLanguageHint": "Language for buttons, labels, and menus in ParseDock. Does not change your exported files.",
+    "appLanguageHint": "Language for buttons, labels, and menus in ParseKit. Does not change your exported files.",
     "ocrLanguageTitle": "OCR language (input)",
     "ocrLanguageHint": "Language of text inside scanned PDFs and images you parse. Used only when OCR is on. Output format (TXT/MD/JSON) is separate; exported content keeps the document language.",
     "ocrLanguageLabel": "Document text language",
     "appearanceTitle": "Appearance",
-    "appearanceHint": "Choose how ParseDock looks on your Mac.",
+    "appearanceHint": "Choose how ParseKit looks on your Mac.",
     "workersTitle": "Parallel workers",
     "workersHint": "How many files to parse at once. Higher is faster on large batches; lower uses less CPU.",
     "launchAtLogin": "Launch at login",
-    "launchAtLoginHint": "Start ParseDock automatically when you sign in to your Mac.",
-    "close": "Close",
-    "ocrMigrated": "OCR language was reset to English. Choose a supported language in Settings."
+    "launchAtLoginHint": "Start ParseKit automatically when you sign in to your Mac.",
+    "aboutTitle": "About ParseKit",
+    "aboutTagline": "100% local document processing",
+    "aboutDescription": "ParseKit — a toolkit for parsing documents.",
+    "aboutPoweredBy": "Powered by",
+    "aboutPoweredByValue": "LiteParse v2 (Rust)",
+    "aboutFormats": "PDF, Office, spreadsheets, images → Markdown, text, or JSON.",
+    "aboutLicense": "License",
+    "aboutLicenseValue": "Apache-2.0",
+    "aboutLicenseNote": "ParseKit uses LiteParse v2 by LlamaIndex, licensed under the Apache License 2.0.",
+    "aboutRepository": "View on GitHub"
   },
   "language": {
     "en": "English",
@@ -87,18 +97,8 @@
     "system": "System",
     "aria": "Appearance"
   },
-  "about": {
-    "tagline": "100% local document processing",
-    "poweredBy": "Powered By",
-    "poweredByValue": "LiteParse v2 (Rust)",
-    "license": "License",
-    "licenseValue": "Apache-2.0",
-    "licenseNote": "ParseDock uses LiteParse v2 by LlamaIndex, licensed under the Apache License 2.0.",
-    "repository": "View on GitHub",
-    "close": "Close"
-  },
   "tray": {
-    "open": "Open ParseDock",
-    "quit": "Quit ParseDock"
+    "open": "Open ParseKit",
+    "quit": "Quit ParseKit"
   }
 }

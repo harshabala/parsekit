@@ -1,10 +1,11 @@
 {
   "app": {
-    "name": "ParseDock"
+    "name": "ParseKit",
+    "tagline": "ParseKit — un kit de herramientas para analizar documentos."
   },
   "header": {
     "settings": "Ajustes",
-    "about": "Acerca de ParseDock"
+    "quit": "Salir de ParseKit"
   },
   "config": {
     "title": "Configuración",
@@ -62,19 +63,28 @@
   },
   "settings": {
     "title": "Ajustes",
+    "back": "Atrás",
     "appLanguageTitle": "Idioma de la app",
-    "appLanguageHint": "Idioma de botones, etiquetas y menús de ParseDock. No cambia el contenido de los archivos exportados.",
+    "appLanguageHint": "Idioma de botones, etiquetas y menús de ParseKit. No cambia el contenido de los archivos exportados.",
     "ocrLanguageTitle": "Idioma OCR (entrada)",
     "ocrLanguageHint": "Idioma del texto en PDF escaneados e imágenes que analizas. Solo se usa con OCR activado. El formato de salida (TXT/MD/JSON) es aparte; el contenido exportado conserva el idioma del documento.",
     "ocrLanguageLabel": "Idioma del texto del documento",
     "appearanceTitle": "Apariencia",
-    "appearanceHint": "Elige cómo se ve ParseDock en tu Mac.",
+    "appearanceHint": "Elige cómo se ve ParseKit en tu Mac.",
     "workersTitle": "Trabajadores en paralelo",
     "workersHint": "Cuántos archivos analizar a la vez. Más es más rápido en lotes grandes; menos usa menos CPU.",
     "launchAtLogin": "Iniciar al iniciar sesión",
-    "launchAtLoginHint": "Inicia ParseDock automáticamente al iniciar sesión en tu Mac.",
-    "close": "Cerrar",
-    "ocrMigrated": "El idioma OCR se restableció a inglés. Elige un idioma compatible en Ajustes."
+    "launchAtLoginHint": "Inicia ParseKit automáticamente al iniciar sesión en tu Mac.",
+    "aboutTitle": "Acerca de ParseKit",
+    "aboutTagline": "Procesamiento de documentos 100% local",
+    "aboutDescription": "ParseKit — un kit de herramientas para analizar documentos.",
+    "aboutPoweredBy": "Desarrollado con",
+    "aboutPoweredByValue": "LiteParse v2 (Rust)",
+    "aboutFormats": "PDF, Office, hojas de cálculo, imágenes → Markdown, texto o JSON.",
+    "aboutLicense": "Licencia",
+    "aboutLicenseValue": "Apache-2.0",
+    "aboutLicenseNote": "ParseKit usa LiteParse v2 de LlamaIndex, bajo licencia Apache License 2.0.",
+    "aboutRepository": "Ver en GitHub"
   },
   "language": {
     "en": "English",
@@ -87,18 +97,8 @@
     "system": "Sistema",
     "aria": "Apariencia"
   },
-  "about": {
-    "tagline": "Procesamiento de documentos 100% local",
-    "poweredBy": "Desarrollado con",
-    "poweredByValue": "LiteParse v2 (Rust)",
-    "license": "Licencia",
-    "licenseValue": "Apache-2.0",
-    "licenseNote": "ParseDock usa LiteParse v2 de LlamaIndex, bajo licencia Apache License 2.0.",
-    "repository": "Ver en GitHub",
-    "close": "Cerrar"
-  },
   "tray": {
-    "open": "Abrir ParseDock",
-    "quit": "Salir de ParseDock"
+    "open": "Abrir ParseKit",
+    "quit": "Salir de ParseKit"
   }
 }

@@ -27,7 +27,6 @@
   import FormatSelector from "./components/FormatSelector.svelte";
   import ProgressList from "./components/ProgressList.svelte";
   import RecentBatches from "./components/RecentBatches.svelte";
-  import AboutScreen from "./components/AboutScreen.svelte";
   import SettingsScreen from "./components/SettingsScreen.svelte";
   import "./index.css";
 
@@ -42,7 +41,6 @@
   let files = $state<FileProgress[]>([]);
   let totalFiles = $state(0);
   let recentBatches = $state<BatchResult[]>([]);
-  let showAbout = $state(false);
   let showSettings = $state(false);
   let theme = $state<ThemeMode>(DEFAULT_THEME);
   let inputFileCount = $state<number | null>(null);
@@ -102,13 +100,15 @@
   }
 
   function openSettings() {
-    showAbout = false;
     showSettings = true;
   }
 
-  function openAbout() {
-    showSettings = false;
-    showAbout = true;
+  async function quitApp() {
+    try {
+      await invoke("quit_app");
+    } catch {
+      /* web-only dev */
+    }
   }
 
   onMount(async () => {
@@ -391,9 +391,8 @@
         startParse();
       }
     }
-    if (e.key === "Escape") {
-      if (showSettings) showSettings = false;
-      else if (showAbout) showAbout = false;
+    if (e.key === "Escape" && showSettings) {
+      showSettings = false;
     }
   }
 </script>
@@ -401,6 +400,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="shell">
+  {#if !showSettings}
   <header>
     <span>{t("app.name")}</span>
     <div class="header-actions">
@@ -410,35 +410,35 @@
         title={t("header.settings")}
         aria-label={t("header.settings")}
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path
-            d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
+            d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
             stroke="currentColor"
-            stroke-width="1.5"
+            stroke-width="2"
           />
           <path
-            d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.34 3.34l1.13 1.13M11.53 11.53l1.13 1.13M3.34 12.66l1.13-1.13M11.53 4.47l1.13-1.13"
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
             stroke="currentColor"
-            stroke-width="1.2"
+            stroke-width="2"
             stroke-linecap="round"
+            stroke-linejoin="round"
           />
         </svg>
       </button>
       <button
         class="icon-btn"
-        onclick={openAbout}
-        title={t("header.about")}
-        aria-label={t("header.about")}
+        onclick={quitApp}
+        title={t("header.quit")}
+        aria-label={t("header.quit")}
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path
-            d="M7 6.5C7 5.67 7.67 5 8.5 5C9.33 5 10 5.67 10 6.5C10 7.17 9.5 7.5 9 7.8C8.7 7.97 8.5 8.17 8.5 8.5V9"
+            d="M12 3v9M8.5 8.5 12 12l3.5-3.5M5 21h14"
             stroke="currentColor"
-            stroke-width="1.5"
+            stroke-width="2"
             stroke-linecap="round"
+            stroke-linejoin="round"
           />
-          <circle cx="8.5" cy="11" r="0.75" fill="currentColor"/>
         </svg>
       </button>
     </div>
@@ -527,6 +527,7 @@
       <RecentBatches batches={recentBatches} onOpenFolder={openFolder} />
     {/if}
   </main>
+  {/if}
 
   {#if showSettings}
     <SettingsScreen
@@ -543,9 +544,5 @@
       onLaunchAtLoginChange={handleLaunchAtLoginChange}
       onClose={() => (showSettings = false)}
     />
-  {/if}
-
-  {#if showAbout}
-    <AboutScreen onClose={() => (showAbout = false)} />
   {/if}
 </div>

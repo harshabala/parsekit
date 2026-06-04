@@ -10,13 +10,13 @@ function bootstrap() {
     if (!target) throw new Error("Mount target #app not found");
     const app = mount(App, { target });
     document.getElementById("boot-fallback")?.remove();
-    console.info("[ParseDock] UI mounted");
+    console.info("[ParseKit] UI mounted");
     return app;
   } catch (error) {
-    console.error("[ParseDock] UI bootstrap failed:", error);
+    console.error("[ParseKit] UI bootstrap failed:", error);
     const fallback = document.getElementById("boot-fallback");
     if (fallback) {
-      fallback.textContent = `ParseDock failed to load: ${error instanceof Error ? error.message : String(error)}`;
+      fallback.textContent = `ParseKit failed to load: ${error instanceof Error ? error.message : String(error)}`;
       fallback.setAttribute("role", "alert");
       fallback.style.cssText = "color: #c0392b; font-size: 12px;";
     }

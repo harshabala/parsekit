@@ -1,4 +1,4 @@
-//! Shared sidecar logic for ParseDock (used by the parsedock-sidecar binary).
+//! Shared sidecar logic for ParseKit (used by the parsekit-sidecar binary).
 
 use liteparse::{LiteParseConfig, OutputFormat, ParseResult, ParsedPage, TextItem};
 use serde::Serialize;

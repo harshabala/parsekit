@@ -1,16 +1,16 @@
 [package]
-name = "parsedock"
-version = "0.1.6"
+name = "parsekit"
+version = "0.2.0"
 edition = "2021"
-default-run = "parsedock"
+default-run = "parsekit"
 
 [lib]
-name = "parsedock_lib"
+name = "parsekit_lib"
 crate-type = ["lib"]
 
 [[bin]]
-name = "parsedock-sidecar"
-path = "src/bin/parsedock-sidecar.rs"
+name = "parsekit-sidecar"
+path = "src/bin/parsekit-sidecar.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

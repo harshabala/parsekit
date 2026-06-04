@@ -1,8 +1,8 @@
-//! ParseDock sidecar: JSON-lines stdin/stdout protocol for batch document parsing.
+//! ParseKit sidecar: JSON-lines stdin/stdout protocol for batch document parsing.
 //! Uses LiteParse v2 (Rust core) — same contract as the legacy Node sidecar.
 
 use liteparse::LiteParse;
-use parsedock_lib::sidecar_helpers::{
+use parsekit_lib::sidecar_helpers::{
     build_liteparse_config, format_output, output_paths, validate_output_format,
 };
 use serde::Deserialize;

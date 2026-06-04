@@ -31,7 +31,7 @@ export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
     );
     return val !== undefined ? val : defaultValue;
   } catch (error) {
-    console.warn(`[ParseDock] getSetting(${key}) failed, using default`, error);
+    console.warn(`[ParseKit] getSetting(${key}) failed, using default`, error);
     return defaultValue;
   }
 }
@@ -43,6 +43,6 @@ export async function setSetting<T>(key: string, value: T): Promise<void> {
       await store.save();
     }, `setSetting(${key})`);
   } catch (error) {
-    console.warn(`[ParseDock] setSetting(${key}) failed`, error);
+    console.warn(`[ParseKit] setSetting(${key}) failed`, error);
   }
 }

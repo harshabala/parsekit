@@ -1,7 +1,7 @@
 {
-  "productName": "ParseDock",
-  "version": "0.1.6",
-  "identifier": "com.parsedock.app",
+  "productName": "ParseKit",
+  "version": "0.2.0",
+  "identifier": "com.harshabala.parsekit",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "ParseDock",
+        "title": "ParseKit",
         "width": 320,
         "height": 480,
         "resizable": false,
@@ -44,6 +44,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/parsedock-sidecar"]
+    "externalBin": ["binaries/parsekit-sidecar"]
   }
 }

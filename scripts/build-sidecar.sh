@@ -10,9 +10,17 @@ fi
 
 mkdir -p src-tauri/binaries
 
-OUT="src-tauri/binaries/parsedock-sidecar-$TRIPLE"
+OUT="src-tauri/binaries/parsekit-sidecar-$TRIPLE"
+LEGACY="src-tauri/binaries/parsedock-sidecar-$TRIPLE"
+
+# Tauri build.rs requires the sidecar resource to exist before compiling the crate.
+if [[ ! -f "$OUT" && -f "$LEGACY" ]]; then
+  cp "$LEGACY" "$OUT"
+  chmod +x "$OUT"
+  echo "Bootstrapped $OUT from legacy sidecar (will rebuild if sources changed)"
+fi
 SOURCES=(
-  src-tauri/src/bin/parsedock-sidecar.rs
+  src-tauri/src/bin/parsekit-sidecar.rs
   src-tauri/src/sidecar_helpers.rs
   src-tauri/src/lib.rs
   src-tauri/Cargo.toml
@@ -36,9 +44,9 @@ if [[ "$needs_build" == "false" ]]; then
 fi
 
 echo "Building LiteParse v2 sidecar (first build may take ~10 minutes)..."
-cargo build --release --manifest-path src-tauri/Cargo.toml --bin parsedock-sidecar
+cargo build --release --manifest-path src-tauri/Cargo.toml --bin parsekit-sidecar
 
-cp "src-tauri/target/release/parsedock-sidecar" "$OUT"
+cp "src-tauri/target/release/parsekit-sidecar" "$OUT"
 chmod +x "$OUT"
 
 echo "Built sidecar: $OUT"

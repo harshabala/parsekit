@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { invoke } from "@tauri-apps/api/core";
   import type { AppLocale } from "../lib/i18n.svelte";
   import { t } from "../lib/i18n.svelte";
   import type { OcrLanguageCode } from "../lib/ocrLanguages";
@@ -6,6 +8,8 @@
   import LanguageSelector from "./LanguageSelector.svelte";
   import OcrLanguageSelector from "./OcrLanguageSelector.svelte";
   import ThemeSelector from "./ThemeSelector.svelte";
+
+  const REPO_URL = "https://github.com/harshabala/parsedock";
 
   let {
     locale: localeValue,
@@ -35,21 +39,19 @@
     onClose: () => void;
   } = $props();
 
+  let version = $state("0.2.0");
+
+  onMount(async () => {
+    try {
+      const info = await invoke<{ version?: string }>("get_system_info");
+      if (info.version) version = info.version;
+    } catch {
+      /* keep default */
+    }
+  });
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") {
-      onClose();
-    }
-  }
-
-  function handleOverlayClick(e: MouseEvent) {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  }
-
-  function handleOverlayKeydown(e: KeyboardEvent) {
-    if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
       onClose();
     }
   }
@@ -57,30 +59,23 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div
-  class="about-overlay"
-  onclick={handleOverlayClick}
-  onkeydown={handleOverlayKeydown}
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="settings-title"
-  tabindex="-1"
->
-  <div class="about-panel settings-panel" role="document">
-    <div class="about-header" id="settings-title">{t("settings.title")}</div>
+<div class="settings-screen" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <div class="settings-header">
+    <button type="button" class="settings-back-btn" onclick={onClose}>{t("settings.back")}</button>
+    <span class="settings-header-title" id="settings-title">{t("settings.title")}</span>
+  </div>
 
-    <div class="about-divider"></div>
-
+  <div class="settings-scroll">
     <div class="settings-section">
-      <div class="about-section-title">{t("settings.appLanguageTitle")}</div>
+      <div class="settings-section-title">{t("settings.appLanguageTitle")}</div>
       <p class="settings-hint">{t("settings.appLanguageHint")}</p>
       <LanguageSelector value={localeValue} onChange={onLocaleChange} />
     </div>
 
-    <div class="about-divider"></div>
+    <div class="settings-divider"></div>
 
     <div class="settings-section">
-      <div class="about-section-title">{t("settings.ocrLanguageTitle")}</div>
+      <div class="settings-section-title">{t("settings.ocrLanguageTitle")}</div>
       <p class="settings-hint">{t("settings.ocrLanguageHint")}</p>
       <OcrLanguageSelector
         value={ocrLanguage}
@@ -89,10 +84,10 @@
       />
     </div>
 
-    <div class="about-divider"></div>
+    <div class="settings-divider"></div>
 
     <div class="settings-section">
-      <div class="about-section-title">{t("settings.workersTitle")}</div>
+      <div class="settings-section-title">{t("settings.workersTitle")}</div>
       <p class="settings-hint">{t("settings.workersHint")}</p>
       <div class="workers-row">
         <input
@@ -108,15 +103,15 @@
       </div>
     </div>
 
-    <div class="about-divider"></div>
+    <div class="settings-divider"></div>
 
     <div class="settings-section">
-      <div class="about-section-title">{t("settings.appearanceTitle")}</div>
+      <div class="settings-section-title">{t("settings.appearanceTitle")}</div>
       <p class="settings-hint">{t("settings.appearanceHint")}</p>
       <ThemeSelector value={theme} onChange={onThemeChange} />
     </div>
 
-    <div class="about-divider"></div>
+    <div class="settings-divider"></div>
 
     <div class="settings-section settings-toggle-row">
       <label class="settings-launch-label">
@@ -130,6 +125,26 @@
       <p class="settings-hint">{t("settings.launchAtLoginHint")}</p>
     </div>
 
-    <button type="button" class="about-close-btn" onclick={onClose}>{t("settings.close")}</button>
+    <div class="settings-divider"></div>
+
+    <div class="settings-section settings-about">
+      <div class="settings-section-title">{t("settings.aboutTitle")}</div>
+      <p class="settings-about-version">v{version}</p>
+      <p class="settings-hint">{t("settings.aboutDescription")}</p>
+      <p class="settings-hint">{t("settings.aboutTagline")}</p>
+      <p class="settings-hint">{t("settings.aboutFormats")}</p>
+      <div class="settings-about-meta">
+        <span class="settings-meta-label">{t("settings.aboutPoweredBy")}</span>
+        <span>{t("settings.aboutPoweredByValue")}</span>
+      </div>
+      <div class="settings-about-meta">
+        <span class="settings-meta-label">{t("settings.aboutLicense")}</span>
+        <span>{t("settings.aboutLicenseValue")}</span>
+      </div>
+      <p class="settings-hint settings-license-note">{t("settings.aboutLicenseNote")}</p>
+      <a class="settings-repo-link" href={REPO_URL} target="_blank" rel="noopener noreferrer">
+        {t("settings.aboutRepository")}
+      </a>
+    </div>
   </div>
 </div>
