@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
-    "release:macos": "npm run tauri build && bash scripts/postbuild-macos.sh"
+    "release:macos": "npm run tauri build && bash scripts/postbuild-macos.sh",
+    "publish:macos": "bash scripts/publish-release.sh"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",

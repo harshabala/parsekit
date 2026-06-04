@@ -9,6 +9,13 @@ src-tauri/gen/
 *.css.bak
 *.log
 .env
+
+# Tauri updater signing keys — private key must never be committed
+.tauri/
+*.key
+!*.key.pub
+parsekit.key
+parsekit.key.pub
 src-tauri/com.parsedock.app
 src-tauri/*.app
 com.parsedock.app.lock

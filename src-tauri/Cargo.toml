@@ -28,6 +28,7 @@ url = "2"
 single-instance = "0.3"
 liteparse = { version = "2.0.4", features = ["tesseract"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs", "io-util"] }
+tauri-plugin-updater = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

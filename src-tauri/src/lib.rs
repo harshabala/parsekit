@@ -1,4 +1,6 @@
 pub mod macos_popover;
+#[cfg(target_os = "macos")]
+pub mod macos_open_files;
 pub mod popover_trace;
 pub mod sidecar_helpers;
 
@@ -16,6 +18,7 @@ use tauri::tray::{
 };
 use tauri::{AppHandle, Manager, PhysicalPosition, Position, Rect, Runtime, Size, State, WebviewWindow};
 use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_updater::UpdaterExt;
 use walkdir::WalkDir;
 
 /// Menu bar template glyph (black on transparent); see `icons/tray/icon*.png`.
@@ -500,6 +503,131 @@ fn get_optimal_workers() -> usize {
     4
 }
 
+#[derive(serde::Serialize)]
+struct DependencyStatus {
+    id: String,
+    #[serde(rename = "labelKey")]
+    label_key: String,
+    installed: bool,
+    optional: bool,
+    #[serde(rename = "brewHint")]
+    brew_hint: String,
+}
+
+fn shell_which(name: &str) -> bool {
+    std::process::Command::new("/usr/bin/which")
+        .arg(name)
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+fn libreoffice_available() -> bool {
+    shell_which("soffice") || shell_which("libreoffice")
+}
+
+fn imagemagick_available() -> bool {
+    shell_which("magick") || shell_which("convert")
+}
+
+#[tauri::command]
+fn check_dependencies() -> Result<Vec<DependencyStatus>, String> {
+    Ok(vec![
+        DependencyStatus {
+            id: "libreoffice".into(),
+            label_key: "deps.libreoffice".into(),
+            installed: libreoffice_available(),
+            optional: true,
+            brew_hint: "brew install --cask libreoffice".into(),
+        },
+        DependencyStatus {
+            id: "imagemagick".into(),
+            label_key: "deps.imagemagick".into(),
+            installed: imagemagick_available(),
+            optional: true,
+            brew_hint: "brew install imagemagick".into(),
+        },
+        DependencyStatus {
+            id: "tesseract".into(),
+            label_key: "deps.tesseract".into(),
+            installed: true,
+            optional: false,
+            brew_hint: String::new(),
+        },
+    ])
+}
+
+#[cfg(target_os = "macos")]
+#[tauri::command]
+fn is_installed_in_applications() -> bool {
+    std::env::current_exe()
+        .ok()
+        .map(|p| {
+            p.to_string_lossy()
+                .contains("/Applications/ParseKit.app/")
+        })
+        .unwrap_or(false)
+}
+
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+fn is_installed_in_applications() -> bool {
+    true
+}
+
+#[cfg(target_os = "macos")]
+#[tauri::command]
+fn open_privacy_security_settings() -> Result<(), String> {
+    std::process::Command::new("open")
+        .arg("x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension")
+        .spawn()
+        .map_err(|e| format!("Failed to open System Settings: {e}"))?;
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+fn open_privacy_security_settings() -> Result<(), String> {
+    Err("System Settings link is only available on macOS".into())
+}
+
+#[tauri::command]
+fn gatekeeper_fix_command() -> String {
+    "xattr -cr /Applications/ParseKit.app && xattr -d com.apple.FinderInfo /Applications/ParseKit.app 2>/dev/null || true".to_string()
+}
+
+/// Copy plain text to the system clipboard (macOS `pbcopy` — reliable for menu-bar apps).
+#[tauri::command]
+fn copy_text_to_clipboard(text: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        use std::io::Write;
+        use std::process::{Command, Stdio};
+        let mut child = Command::new("/usr/bin/pbcopy")
+            .stdin(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("Could not run pbcopy: {e}"))?;
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin
+                .write_all(text.as_bytes())
+                .map_err(|e| format!("Could not write to pbcopy: {e}"))?;
+        }
+        let status = child
+            .wait()
+            .map_err(|e| format!("pbcopy wait failed: {e}"))?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err("pbcopy failed to copy to clipboard".into())
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = text;
+        Err("Clipboard copy is only supported on macOS".into())
+    }
+}
+
 #[tauri::command]
 fn get_system_info() -> Result<serde_json::Value, String> {
     Ok(serde_json::json!({
@@ -667,8 +795,116 @@ fn copy_file_to_clipboard(path: String) -> Result<Vec<u8>, String> {
 }
 
 #[tauri::command]
+fn show_main_window(
+    app: tauri::AppHandle,
+    popover: State<'_, PopoverState>,
+) -> Result<(), String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "Main window not found".to_string())?;
+    show_popover(&window, None, popover.inner());
+    Ok(())
+}
+
+#[tauri::command]
 fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
+}
+
+#[cfg(target_os = "macos")]
+#[tauri::command]
+fn install_finder_quick_action() -> Result<String, String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let resources = exe
+        .parent()
+        .and_then(|m| m.parent())
+        .and_then(|c| c.parent())
+        .map(|c| c.join("Resources"))
+        .ok_or_else(|| "Could not locate app Resources directory".to_string())?;
+
+    let install_script = resources.join("macos/install-finder-quick-action.sh");
+    if !install_script.is_file() {
+        return Err(format!(
+            "Installer script missing: {}. Reinstall ParseKit from the latest build.",
+            install_script.display()
+        ));
+    }
+
+    let output = std::process::Command::new("/bin/bash")
+        .arg(&install_script)
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        return Err(format!(
+            "Finder action install failed.\n{stdout}{stderr}"
+        ));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+fn install_finder_quick_action() -> Result<String, String> {
+    Err("Finder Quick Actions are only available on macOS.".into())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[tauri::command]
+fn finder_quick_action_installed() -> Result<bool, String> {
+    Ok(false)
+}
+
+#[cfg(target_os = "macos")]
+#[tauri::command]
+fn finder_quick_action_installed() -> Result<bool, String> {
+    let home = std::env::var("HOME").map_err(|e| e.to_string())?;
+    let workflow = Path::new(&home)
+        .join("Library/Services/Parse to Markdown with ParseKit.workflow");
+    Ok(workflow.is_dir())
+}
+
+#[derive(serde::Serialize)]
+pub struct UpdateInfo {
+    pub available: bool,
+    pub version: Option<String>,
+    pub body: Option<String>,
+    pub download_url: Option<String>,
+}
+
+#[tauri::command]
+async fn check_for_update(app: AppHandle) -> Result<UpdateInfo, String> {
+    match app.updater().map_err(|e| e.to_string())?.check().await {
+        Ok(Some(update)) => Ok(UpdateInfo {
+            available: true,
+            version: Some(update.version.clone()),
+            body: update.body.clone(),
+            download_url: Some(update.download_url.to_string()),
+        }),
+        Ok(None) => Ok(UpdateInfo {
+            available: false,
+            version: None,
+            body: None,
+            download_url: None,
+        }),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+async fn install_update(app: AppHandle) -> Result<(), String> {
+    let updater = app.updater().map_err(|e| e.to_string())?;
+    let update = updater
+        .check()
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "No update available".to_string())?;
+    update
+        .download_and_install(|_chunk, _total| {}, || {})
+        .await
+        .map_err(|e| e.to_string())?;
+    app.restart();
 }
 
 pub fn run() {
@@ -677,12 +913,18 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             scan_directory,
             path_is_directory,
             open_in_finder,
             copy_file_to_clipboard,
             get_system_info,
+            check_dependencies,
+            is_installed_in_applications,
+            open_privacy_security_settings,
+            gatekeeper_fix_command,
+            copy_text_to_clipboard,
             trigger_haptic,
             pick_input_files,
             pick_input_folder,
@@ -690,6 +932,11 @@ pub fn run() {
             update_tray_menu_labels,
             show_completion_notification,
             set_launch_at_login,
+            install_finder_quick_action,
+            finder_quick_action_installed,
+            check_for_update,
+            install_update,
+            show_main_window,
             quit_app,
         ])
         .setup(|app| {
@@ -846,10 +1093,19 @@ pub fn run() {
             startup_trace("setup() complete");
 
             #[cfg(target_os = "macos")]
-            maybe_show_menu_bar_hint();
+            {
+                maybe_show_menu_bar_hint();
+                macos_open_files::start_open_queue_watcher(app.handle().clone());
+            }
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running ParseKit");
+        .build(tauri::generate_context!())
+        .expect("error while building ParseKit")
+        .run(|app_handle, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Opened { urls } = event {
+                macos_open_files::emit_opened_urls(&app_handle, urls);
+            }
+        });
 }

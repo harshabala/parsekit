@@ -10,6 +10,7 @@
     "shell:allow-stdin-write",
     "shell:allow-kill",
     "clipboard-manager:default",
+    "updater:default",
     "core:event:default",
     {
       "identifier": "shell:allow-spawn",
