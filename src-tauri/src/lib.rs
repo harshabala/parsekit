@@ -315,12 +315,15 @@ fn file_path_to_string(path: tauri_plugin_dialog::FilePath) -> Option<String> {
 
 /// Open native pickers without a parent window. Borderless accessory popovers cannot host
 /// sheet modals; attaching the main window as parent causes a system beep and no Finder UI.
-fn run_file_picker<R: Runtime, F: FnOnce(&AppHandle<R>) -> Option<Vec<String>>>(
+async fn run_file_picker_async<R: Runtime, Fut>(
     app: AppHandle<R>,
     popover: &PopoverState,
-    pick: F,
-) -> Result<Option<Vec<String>>, String> {
-    popover_trace("File picker: with_modal_session begin");
+    pick: impl FnOnce(AppHandle<R>) -> Fut,
+) -> Result<Option<Vec<String>>, String>
+where
+    Fut: std::future::Future<Output = Option<Vec<String>>>,
+{
+    popover_trace("File picker: async session begin");
     popover.begin_picker();
     #[cfg(target_os = "macos")]
     {
@@ -328,9 +331,8 @@ fn run_file_picker<R: Runtime, F: FnOnce(&AppHandle<R>) -> Option<Vec<String>>>(
         popover_trace("File picker: activation policy → Regular");
     }
 
-    let result = pick(&app);
+    let result = pick(app.clone()).await;
 
-    popover.end_picker();
     #[cfg(target_os = "macos")]
     {
         let popover_still_open = app
@@ -341,63 +343,91 @@ fn run_file_picker<R: Runtime, F: FnOnce(&AppHandle<R>) -> Option<Vec<String>>>(
             restore_accessory_app_policy(&app);
             popover_trace("File picker: activation policy → Accessory (popover closed)");
         } else {
-            popover_trace("File picker: keeping Accessory/Regular (popover still open)");
+            popover_trace("File picker: keeping activation policy (popover still open)");
         }
     }
-    popover_trace("File picker: with_modal_session end");
+    popover.end_picker();
+    popover_trace("File picker: async session end");
     Ok(result)
 }
 
+async fn await_pick_files(app: &AppHandle, title: &str) -> Result<Option<Vec<String>>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.dialog()
+        .file()
+        .set_title(title)
+        .add_filter("Supported documents", SUPPORTED_EXTENSIONS)
+        .pick_files(move |paths| {
+            let _ = tx.send(paths);
+        });
+    match rx.await {
+        Ok(Some(files)) => Ok(Some(
+            files.into_iter().filter_map(file_path_to_string).collect(),
+        )),
+        Ok(None) => Ok(None),
+        Err(_) => Ok(None),
+    }
+}
+
+async fn await_pick_folder(app: &AppHandle, title: &str) -> Result<Option<String>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.dialog()
+        .file()
+        .set_title(title)
+        .pick_folder(move |path| {
+            let _ = tx.send(path);
+        });
+    match rx.await {
+        Ok(Some(path)) => Ok(file_path_to_string(path)),
+        Ok(None) => Ok(None),
+        Err(_) => Ok(None),
+    }
+}
+
 #[tauri::command]
-fn pick_input_files(
+async fn pick_input_files(
     app: AppHandle,
-    popover: State<PopoverState>,
+    popover: State<'_, PopoverState>,
 ) -> Result<Option<Vec<String>>, String> {
-    run_file_picker(app, popover.inner(), |app| {
-        app.dialog()
-            .file()
-            .set_title("Select files to parse")
-            .add_filter("Supported documents", SUPPORTED_EXTENSIONS)
-            .blocking_pick_files()
-            .map(|files| {
-                files
-                    .into_iter()
-                    .filter_map(file_path_to_string)
-                    .collect::<Vec<_>>()
-            })
+    run_file_picker_async(app, popover.inner(), |app| async move {
+        await_pick_files(&app, "Select files to parse")
+            .await
+            .ok()
+            .flatten()
     })
+    .await
 }
 
 #[tauri::command]
-fn pick_input_folder(
+async fn pick_input_folder(
     app: AppHandle,
-    popover: State<PopoverState>,
+    popover: State<'_, PopoverState>,
 ) -> Result<Option<String>, String> {
-    let paths = run_file_picker(app, popover.inner(), |app| {
-        app.dialog()
-            .file()
-            .set_title("Select folder")
-            .blocking_pick_folder()
-            .and_then(file_path_to_string)
+    run_file_picker_async(app, popover.inner(), |app| async move {
+        await_pick_folder(&app, "Select folder")
+            .await
+            .ok()
+            .flatten()
             .map(|path| vec![path])
-    })?;
-    Ok(paths.and_then(|mut v| v.pop()))
+    })
+    .await
+    .map(|paths| paths.and_then(|mut v| v.pop()))
 }
 
 #[tauri::command]
-fn pick_output_folder(
+async fn pick_output_folder(
     app: AppHandle,
-    popover: State<PopoverState>,
+    popover: State<'_, PopoverState>,
 ) -> Result<Option<String>, String> {
-    let paths = run_file_picker(app, popover.inner(), |app| {
-        app.dialog()
-            .file()
-            .set_title("Choose output folder")
-            .blocking_pick_folder()
-            .and_then(file_path_to_string)
+    run_file_picker_async(app, popover.inner(), |app| async move {
+        await_pick_folder(&app, "Choose output folder")
+            .await
+            .ok()
+            .flatten()
             .map(|path| vec![path])
-    })?;
-    Ok(paths.and_then(|mut v| v.pop()))
+    })
+    .await
+    .map(|paths| paths.and_then(|mut v| v.pop()))
 }
 
 #[cfg(target_os = "macos")]
