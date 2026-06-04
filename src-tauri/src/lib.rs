@@ -18,9 +18,8 @@ use tauri::{AppHandle, Manager, PhysicalPosition, Position, Rect, Runtime, Size,
 use tauri_plugin_dialog::DialogExt;
 use walkdir::WalkDir;
 
-/// Colored app mark — `icons/tray/icon@2x.png` was a solid black square and was invisible
-/// in the menu bar when used as a template image.
-const TRAY_ICON: tauri::image::Image<'static> = tauri::include_image!("icons/32x32.png");
+/// Menu bar template glyph (black on transparent); see `icons/tray/icon*.png`.
+const TRAY_ICON: tauri::image::Image<'static> = tauri::include_image!("icons/tray/icon@2x.png");
 /// Ignore focus-loss hides briefly after `Window.show()` so activation does not collapse the panel.
 /// Just long enough to ride out activation focus churn; short enough that click-away still dismisses.
 const POPOVER_SHOW_GRACE_MS: u64 = 500;
@@ -549,7 +548,7 @@ fn maybe_show_menu_bar_hint() {
     let _ = std::fs::write(&marker, "");
     let _ = show_completion_notification(
         "ParseDock".to_string(),
-        "Look for the blue P icon in your menu bar (top-right). Click it to open.".to_string(),
+        "Look for the ParseDock icon in your menu bar (top-right). Click it to open.".to_string(),
     );
 }
 
@@ -684,7 +683,7 @@ pub fn run() {
 
             let tray = TrayIconBuilder::new()
                 .icon(TRAY_ICON)
-                .icon_as_template(false)
+                .icon_as_template(true)
                 .show_menu_on_left_click(false)
                 .tooltip("ParseDock")
                 // Do NOT attach .menu() — macOS captures left-clicks for the status item menu.

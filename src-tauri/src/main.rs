@@ -5,11 +5,11 @@ fn notify_already_running() {
     {
         let _ = std::process::Command::new("osascript").args([
             "-e",
-            r#"display notification "ParseDock is already running. Click the blue P icon in the menu bar (top-right of your screen)." with title "ParseDock""#,
+                r#"display notification "ParseDock is already running. Click the ParseDock icon in the menu bar (top-right of your screen)." with title "ParseDock""#,
         ]).spawn();
     }
     eprintln!(
-        "ParseDock is already running. Look for the blue P icon in the menu bar (top-right), or quit ParseDock in Activity Monitor."
+            "ParseDock is already running. Look for the ParseDock icon in the menu bar (top-right), or quit ParseDock in Activity Monitor."
     );
 }
 
