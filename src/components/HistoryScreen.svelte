@@ -1,5 +1,8 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import { t } from "../lib/i18n.svelte";
+  import { hintFadeIn, hintFadeOut } from "../lib/motion";
   import type { BatchResult } from "../lib/types";
   import BatchHistoryList from "./BatchHistoryList.svelte";
 
@@ -14,6 +17,10 @@
     onRerun: (batch: BatchResult) => void;
     onClose: () => void;
   } = $props();
+
+  const reducedMotion = $derived(prefersReducedMotion.current);
+  const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
+  const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") {
@@ -32,10 +39,14 @@
 
   <div class="settings-scroll">
     {#if batches.length === 0}
-      <p class="settings-hint">{t("history.empty")}</p>
+      <p class="settings-hint" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+        {t("history.empty")}
+      </p>
     {:else}
-      <p class="settings-hint">{t("history.hint", { count: batches.length })}</p>
-      <BatchHistoryList {batches} {onOpenFolder} {onRerun} />
+      <div in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+        <p class="settings-hint">{t("history.hint", { count: batches.length })}</p>
+        <BatchHistoryList {batches} {onOpenFolder} {onRerun} />
+      </div>
     {/if}
   </div>
 </div>

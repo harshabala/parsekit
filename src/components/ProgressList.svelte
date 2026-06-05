@@ -1,14 +1,31 @@
 <script lang="ts">
-  import { fade } from "svelte/transition";
+  import { fade, fly } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { t } from "../lib/i18n.svelte";
-  import { iconFadeIn, iconFadeOut } from "../lib/motion";
+  import {
+    iconFadeIn,
+    iconFadeOut,
+    hintFadeIn,
+    hintFadeOut,
+    rowFlyIn,
+    rowFlyOut,
+    sectionFlyIn,
+    sectionFlyOut,
+    MOTION_ROW_STAGGER_CAP,
+  } from "../lib/motion";
   import { resolvePrimaryParsingId } from "../lib/progress";
   import type { FileProgress } from "../lib/types";
 
   const reducedMotion = $derived(prefersReducedMotion.current);
   const iconFadeInParams = $derived(iconFadeIn(reducedMotion));
   const iconFadeOutParams = $derived(iconFadeOut(reducedMotion));
+  const sectionFlyInParams = $derived(sectionFlyIn(reducedMotion));
+  const sectionFlyOutParams = $derived(sectionFlyOut(reducedMotion));
+  const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
+  const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
+
+  let prevFileCount = $state(0);
+  let rowStaggerActive = $state(false);
 
   let {
     files,
@@ -64,6 +81,16 @@
   });
 
   $effect(() => {
+    const n = files.length;
+    if (prevFileCount === 0 && n > 0 && n <= MOTION_ROW_STAGGER_CAP) {
+      rowStaggerActive = true;
+    } else if (n === 0) {
+      rowStaggerActive = false;
+    }
+    prevFileCount = n;
+  });
+
+  $effect(() => {
     if (!isParsing || !primaryActiveId || reducedMotion || !listEl) return;
     if (Date.now() < userScrolledUntil) return;
 
@@ -76,7 +103,10 @@
     const rowTop = row.offsetTop;
     const rowBottom = rowTop + row.offsetHeight;
     if (rowTop < listTop + 4 || rowBottom > listBottom - 4) {
-      row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      row.scrollIntoView({
+        block: "nearest",
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
     }
   });
 
@@ -129,7 +159,12 @@
     </div>
 
     {#if isParsing && primaryActive}
-      <p class="progress-now" aria-live="polite">
+      <p
+        class="progress-now"
+        aria-live="polite"
+        in:fly={sectionFlyInParams}
+        out:fly={sectionFlyOutParams}
+      >
         <span class="parse-spinner parse-spinner-inline" aria-hidden="true"></span>
         <span class="progress-now-text">
           {t("progress.nowParsing", { name: primaryActive.name })}
@@ -150,16 +185,24 @@
       <span>{t("progress.waiting", { count: pendingCount })}</span>
       {#if errorCount > 0}
         <span class="progress-stat-sep" aria-hidden="true">·</span>
-        <span class="progress-stat-err">{t("progress.failed", { count: errorCount })}</span>
+        <span class="progress-stat-err" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+          {t("progress.failed", { count: errorCount })}
+        </span>
       {/if}
       {#if skippedCount > 0}
         <span class="progress-stat-sep" aria-hidden="true">·</span>
-        <span>{t("progress.skipped", { count: skippedCount })}</span>
+        <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+          {t("progress.skipped", { count: skippedCount })}
+        </span>
       {/if}
     </div>
 
     {#if finishedCount > 0}
-      <div class="progress-summary">
+      <div
+        class="progress-summary"
+        in:fade={hintFadeInParams}
+        out:fade={hintFadeOutParams}
+      >
         {t("progress.summary", {
           parsed: completedCount,
           errors: errorCount,
@@ -169,13 +212,15 @@
     {/if}
 
     <div class="file-list" bind:this={listEl} onwheel={onListWheel}>
-      {#each files as file (file.id)}
+      {#each files as file, index (file.id)}
         <div
           class="file-row"
           data-file-id={file.id}
           class:file-row-active={file.status === "parsing"}
           class:file-row-error={file.status === "error"}
           class:file-row-done={file.status === "done"}
+          in:fly={rowFlyIn(reducedMotion, index, rowStaggerActive)}
+          out:fly={rowFlyOut(reducedMotion)}
         >
           <div class="file-row-main">
             <span class="file-name" title={file.name}>{file.name}</span>

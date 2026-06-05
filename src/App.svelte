@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { fade, fly } from "svelte/transition";
+  import { fade, fly, slide } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
@@ -46,20 +46,34 @@
     bannerFlyOut,
     buttonFadeIn,
     buttonFadeOut,
+    collapseSlideIn,
+    collapseSlideOut,
+    hintFadeIn,
+    hintFadeOut,
+    panelBlurFlyIn,
+    panelBlurFlyOut,
+    panelBlurFlyInParams,
+    panelBlurFlyOutParams,
     panelFadeIn,
     panelFadeOut,
-    panelFlyIn,
-    panelFlyOut,
     sectionFlyIn,
     sectionFlyOut,
+    subviewFadeIn,
+    subviewFadeOut,
   } from "./lib/motion";
   import "./index.css";
 
   const reducedMotion = $derived(prefersReducedMotion.current);
-  const mainFlyIn = $derived(panelFlyIn(reducedMotion));
-  const mainFlyOut = $derived(panelFlyOut(reducedMotion));
+  const mainPanelIn = $derived(panelBlurFlyInParams(reducedMotion));
+  const mainPanelOut = $derived(panelBlurFlyOutParams(reducedMotion));
   const mainFadeIn = $derived(panelFadeIn(reducedMotion));
   const mainFadeOut = $derived(panelFadeOut(reducedMotion));
+  const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
+  const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
+  const configSlideIn = $derived(collapseSlideIn(reducedMotion));
+  const configSlideOut = $derived(collapseSlideOut(reducedMotion));
+  const subviewFadeInParams = $derived(subviewFadeIn(reducedMotion));
+  const subviewFadeOutParams = $derived(subviewFadeOut(reducedMotion));
   const bannerFlyInParams = $derived(bannerFlyIn(reducedMotion));
   const bannerFlyOutParams = $derived(bannerFlyOut(reducedMotion));
   const sectionFlyInParams = $derived(sectionFlyIn(reducedMotion));
@@ -689,8 +703,8 @@
 <div class="shell">
   {#if !showSettings && !showHistory}
     {#key "main"}
-      <div class="motion-panel" in:fly={mainFlyIn} out:fly={mainFlyOut}>
-        <div class="motion-panel-content" in:fade={mainFadeIn} out:fade={mainFadeOut}>
+      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
+        <div class="motion-panel-content">
   <header>
     <span>{t("app.name")}</span>
     <div class="header-actions">
@@ -748,13 +762,15 @@
 
   <main>
     {#if showOnboarding}
-      <OnboardingChecklist
-        outputDirSet={outputDirConfigured}
-        filesReady={filesReady}
-        {showInstallHint}
-        onDismiss={dismissOnboarding}
-        onPickOutput={onboardingPickOutput}
-      />
+      <div in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
+        <OnboardingChecklist
+          outputDirSet={outputDirConfigured}
+          filesReady={filesReady}
+          {showInstallHint}
+          onDismiss={dismissOnboarding}
+          onPickOutput={onboardingPickOutput}
+        />
+      </div>
     {/if}
 
     <div class="section">
@@ -772,7 +788,7 @@
         {/if}
       </div>
       {#if !configCollapsed}
-        <div class="card">
+        <div class="card" in:slide={configSlideIn} out:slide={configSlideOut}>
           <OutputFolderPicker value={outputDir} onSelect={handleOutputSelect} />
 
           <div class="row">
@@ -782,8 +798,8 @@
           {#if format !== "json"}
             <div
               class="file-count-preview caption-hint"
-              in:fade={mainFadeIn}
-              out:fade={mainFadeOut}
+              in:fade={hintFadeInParams}
+              out:fade={hintFadeOutParams}
             >
               {t("config.spreadsheetJsonHint")}
             </div>
@@ -801,13 +817,21 @@
             </div>
           </div>
           {#if ocrEnabled}
-            <p class="caption-hint ocr-workers-hint">{t("config.ocrWorkersHint")}</p>
+            <p
+              class="caption-hint ocr-workers-hint"
+              in:fade={hintFadeInParams}
+              out:fade={hintFadeOutParams}
+            >
+              {t("config.ocrWorkersHint")}
+            </p>
           {/if}
         </div>
       {:else}
         <button
           type="button"
           class="secondary config-collapsed-summary"
+          in:slide={configSlideIn}
+          out:slide={configSlideOut}
           onclick={toggleConfigCollapsed}
         >
           {outputDir ? outputDir : t("config.downloads")} · {format.toUpperCase()}
@@ -906,8 +930,8 @@
 
   {#if showHistory}
     {#key "history"}
-      <div class="motion-panel" in:fly={mainFlyIn} out:fly={mainFlyOut}>
-        <div class="motion-panel-content" in:fade={mainFadeIn} out:fade={mainFadeOut}>
+      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
+        <div class="motion-panel-content">
           <HistoryScreen
             batches={recentBatches}
             onOpenFolder={openFolder}
@@ -921,8 +945,10 @@
 
   {#if showSettings}
     {#key "settings"}
-      <div class="motion-panel" in:fly={mainFlyIn} out:fly={mainFlyOut}>
-        <div class="motion-panel-content" in:fade={mainFadeIn} out:fade={mainFadeOut}>
+      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
+        <div class="motion-panel-content">
+    {#key showAbout}
+      <div in:fade={subviewFadeInParams} out:fade={subviewFadeOutParams}>
     {#if showAbout}
       <AboutScreen onClose={() => (showAbout = false)} />
     {:else}
@@ -951,6 +977,8 @@
         onClose={() => (showSettings = false)}
       />
     {/if}
+      </div>
+    {/key}
         </div>
       </div>
     {/key}

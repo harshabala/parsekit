@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import type { AppLocale } from "../lib/i18n.svelte";
   import { t } from "../lib/i18n.svelte";
+  import { hintFadeIn, hintFadeOut } from "../lib/motion";
   import type { OcrLanguageCode } from "../lib/ocrLanguages";
   import type { ThemeMode } from "../lib/types";
   import LanguageSelector from "./LanguageSelector.svelte";
@@ -57,6 +60,10 @@
     onCheckForUpdates?: () => void;
     onClose: () => void;
   } = $props();
+
+  const reducedMotion = $derived(prefersReducedMotion.current);
+  const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
+  const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
 
   let gatekeeperCopied = $state(false);
   let gatekeeperCopyError = $state<string | null>(null);
@@ -176,10 +183,16 @@
           class:gatekeeper-copy-success={gatekeeperCopied}
           onclick={copyGatekeeperCommand}
         >
-          {gatekeeperCopied ? t("gatekeeper.copied") : t("gatekeeper.copyCommand")}
+          {#key gatekeeperCopied}
+            <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+              {gatekeeperCopied ? t("gatekeeper.copied") : t("gatekeeper.copyCommand")}
+            </span>
+          {/key}
         </button>
         {#if gatekeeperCopyError}
-          <p class="settings-hint deps-error">{gatekeeperCopyError}</p>
+          <p class="settings-hint deps-error" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+            {gatekeeperCopyError}
+          </p>
         {/if}
         <button type="button" class="secondary" onclick={openPrivacySettings}>
           {t("gatekeeper.openSettings")}
@@ -193,7 +206,13 @@
       <div class="settings-section-title">{t("settings.finderTitle")}</div>
       <p class="settings-hint">{t("settings.finderHint")}</p>
       {#if finderActionInstalled}
-        <p class="settings-hint settings-finder-status">{t("settings.finderInstalled")}</p>
+        <p
+          class="settings-hint settings-finder-status"
+          in:fade={hintFadeInParams}
+          out:fade={hintFadeOutParams}
+        >
+          {t("settings.finderInstalled")}
+        </p>
       {:else if onInstallFinderAction}
         <button
           type="button"
@@ -201,11 +220,21 @@
           disabled={finderActionBusy}
           onclick={onInstallFinderAction}
         >
-          {finderActionBusy ? t("settings.finderInstalling") : t("settings.finderInstall")}
+          {#key finderActionBusy}
+            <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+              {finderActionBusy ? t("settings.finderInstalling") : t("settings.finderInstall")}
+            </span>
+          {/key}
         </button>
       {/if}
       {#if finderActionNotice}
-        <p class="settings-hint settings-finder-notice">{finderActionNotice}</p>
+        <p
+          class="settings-hint settings-finder-notice"
+          in:fade={hintFadeInParams}
+          out:fade={hintFadeOutParams}
+        >
+          {finderActionNotice}
+        </p>
       {/if}
     </div>
 
@@ -228,6 +257,8 @@
         <p
           class="settings-update-status"
           class:settings-update-status-ok={updateStatusOk}
+          in:fade={hintFadeInParams}
+          out:fade={hintFadeOutParams}
         >
           {updateStatusNote}
         </p>

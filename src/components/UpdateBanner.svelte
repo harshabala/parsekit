@@ -1,6 +1,13 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import { t } from "../lib/i18n.svelte";
   import type { UpdateInfo } from "../lib/update";
+  import { hintFadeIn, hintFadeOut } from "../lib/motion";
+
+  const reducedMotion = $derived(prefersReducedMotion.current);
+  const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
+  const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
 
   let {
     info,
@@ -47,6 +54,8 @@
     </button>
   </div>
   {#if error}
-    <p class="update-banner-error">{error}</p>
+    <p class="update-banner-error" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+      {error}
+    </p>
   {/if}
 </div>

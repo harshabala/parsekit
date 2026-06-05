@@ -54,8 +54,61 @@ export const MOTION_ENTER_Y = 8;
 export const MOTION_EXIT_Y = -4;
 export const MOTION_BANNER_ENTER_Y = 4;
 export const MOTION_BANNER_EXIT_Y = -2;
+export const MOTION_ENTER_BLUR_PX = 4;
 export const MOTION_ENTER_MS = 180;
 export const MOTION_EXIT_MS = 120;
+export const MOTION_HINT_MS = 120;
+export const MOTION_ROW_STAGGER_MAX = 9;
+export const MOTION_ROW_STAGGER_DELAY_MS = 40;
+export const MOTION_ROW_STAGGER_CAP = 15;
+
+function panelBlurCss(
+  t: number,
+  u: number,
+  y: number,
+  blurPx: number
+): string {
+  return `transform: translateY(${y * u}px); opacity: ${t}; filter: blur(${blurPx * u}px);`;
+}
+
+export type BlurFlyTransition = {
+  duration: number;
+  easing: (t: number) => number;
+  css: (t: number, u: number) => string;
+};
+
+/** Params for `in:panelBlurFlyIn` / `out:panelBlurFlyOut` Svelte transitions. */
+export function panelBlurFlyInParams(prefersReduced: boolean): BlurFlyTransition {
+  const y = prefersReduced ? 0 : MOTION_ENTER_Y;
+  const blur = prefersReduced ? 0 : MOTION_ENTER_BLUR_PX;
+  const duration = prefersReduced ? 0 : MOTION_ENTER_MS;
+  return {
+    duration,
+    easing: easingDecelerate,
+    css: (t: number, u: number) => panelBlurCss(t, u, y, blur),
+  };
+}
+
+export function panelBlurFlyOutParams(prefersReduced: boolean): BlurFlyTransition {
+  const y = prefersReduced ? 0 : MOTION_EXIT_Y;
+  const blur = prefersReduced ? 0 : MOTION_ENTER_BLUR_PX;
+  const duration = prefersReduced ? 0 : MOTION_EXIT_MS;
+  return {
+    duration,
+    easing: easingAccelerate,
+    css: (t: number, u: number) => panelBlurCss(t, u, y, blur),
+  };
+}
+
+/** Svelte transition: panel enter (translateY + opacity + blur). */
+export function panelBlurFlyIn(_node: Element, params: BlurFlyTransition) {
+  return params;
+}
+
+/** Svelte transition: panel exit. */
+export function panelBlurFlyOut(_node: Element, params: BlurFlyTransition) {
+  return params;
+}
 
 export function panelFlyIn(prefersReduced: boolean) {
   return {
@@ -146,6 +199,68 @@ export function iconFadeIn(prefersReduced: boolean) {
 export function iconFadeOut(prefersReduced: boolean) {
   return {
     duration: prefersReduced ? 0 : MOTION_ICON_EXIT_MS,
+    easing: easingAccelerate,
+  };
+}
+
+/** Inline hints, status lines, drop-zone ready: 120ms */
+export function hintFadeIn(prefersReduced: boolean) {
+  return {
+    duration: prefersReduced ? 0 : MOTION_HINT_MS,
+    easing: easingDecelerate,
+  };
+}
+
+export function hintFadeOut(prefersReduced: boolean) {
+  return {
+    duration: prefersReduced ? 0 : MOTION_HINT_MS,
+    easing: easingAccelerate,
+  };
+}
+
+/** Config card ↔ collapsed summary */
+export function collapseSlideIn(prefersReduced: boolean) {
+  return {
+    duration: prefersReduced ? 0 : MOTION_ENTER_MS,
+    easing: easingDecelerate,
+  };
+}
+
+export function collapseSlideOut(prefersReduced: boolean) {
+  return {
+    duration: prefersReduced ? 0 : MOTION_EXIT_MS,
+    easing: easingAccelerate,
+  };
+}
+
+/** Settings ↔ About sub-view */
+export function subviewFadeIn(prefersReduced: boolean) {
+  return panelFadeIn(prefersReduced);
+}
+
+export function subviewFadeOut(prefersReduced: boolean) {
+  return panelFadeOut(prefersReduced);
+}
+
+/** File row stagger on batch start (≤15 files, cap 9 delays). */
+export function rowFlyIn(
+  prefersReduced: boolean,
+  index: number,
+  stagger: boolean
+) {
+  const capped = Math.min(index, MOTION_ROW_STAGGER_MAX);
+  return {
+    y: prefersReduced ? 0 : 6,
+    duration: prefersReduced ? 0 : 160,
+    delay: prefersReduced || !stagger ? 0 : capped * MOTION_ROW_STAGGER_DELAY_MS,
+    easing: easingDecelerate,
+  };
+}
+
+export function rowFlyOut(prefersReduced: boolean) {
+  return {
+    y: prefersReduced ? 0 : MOTION_EXIT_Y,
+    duration: prefersReduced ? 0 : MOTION_EXIT_MS,
     easing: easingAccelerate,
   };
 }

@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
+  import { hintFadeIn, hintFadeOut } from "../lib/motion";
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { t } from "../lib/i18n.svelte";
   import { pickInputFiles, pickInputFolder } from "../lib/picker";
@@ -21,6 +24,10 @@
     onFolder: (path: string, count: number, scanError?: string) => void;
     onFiles: (paths: string[]) => void;
   } = $props();
+
+  const reducedMotion = $derived(prefersReducedMotion.current);
+  const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
+  const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
 
   let dragOver = $state(false);
   let scanning = $state(false);
@@ -130,11 +137,13 @@
     </svg>
   </div>
   <p class="drop-zone-title">{t("dropzone.title")}</p>
-  <p class="drop-zone-hint">
-    {scanning ? t("dropzone.scanning") : t("dropzone.hint")}
-  </p>
+  {#key scanning}
+    <p class="drop-zone-hint" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+      {scanning ? t("dropzone.scanning") : t("dropzone.hint")}
+    </p>
+  {/key}
   {#if fileCount !== null && fileCount > 0}
-    <p class="drop-zone-ready">
+    <p class="drop-zone-ready" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
       {fileCount === 1
         ? t("dropzone.filesReadyOne")
         : t("dropzone.filesReady", { count: fileCount })}
