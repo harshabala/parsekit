@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   applyParseProgressEvent,
   resolvePrimaryParsingId,
+  pathsMatchForProgress,
+  settleBatchOnStop,
   settleInFlightOnAbort,
 } from "./progress";
 import type { FileProgress } from "./types";
@@ -83,18 +85,41 @@ describe("applyParseProgressEvent", () => {
   });
 });
 
-describe("settleInFlightOnAbort", () => {
-  it("marks parsing as error and leaves pending", () => {
+describe("pathsMatchForProgress", () => {
+  it("treats /var and /private/var as the same file", () => {
+    expect(
+      pathsMatchForProgress(
+        "/var/folders/x/report.pdf",
+        "/private/var/folders/x/report.pdf"
+      )
+    ).toBe(true);
+  });
+});
+
+describe("settleBatchOnStop", () => {
+  it("marks parsing and pending as error with distinct messages", () => {
     const files = [
       row("/a/done.pdf", "done"),
       row("/a/active.pdf", "parsing"),
       row("/a/wait.pdf", "pending"),
     ];
-    const next = settleInFlightOnAbort(files, "Stopped");
+    const next = settleBatchOnStop(files, {
+      parsing: "Stopped mid-file",
+      pending: "Never started",
+    });
     expect(next[0].status).toBe("done");
     expect(next[1].status).toBe("error");
-    expect(next[1].error).toBe("Stopped");
-    expect(next[2].status).toBe("pending");
+    expect(next[1].error).toBe("Stopped mid-file");
+    expect(next[2].status).toBe("error");
+    expect(next[2].error).toBe("Never started");
+  });
+});
+
+describe("settleInFlightOnAbort", () => {
+  it("marks both parsing and pending", () => {
+    const files = [row("/a/wait.pdf", "pending"), row("/a/active.pdf", "parsing")];
+    const next = settleInFlightOnAbort(files, "Stopped");
+    expect(next.every((f) => f.status === "error")).toBe(true);
   });
 });
 

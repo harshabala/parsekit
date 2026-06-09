@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { fade } from "svelte/transition";
+  import { fade, slide } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import type { AppLocale } from "../lib/i18n.svelte";
   import { t } from "../lib/i18n.svelte";
-  import { hintFadeIn, hintFadeOut } from "../lib/motion";
+  import { collapseSlideIn, collapseSlideOut, hintFadeIn, hintFadeOut } from "../lib/motion";
   import type { OcrLanguageCode } from "../lib/ocrLanguages";
   import type { ThemeMode } from "../lib/types";
   import LanguageSelector from "./LanguageSelector.svelte";
@@ -64,7 +64,10 @@
   const reducedMotion = $derived(prefersReducedMotion.current);
   const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
   const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
+  const advancedSlideIn = $derived(collapseSlideIn(reducedMotion));
+  const advancedSlideOut = $derived(collapseSlideOut(reducedMotion));
 
+  let advancedCollapsed = $state(true);
   let gatekeeperCopied = $state(false);
   let gatekeeperCopyError = $state<string | null>(null);
 
@@ -72,6 +75,10 @@
     if (e.key === "Escape") {
       onClose();
     }
+  }
+
+  function toggleAdvanced() {
+    advancedCollapsed = !advancedCollapsed;
   }
 
   async function copyGatekeeperCommand() {
@@ -122,6 +129,14 @@
     <div class="settings-divider"></div>
 
     <div class="settings-section">
+      <div class="settings-section-title">{t("settings.appearanceTitle")}</div>
+      <p class="settings-hint">{t("settings.appearanceHint")}</p>
+      <ThemeSelector value={theme} onChange={onThemeChange} />
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-section">
       <div class="settings-section-title">{t("settings.ocrLanguageTitle")}</div>
       <p class="settings-hint">{t("settings.ocrLanguageHint")}</p>
       <OcrLanguageSelector
@@ -133,137 +148,145 @@
 
     <div class="settings-divider"></div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">{t("settings.workersTitle")}</div>
-      <p class="settings-hint">{t("settings.workersHint")}</p>
-      <WorkersSlider
-        value={workers}
-        label={t("settings.workersTitle")}
-        onChange={onWorkersChange}
-      />
+    <div class="settings-section settings-advanced-header">
+      <div class="settings-section-title">{t("settings.advancedTitle")}</div>
+      <button
+        type="button"
+        class="config-collapse-btn"
+        onclick={toggleAdvanced}
+        aria-expanded={!advancedCollapsed}
+      >
+        {advancedCollapsed ? t("settings.advancedExpand") : t("settings.advancedCollapse")}
+      </button>
     </div>
 
-    <div class="settings-divider"></div>
+    {#if !advancedCollapsed}
+      <div class="settings-advanced-body" in:slide={advancedSlideIn} out:slide={advancedSlideOut}>
+        <div class="settings-section settings-toggle-row">
+          <label class="settings-launch-label">
+            <input
+              type="checkbox"
+              checked={launchAtLogin}
+              onchange={(e) => onLaunchAtLoginChange((e.currentTarget as HTMLInputElement).checked)}
+            />
+            <span>{t("settings.launchAtLogin")}</span>
+          </label>
+          <p class="settings-hint">{t("settings.launchAtLoginHint")}</p>
+        </div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">{t("settings.appearanceTitle")}</div>
-      <p class="settings-hint">{t("settings.appearanceHint")}</p>
-      <ThemeSelector value={theme} onChange={onThemeChange} />
-    </div>
+        <div class="settings-divider"></div>
 
-    <div class="settings-divider"></div>
+        <div class="settings-section">
+          <div class="settings-section-title">{t("settings.workersTitle")}</div>
+          <p class="settings-hint">{t("settings.workersHint")}</p>
+          <WorkersSlider
+            value={workers}
+            label={t("settings.workersTitle")}
+            onChange={onWorkersChange}
+          />
+        </div>
 
-    <div class="settings-section settings-toggle-row">
-      <label class="settings-launch-label">
-        <input
-          type="checkbox"
-          checked={launchAtLogin}
-          onchange={(e) => onLaunchAtLoginChange((e.currentTarget as HTMLInputElement).checked)}
-        />
-        <span>{t("settings.launchAtLogin")}</span>
-      </label>
-      <p class="settings-hint">{t("settings.launchAtLoginHint")}</p>
-    </div>
+        <div class="settings-divider"></div>
 
-    <div class="settings-divider"></div>
+        <div class="settings-section">
+          <DependencyPreflight />
+        </div>
 
-    <div class="settings-section">
-      <DependencyPreflight />
-    </div>
+        <div class="settings-divider"></div>
 
-    <div class="settings-divider"></div>
+        <div class="settings-section">
+          <div class="settings-section-title">{t("gatekeeper.title")}</div>
+          <p class="settings-hint">{t("gatekeeper.hint")}</p>
+          <div class="gatekeeper-actions">
+            <button
+              type="button"
+              class="secondary gatekeeper-copy-btn"
+              class:gatekeeper-copy-success={gatekeeperCopied}
+              onclick={copyGatekeeperCommand}
+            >
+              {#key gatekeeperCopied}
+                <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+                  {gatekeeperCopied ? t("gatekeeper.copied") : t("gatekeeper.copyCommand")}
+                </span>
+              {/key}
+            </button>
+            {#if gatekeeperCopyError}
+              <p class="settings-hint deps-error" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+                {gatekeeperCopyError}
+              </p>
+            {/if}
+            <button type="button" class="secondary" onclick={openPrivacySettings}>
+              {t("gatekeeper.openSettings")}
+            </button>
+          </div>
+        </div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">{t("gatekeeper.title")}</div>
-      <p class="settings-hint">{t("gatekeeper.hint")}</p>
-      <div class="gatekeeper-actions">
-        <button
-          type="button"
-          class="secondary gatekeeper-copy-btn"
-          class:gatekeeper-copy-success={gatekeeperCopied}
-          onclick={copyGatekeeperCommand}
-        >
-          {#key gatekeeperCopied}
-            <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
-              {gatekeeperCopied ? t("gatekeeper.copied") : t("gatekeeper.copyCommand")}
-            </span>
-          {/key}
-        </button>
-        {#if gatekeeperCopyError}
-          <p class="settings-hint deps-error" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
-            {gatekeeperCopyError}
-          </p>
-        {/if}
-        <button type="button" class="secondary" onclick={openPrivacySettings}>
-          {t("gatekeeper.openSettings")}
-        </button>
+        <div class="settings-divider"></div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">{t("settings.finderTitle")}</div>
+          <p class="settings-hint">{t("settings.finderHint")}</p>
+          {#if finderActionInstalled}
+            <p
+              class="settings-hint settings-finder-status"
+              in:fade={hintFadeInParams}
+              out:fade={hintFadeOutParams}
+            >
+              {t("settings.finderInstalled")}
+            </p>
+          {:else if onInstallFinderAction}
+            <button
+              type="button"
+              class="secondary settings-finder-install-btn"
+              disabled={finderActionBusy}
+              onclick={onInstallFinderAction}
+            >
+              {#key finderActionBusy}
+                <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+                  {finderActionBusy ? t("settings.finderInstalling") : t("settings.finderInstall")}
+                </span>
+              {/key}
+            </button>
+          {/if}
+          {#if finderActionNotice}
+            <p
+              class="settings-hint settings-finder-notice"
+              in:fade={hintFadeInParams}
+              out:fade={hintFadeOutParams}
+            >
+              {finderActionNotice}
+            </p>
+          {/if}
+        </div>
+
+        <div class="settings-divider"></div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">{t("update.settingsTitle")}</div>
+          <p class="settings-hint">{t("update.settingsHint")}</p>
+          {#if onCheckForUpdates}
+            <button
+              type="button"
+              class="secondary"
+              disabled={updateCheckBusy}
+              onclick={onCheckForUpdates}
+            >
+              {updateCheckBusy ? t("update.checking") : t("update.checkButton")}
+            </button>
+          {/if}
+          {#if updateStatusNote}
+            <p
+              class="settings-update-status"
+              class:settings-update-status-ok={updateStatusOk}
+              in:fade={hintFadeInParams}
+              out:fade={hintFadeOutParams}
+            >
+              {updateStatusNote}
+            </p>
+          {/if}
+        </div>
       </div>
-    </div>
-
-    <div class="settings-divider"></div>
-
-    <div class="settings-section">
-      <div class="settings-section-title">{t("settings.finderTitle")}</div>
-      <p class="settings-hint">{t("settings.finderHint")}</p>
-      {#if finderActionInstalled}
-        <p
-          class="settings-hint settings-finder-status"
-          in:fade={hintFadeInParams}
-          out:fade={hintFadeOutParams}
-        >
-          {t("settings.finderInstalled")}
-        </p>
-      {:else if onInstallFinderAction}
-        <button
-          type="button"
-          class="secondary settings-finder-install-btn"
-          disabled={finderActionBusy}
-          onclick={onInstallFinderAction}
-        >
-          {#key finderActionBusy}
-            <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
-              {finderActionBusy ? t("settings.finderInstalling") : t("settings.finderInstall")}
-            </span>
-          {/key}
-        </button>
-      {/if}
-      {#if finderActionNotice}
-        <p
-          class="settings-hint settings-finder-notice"
-          in:fade={hintFadeInParams}
-          out:fade={hintFadeOutParams}
-        >
-          {finderActionNotice}
-        </p>
-      {/if}
-    </div>
-
-    <div class="settings-divider"></div>
-
-    <div class="settings-section">
-      <div class="settings-section-title">{t("update.settingsTitle")}</div>
-      <p class="settings-hint">{t("update.settingsHint")}</p>
-      {#if onCheckForUpdates}
-        <button
-          type="button"
-          class="secondary"
-          disabled={updateCheckBusy}
-          onclick={onCheckForUpdates}
-        >
-          {updateCheckBusy ? t("update.checking") : t("update.checkButton")}
-        </button>
-      {/if}
-      {#if updateStatusNote}
-        <p
-          class="settings-update-status"
-          class:settings-update-status-ok={updateStatusOk}
-          in:fade={hintFadeInParams}
-          out:fade={hintFadeOutParams}
-        >
-          {updateStatusNote}
-        </p>
-      {/if}
-    </div>
+    {/if}
 
     <div class="settings-divider"></div>
 

@@ -1,14 +1,18 @@
 #!/usr/bin/env swift
-// ParseKit DMG background — MUST be exactly window size (640×440) for create-dmg / Finder.
-// Do not use @2x-only art here; a 2x PNG in a 1x window mis-scales and clips text (see screenshots).
+// ParseKit DMG background — logical window 640×440 (tauri.conf + create-dmg).
+// 1× on purpose: the background PNG's point size MUST equal the create-dmg
+// window size (640×440). At 2× the PNG reports as 1280×880 pt, and Retina Finder
+// anchors it top-left without fitting, cropping the text to "Drag ParseKit t…".
+// At 1×, pixels == points == window, so the instruction line is always centered.
 import AppKit
 import CoreGraphics
 
+let scale: CGFloat = 1
 let windowW: CGFloat = 640
 let windowH: CGFloat = 440
-let width = windowW
-let height = windowH
-let margin: CGFloat = 40
+let width = windowW * scale
+let height = windowH * scale
+let margin: CGFloat = 40 * scale
 
 guard
   let rep = NSBitmapImageRep(
@@ -27,12 +31,17 @@ else {
   fputs("Failed to create bitmap\n", stderr)
   exit(1)
 }
+// Pixel dimensions must match rep.size so drawing coordinates align with the bitmap.
 rep.size = NSSize(width: width, height: height)
 
 guard let ctx = NSGraphicsContext(bitmapImageRep: rep)?.cgContext else {
   fputs("No graphics context\n", stderr)
   exit(1)
 }
+ctx.interpolationQuality = .high
+ctx.setShouldAntialias(true)
+ctx.setAllowsFontSmoothing(true)
+
 NSGraphicsContext.saveGraphicsState()
 NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
 
@@ -53,7 +62,7 @@ if let gradient = CGGradient(colorsSpace: space, colors: colors, locations: [0, 
 
 // Single instruction line at top — nothing drawn over the icon row (y ≈ 198 in create-dmg).
 let title = "Drag ParseKit to Applications"
-let titleFont = NSFont.systemFont(ofSize: 22, weight: .semibold)
+let titleFont = NSFont.systemFont(ofSize: 22 * scale, weight: .semibold)
 let titleColor = NSColor(calibratedRed: 0.20, green: 0.17, blue: 0.14, alpha: 1)
 let titleAttrs: [NSAttributedString.Key: Any] = [
   .font: titleFont,
@@ -75,4 +84,4 @@ guard let png = rep.representation(using: .png, properties: [:]) else {
   exit(1)
 }
 try png.write(to: outURL)
-print("Wrote \(outURL.path) (\(Int(width))×\(Int(height)) — matches DMG window)")
+print("Wrote \(outURL.path) (\(Int(width))×\(Int(height)) px, \(Int(windowW))×\(Int(windowH)) pt window)")

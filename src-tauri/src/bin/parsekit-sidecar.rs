@@ -45,6 +45,8 @@ fn default_workers() -> usize {
 fn emit(value: serde_json::Value) {
     let mut stdout = io::stdout().lock();
     let _ = writeln!(stdout, "{}", value);
+    // Pipe stdout is block-buffered; flush so the UI receives each line before exit.
+    let _ = stdout.flush();
 }
 
 async fn process_file(
@@ -139,7 +141,14 @@ async fn run(config: SidecarConfig) -> Result<(), String> {
         .await
         .map_err(|e| e.to_string())?;
 
-    let file_concurrency = config.workers.max(1);
+    // The native parse engine (pdfium + OCR) is NOT safe to run as multiple
+    // concurrent `LiteParse` instances in one process: parallel `.parse()`
+    // calls race and crash the whole sidecar (SIGSEGV/SIGABRT) before any file
+    // finishes, which the UI surfaces as "batch interrupted / 0 parsed" for the
+    // entire batch. Parse files strictly one at a time. `config.workers` is kept
+    // for intra-file page parallelism only (see `build_liteparse_config`).
+    let file_concurrency = 1usize;
+    let intra_file_workers = config.workers.max(1);
     let format = config.format.clone();
     let ocr_enabled = config.ocr_enabled;
     let ocr_language = config.ocr_language.clone();
@@ -154,7 +163,8 @@ async fn run(config: SidecarConfig) -> Result<(), String> {
     let mut skipped = 0usize;
     let mut errors = 0usize;
 
-    let mut handles = Vec::with_capacity(config.files.len());
+    let mut handles: Vec<(String, tokio::task::JoinHandle<&'static str>)> =
+        Vec::with_capacity(config.files.len());
     for file_path in config.files {
         let permit = semaphore
             .clone()
@@ -164,16 +174,23 @@ async fn run(config: SidecarConfig) -> Result<(), String> {
         let out_dir = out_dir.clone();
         let format = format.clone();
         let ocr_language = ocr_language.clone();
-        let lp_config = build_liteparse_config(ocr_enabled, ocr_language, file_concurrency);
+        let lp_config = build_liteparse_config(ocr_enabled, ocr_language, intra_file_workers);
+        let path_for_task = file_path.clone();
 
-        handles.push(tokio::spawn(async move {
-            let result = process_file(file_path, out_dir, format, lp_config).await;
+        let join = tokio::spawn(async move {
+            let result = process_file(path_for_task, out_dir, format, lp_config).await;
             drop(permit);
             result
-        }));
+        });
+        handles.push((file_path, join));
     }
 
-    for handle in handles {
+    for (file_path, handle) in handles {
+        let file_name = PathBuf::from(&file_path)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or(file_path.as_str())
+            .to_string();
         match handle.await {
             Ok("skipped") => skipped += 1,
             Ok("completed") => parsed += 1,
@@ -181,8 +198,11 @@ async fn run(config: SidecarConfig) -> Result<(), String> {
             Err(e) => {
                 errors += 1;
                 emit(json!({
-                    "type": "error",
-                    "message": e.to_string(),
+                    "type": "progress",
+                    "file": file_name,
+                    "sourcePath": file_path,
+                    "status": "error",
+                    "error": format!("Parse task failed: {e}"),
                 }));
             }
         }

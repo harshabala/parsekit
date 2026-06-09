@@ -1,0 +1,178 @@
+{
+  "app": {
+    "name": "ParseKit",
+    "tagline": "ParseKit — un kit de herramientas para analizar documentos."
+  },
+  "header": {
+    "settings": "Ajustes",
+    "quit": "Salir de ParseKit"
+  },
+  "config": {
+    "title": "Configuración",
+    "outputFolder": "Carpeta de salida",
+    "change": "Cambiar",
+    "downloads": "Descargas",
+    "format": "Formato",
+    "spreadsheetJsonHint": "Las hojas de cálculo siempre se exportan como JSON.",
+    "ocr": "OCR (integrado)",
+    "ocrWorkersHint": "Los PDF escaneados usan más CPU — prueba 1–2 trabajadores en lotes OCR grandes.",
+    "expand": "Mostrar configuración",
+    "collapse": "Ocultar configuración"
+  },
+  "onboarding": {
+    "title": "Primeros pasos",
+    "lead": "ParseKit vive en la barra de menú. Completa estos pasos para tu primer lote.",
+    "dismiss": "Entendido",
+    "installHint": "Arrastra ParseKit a Aplicaciones (no al Escritorio), cierra y vuelve a abrir desde Aplicaciones. Si macOS bloquea el inicio, clic derecho → Abrir una vez.",
+    "chooseOutput": "Elegir carpeta de salida",
+    "stepOutput": "Elige dónde se guardan los Markdown",
+    "stepFiles": "Suelta archivos o una carpeta abajo",
+    "stepRun": "Pulsa Ejecutar análisis",
+    "trayHint": "Consejo: haz clic en el icono de ParseKit en la barra de menú (arriba a la derecha) para volver aquí."
+  },
+  "deps": {
+    "title": "Convertidores opcionales",
+    "hint": "El PDF funciona sin estos. Instálalos solo si analizas Office o imágenes.",
+    "checking": "Comprobando…",
+    "recheck": "Volver a comprobar",
+    "missingNote": "Solo afectan a los tipos de archivo que requieren cada herramienta.",
+    "libreoffice": "LibreOffice (Word, PowerPoint)",
+    "imagemagick": "ImageMagick (PNG, JPG, SVG, …)",
+    "tesseract": "Tesseract OCR (integrado en ParseKit)"
+  },
+  "update": {
+    "bannerAria": "Actualización disponible: versión {version}",
+    "available": "ParseKit {version} está disponible",
+    "installRestart": "Instalar y reiniciar",
+    "installing": "Descargando…",
+    "later": "Más tarde",
+    "installFailed": "Error al actualizar. Inténtalo de nuevo o descarga desde GitHub.",
+    "settingsTitle": "Actualizaciones",
+    "settingsHint": "ParseKit comprueba GitHub Releases al iniciar. También puedes comprobar aquí.",
+    "checkButton": "Buscar actualizaciones",
+    "checking": "Comprobando…",
+    "upToDate": "Al día (v{version})",
+    "checkFailed": "No se pudo comprobar actualizaciones. Prueba cuando tengas conexión."
+  },
+  "gatekeeper": {
+    "title": "¿Bloqueado al abrir?",
+    "hint": "Tras arrastrar ParseKit a Aplicaciones, macOS puede bloquear apps sin notarizar. Ejecuta esto en Terminal una vez, o usa Privacidad y seguridad → Abrir de todos modos.",
+    "copyCommand": "Copiar comando",
+    "copied": "Copiado al portapapeles",
+    "copyFailed": "No se pudo copiar al portapapeles. Inténtalo de nuevo.",
+    "openSettings": "Abrir Privacidad y seguridad"
+  },
+  "dropzone": {
+    "title": "Arrastra y suelta archivos o carpetas aquí",
+    "hint": "Compatible: .pdf, .csv, .xlsx, .xls, .tsv y más.",
+    "filesReadyOne": "1 archivo listo para analizar",
+    "filesReady": "{count} archivos listos para analizar",
+    "selectFiles": "Seleccionar archivos",
+    "selectFolder": "Seleccionar carpeta",
+    "scanning": "Escaneando carpeta…"
+  },
+  "run": {
+    "parsing": "Analizando...",
+    "runParse": "Ejecutar análisis",
+    "cancel": "Cancelar",
+    "openOutput": "Abrir salida",
+    "copyOutputPath": "Copiar ruta de salida",
+    "copyLast": "Copiar último archivo",
+    "notifyDone": "Listo: {parsed} analizados, {errors} errores"
+  },
+  "progress": {
+    "title": "Procesando",
+    "parsing": "Analizando documentos...",
+    "complete": "Análisis completado",
+    "ofTotal": "{done} de {total}",
+    "completed": "{count} completados",
+    "inProgress": "{count} en curso",
+    "waiting": "{count} en espera",
+    "failed": "{count} fallidos",
+    "skipped": "{count} omitidos",
+    "summary": "{parsed} analizados, {errors} errores de {total} archivos",
+    "nowParsing": "Analizando {name}",
+    "andMore": "+{count} más",
+    "statusParsing": "En curso",
+    "statusDone": "Listo",
+    "statusError": "Error",
+    "statusSkipped": "Omitido",
+    "statusWaiting": "En espera"
+  },
+  "recent": {
+    "title": "Reciente",
+    "selectedFiles": "Archivos seleccionados",
+    "batch": "Lote",
+    "open": "Abrir",
+    "viewHistory": "Ver historial de lotes",
+    "meta": "{date} · {count} archivos · {format}",
+    "metaOne": "{date} · 1 archivo · {format}",
+    "errorsOne": "1 error",
+    "errors": "{count} errores"
+  },
+  "about": {
+    "back": "Atrás"
+  },
+  "history": {
+    "title": "Historial",
+    "back": "Atrás",
+    "empty": "Aún no hay lotes. Ejecuta un análisis para ver el historial.",
+    "hint": "Últimos {count} lotes (más recientes primero).",
+    "rerun": "Repetir"
+  },
+  "errors": {
+    "addFiles": "Añade archivos o una carpeta para analizar.",
+    "noSupported": "No se encontraron archivos compatibles.",
+    "parseFailed": "Error al analizar.",
+    "parseCancelled": "Análisis cancelado.",
+    "batchInterrupted": "El lote se detuvo antes de terminar este archivo.",
+    "engineStalled": "El motor de análisis dejó de responder. Vuelve a intentarlo con menos trabajos en paralelo."
+  },
+  "settings": {
+    "title": "Ajustes",
+    "back": "Atrás",
+    "appLanguageTitle": "Idioma de la app",
+    "appLanguageHint": "Idioma de botones, etiquetas y menús de ParseKit. No cambia el contenido de los archivos exportados.",
+    "ocrLanguageTitle": "Idioma OCR (entrada)",
+    "ocrLanguageHint": "Idioma del texto en PDF escaneados e imágenes que analizas. Solo se usa con OCR activado. El formato de salida (TXT/MD/JSON) es aparte; el contenido exportado conserva el idioma del documento.",
+    "ocrLanguageLabel": "Idioma del texto del documento",
+    "appearanceTitle": "Apariencia",
+    "appearanceHint": "Elige cómo se ve ParseKit en tu Mac.",
+    "workersTitle": "Trabajadores en paralelo",
+    "workersHint": "Cuántos archivos analizar a la vez. Más es más rápido en lotes grandes; menos usa menos CPU.",
+    "launchAtLogin": "Iniciar al iniciar sesión",
+    "launchAtLoginHint": "Inicia ParseKit automáticamente al iniciar sesión en tu Mac.",
+    "finderTitle": "Finder",
+    "finderHint": "Clic derecho en Finder → Acciones rápidas → Parse to Markdown with ParseKit. Si hay carpeta de salida en ParseKit, analiza en silencio; si no, abre ParseKit con los archivos.",
+    "finderInstall": "Instalar acción rápida de Finder",
+    "finderInstalling": "Instalando…",
+    "finderInstalled": "Acción instalada. Actívala en Ajustes del Sistema → Teclado → Atajos de teclado → Servicios si hace falta.",
+    "finderInstallFailed": "No se pudo instalar la acción de Finder.",
+    "aboutTitle": "Acerca de ParseKit",
+    "aboutTagline": "Análisis en el dispositivo — sin subida a la nube",
+    "aboutPrivacy": "Tus archivos solo se leen y guardan en este Mac. Con OCR activado, el reconocimiento usa Tesseract local (los datos de idioma pueden descargarse una vez en el primer uso).",
+    "aboutDescription": "ParseKit — un kit de herramientas para analizar documentos.",
+    "aboutPoweredBy": "Desarrollado con",
+    "aboutPoweredByValue": "LiteParse v2 (Rust)",
+    "aboutFormats": "PDF, Office, hojas de cálculo, imágenes → Markdown, texto o JSON.",
+    "aboutLicense": "Licencia",
+    "aboutLicenseValue": "Apache-2.0",
+    "aboutLicenseNote": "ParseKit usa LiteParse v2 de LlamaIndex, bajo licencia Apache License 2.0.",
+    "aboutRepository": "Ver en GitHub"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文",
+    "es": "Español"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "aria": "Apariencia"
+  },
+  "tray": {
+    "open": "Abrir ParseKit",
+    "quit": "Salir de ParseKit"
+  }
+}

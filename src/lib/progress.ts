@@ -24,11 +24,23 @@ function mapSidecarStatus(raw: string | undefined): FileStatus {
   return "pending";
 }
 
+/** macOS often uses /var vs /private/var for the same file — match either form. */
+export function pathsMatchForProgress(a: string, b: string): boolean {
+  if (a === b) return true;
+  const norm = (p: string) => p.replace(/\/+/g, "/").replace(/\/$/, "");
+  const na = norm(a);
+  const nb = norm(b);
+  if (na === nb) return true;
+  const stripPrivate = (p: string) =>
+    p.startsWith("/private/var/") ? `/var/${p.slice("/private/var/".length)}` : p;
+  return stripPrivate(na) === stripPrivate(nb);
+}
+
 function findFileIndex(files: FileProgress[], event: ParseProgressEvent): number {
   const sourcePath = event.sourcePath;
   const displayName = event.file || (sourcePath ? fileBaseName(sourcePath) : "");
   if (sourcePath) {
-    const byPath = files.findIndex((f) => f.id === sourcePath);
+    const byPath = files.findIndex((f) => pathsMatchForProgress(f.id, sourcePath));
     if (byPath !== -1) return byPath;
   }
   if (!displayName) return -1;
@@ -95,16 +107,49 @@ export function applyParseProgressEvent(
   return { files: nextFiles, lastParsingId: nextLast };
 }
 
-/** Mark in-flight rows as failed when the batch stops unexpectedly. Pending rows stay pending. */
+export interface BatchSettleMessages {
+  /** Files that were actively parsing when the batch stopped. */
+  parsing?: string;
+  /** Files never started (still queued). */
+  pending?: string;
+}
+
+/**
+ * Finalize all non-terminal rows when the batch ends early (cancel, stall, sidecar exit).
+ * Ensures nothing stays in "Waiting" / "Parsing" forever.
+ */
+export function settleBatchOnStop(
+  files: FileProgress[],
+  messages: BatchSettleMessages
+): FileProgress[] {
+  const parsingMsg = messages.parsing ?? messages.pending ?? "Batch stopped.";
+  const pendingMsg = messages.pending ?? messages.parsing ?? parsingMsg;
+
+  return files.map((f) => {
+    if (f.status === "parsing") {
+      return { ...f, status: "error" as const, error: parsingMsg };
+    }
+    if (f.status === "pending") {
+      return { ...f, status: "error" as const, error: pendingMsg };
+    }
+    return f;
+  });
+}
+
+/** @deprecated Use settleBatchOnStop */
 export function settleInFlightOnAbort(
   files: FileProgress[],
   message: string
 ): FileProgress[] {
-  return files.map((f) =>
-    f.status === "parsing"
-      ? { ...f, status: "error" as const, error: message }
-      : f
-  );
+  return settleBatchOnStop(files, { parsing: message, pending: message });
+}
+
+/** After a successful `done` event, clear any rows that never received a final status. */
+export function settleRemainingOnDone(
+  files: FileProgress[],
+  message: string
+): FileProgress[] {
+  return settleBatchOnStop(files, { parsing: message, pending: message });
 }
 
 /** Pick the row to highlight in the progress banner. */

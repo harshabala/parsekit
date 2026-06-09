@@ -58,9 +58,36 @@ export const MOTION_ENTER_BLUR_PX = 4;
 export const MOTION_ENTER_MS = 180;
 export const MOTION_EXIT_MS = 120;
 export const MOTION_HINT_MS = 120;
-export const MOTION_ROW_STAGGER_MAX = 9;
-export const MOTION_ROW_STAGGER_DELAY_MS = 40;
+/** Max stagger index so delay×index + duration stays ≤ MOTION_STAGGER_BUDGET_MS */
+export const MOTION_ROW_STAGGER_MAX = 5;
+export const MOTION_ROW_STAGGER_DELAY_MS = 32;
 export const MOTION_ROW_STAGGER_CAP = 15;
+export const MOTION_ROW_ENTER_MS = 140;
+export const MOTION_STAGGER_BUDGET_MS = 300;
+export const MOTION_DEPS_STAGGER_DELAY_MS = 40;
+export const MOTION_DEPS_ENTER_MS = 180;
+/** Keep in sync with `--motion-deps-pop` in index.css */
+export const MOTION_DEPS_POP_MS = 220;
+
+function cappedStaggerDelayMs(
+  index: number,
+  durationMs: number
+): number {
+  const maxIndex = Math.floor(
+    (MOTION_STAGGER_BUDGET_MS - durationMs) / MOTION_DEPS_STAGGER_DELAY_MS
+  );
+  return Math.min(index, Math.max(0, maxIndex)) * MOTION_DEPS_STAGGER_DELAY_MS;
+}
+
+/** Deps list row fly-in stagger (capped to MOTION_STAGGER_BUDGET_MS) */
+export function depsStaggerDelayMs(index: number): number {
+  return cappedStaggerDelayMs(index, MOTION_DEPS_ENTER_MS);
+}
+
+/** Deps badge pop stagger (capped to MOTION_STAGGER_BUDGET_MS) */
+export function depsPopDelayMs(index: number): number {
+  return cappedStaggerDelayMs(index, MOTION_DEPS_POP_MS);
+}
 
 function panelBlurCss(
   t: number,
@@ -233,16 +260,12 @@ export function collapseSlideOut(prefersReduced: boolean) {
   };
 }
 
-/** Settings ↔ About sub-view */
-export function subviewFadeIn(prefersReduced: boolean) {
-  return panelFadeIn(prefersReduced);
-}
-
+/** Settings ↔ About sub-view exit (enter is instant) */
 export function subviewFadeOut(prefersReduced: boolean) {
   return panelFadeOut(prefersReduced);
 }
 
-/** File row stagger on batch start (≤15 files, cap 9 delays). */
+/** File row stagger on batch start (≤15 files, capped by MOTION_STAGGER_BUDGET_MS). */
 export function rowFlyIn(
   prefersReduced: boolean,
   index: number,
@@ -251,7 +274,7 @@ export function rowFlyIn(
   const capped = Math.min(index, MOTION_ROW_STAGGER_MAX);
   return {
     y: prefersReduced ? 0 : 6,
-    duration: prefersReduced ? 0 : 160,
+    duration: prefersReduced ? 0 : MOTION_ROW_ENTER_MS,
     delay: prefersReduced || !stagger ? 0 : capped * MOTION_ROW_STAGGER_DELAY_MS,
     easing: easingDecelerate,
   };

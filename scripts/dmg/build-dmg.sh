@@ -43,7 +43,7 @@ chflags hidden "$DMG_STAGE/.install-readme.txt" 2>/dev/null || true
 
 rm -f "$DMG_OUT"
 
-# Window 640×440 — must match tauri.conf + dmg-background.png pixel size (1:1, not @2x).
+# Window 640×440 pt — background PNG is 1280×880 px (@2x) for Retina-sharp text.
 DMG_W=640
 DMG_H=440
 # Icon positions (create-dmg: top-left origin). Middle band is icon-only on the background.

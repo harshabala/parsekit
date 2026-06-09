@@ -1,5 +1,15 @@
 import { Command, type Child } from "@tauri-apps/plugin-shell";
 
+/**
+ * Sidecar stdout protocol (JSON lines):
+ * - `start` — batch began
+ * - `progress` — per-file updates (`status`: parsing | completed | error | skipped)
+ * - `done` — batch finished successfully
+ * - `error` — fatal batch failure (process also exits non-zero or closes); UI must stop parsing
+ *
+ * Per-file failures use `progress` with `status: "error"`, not global `error`.
+ */
+
 export interface ParseConfig {
   /** Informational only — directory scanning is done frontend-side; the sidecar is driven by `files`. */
   inputDir: string;
@@ -54,7 +64,38 @@ function friendlySidecarMessage(raw: string): string {
   if (lower.includes("failed to create the path to the command")) {
     return `Parse engine binary missing next to the app. Run npm run build:sidecar, then restart. (${trimmed})`;
   }
+  if (
+    lower.includes("image too small to scale") ||
+    lower.includes("line cannot be recognized")
+  ) {
+    const firstLine = trimmed.split("\n").find((l) => l.trim())?.trim() ?? trimmed;
+    const short =
+      firstLine.length > 220 ? `${firstLine.slice(0, 217)}…` : firstLine;
+    return `OCR could not read part of a document (${short}). Other files in the batch can still finish.`;
+  }
   return trimmed || "Parse engine failed to start (unknown error).";
+}
+
+function handleSidecarLine(
+  line: string,
+  onEvent: (event: ParseEvent) => void,
+  onBatchActivity: () => void,
+  finish: (fn: () => void) => void,
+  resolve: () => void
+): void {
+  if (!line.trim()) return;
+  try {
+    const event: ParseEvent = JSON.parse(line);
+    onEvent(event);
+    if (event.type === "start" || event.type === "progress") {
+      onBatchActivity();
+    }
+    if (event.type === "done") {
+      finish(() => resolve());
+    }
+  } catch (e) {
+    console.error("Failed to parse sidecar output:", line, e);
+  }
 }
 
 export function runParse(
@@ -63,14 +104,19 @@ export function runParse(
 ): ParseRunHandle {
   let child: Child | null = null;
   let stderrTail = "";
+  let stdoutBuffer = "";
 
   const promise = new Promise<void>(async (resolve, reject) => {
     let settled = false;
+    let sawBatchActivity = false;
     const finish = (fn: () => void) => {
       if (!settled) {
         settled = true;
         fn();
       }
+    };
+    const markActivity = () => {
+      sawBatchActivity = true;
     };
 
     try {
@@ -84,18 +130,12 @@ export function runParse(
         finish(() => reject(new Error(message)));
       });
 
-      command.stdout.on("data", (line) => {
-        const lines = line.split("\n").filter(Boolean);
-        for (const l of lines) {
-          try {
-            const event: ParseEvent = JSON.parse(l);
-            onEvent(event);
-            if (event.type === "done") {
-              finish(() => resolve());
-            }
-          } catch (e) {
-            console.error("Failed to parse sidecar output:", l, e);
-          }
+      command.stdout.on("data", (chunk) => {
+        stdoutBuffer += chunk;
+        const parts = stdoutBuffer.split("\n");
+        stdoutBuffer = parts.pop() ?? "";
+        for (const line of parts) {
+          handleSidecarLine(line, onEvent, markActivity, finish, resolve);
         }
       });
 
@@ -106,17 +146,35 @@ export function runParse(
 
       command.on("close", (data) => {
         if (settled) return;
-        const exitHint =
-          data.code != null && data.code !== 0
+        if (stdoutBuffer.trim()) {
+          handleSidecarLine(stdoutBuffer, onEvent, markActivity, finish, resolve);
+          stdoutBuffer = "";
+        }
+        if (settled) return;
+
+        const stderr = stderrTail.trim();
+        const cleanExit = data.code === 0 || data.code == null;
+
+        // Only recover a missing `done` line when the engine actually ran.
+        if (cleanExit && !stderr && sawBatchActivity) {
+          onEvent({ type: "done", parsed: 0, skipped: 0, errors: 0 });
+          finish(() => resolve());
+          return;
+        }
+
+        const exitHint = !sawBatchActivity
+          ? "Parse engine exited before starting. Quit ParseKit, reinstall from the latest DMG, then try again."
+          : data.code != null && data.code !== 0
             ? `Sidecar exited with code ${data.code}`
             : "Parse engine stopped before the batch finished.";
-        const message = friendlySidecarMessage(stderrTail.trim() || exitHint);
+        const message = friendlySidecarMessage(stderr || exitHint);
         onEvent({ type: "error", message });
         finish(() => reject(new Error(message)));
       });
 
       child = await command.spawn();
-      await child.write(JSON.stringify(config) + "\n");
+      const payload = JSON.stringify(config) + "\n";
+      await child.write(payload);
     } catch (err) {
       const raw = String(err);
       console.error("[sidecar run error]", raw);

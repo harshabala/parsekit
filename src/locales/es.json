@@ -15,7 +15,7 @@
     "format": "Formato",
     "spreadsheetJsonHint": "Las hojas de cálculo siempre se exportan como JSON.",
     "ocr": "OCR (integrado)",
-    "ocrWorkersHint": "Los PDF escaneados usan más CPU — prueba 1–2 trabajadores en lotes OCR grandes.",
+    "ocrWorkersHint": "Los PDF escaneados usan más CPU. Ajusta los hilos OCR en Ajustes → Avanzado (prueba 1–2 en lotes grandes).",
     "expand": "Mostrar configuración",
     "collapse": "Ocultar configuración"
   },
@@ -38,7 +38,9 @@
     "missingNote": "Solo afectan a los tipos de archivo que requieren cada herramienta.",
     "libreoffice": "LibreOffice (Word, PowerPoint)",
     "imagemagick": "ImageMagick (PNG, JPG, SVG, …)",
-    "tesseract": "Tesseract OCR (integrado en ParseKit)"
+    "tesseract": "Tesseract OCR (integrado en ParseKit)",
+    "statusInstalled": "instalado",
+    "statusMissing": "no detectado"
   },
   "update": {
     "bannerAria": "Actualización disponible: versión {version}",
@@ -78,7 +80,8 @@
     "openOutput": "Abrir salida",
     "copyOutputPath": "Copiar ruta de salida",
     "copyLast": "Copiar último archivo",
-    "notifyDone": "Listo: {parsed} analizados, {errors} errores"
+    "notifyDone": "Listo: {parsed} analizados, {errors} errores",
+    "batchDoneWithErrors": "Lote terminado con {errors} errores. Revisa la lista."
   },
   "progress": {
     "title": "Procesando",
@@ -118,7 +121,8 @@
     "back": "Atrás",
     "empty": "Aún no hay lotes. Ejecuta un análisis para ver el historial.",
     "hint": "Últimos {count} lotes (más recientes primero).",
-    "rerun": "Repetir"
+    "rerun": "Repetir",
+    "saveErrors": "Guardar errores"
   },
   "errors": {
     "addFiles": "Añade archivos o una carpeta para analizar.",
@@ -126,7 +130,9 @@
     "parseFailed": "Error al analizar.",
     "parseCancelled": "Análisis cancelado.",
     "batchInterrupted": "El lote se detuvo antes de terminar este archivo.",
-    "engineStalled": "El motor de análisis dejó de responder. Vuelve a intentarlo con menos trabajos en paralelo."
+    "batchNotReached": "El lote terminó antes de procesar este archivo.",
+    "engineStalled": "El motor de análisis dejó de responder. Vuelve a intentarlo con menos trabajos en paralelo.",
+    "engineNoOutput": "El motor de análisis no se ejecutó. Reinstala desde el DMG más reciente o ejecuta npm run build:sidecar, cierra y vuelve a abrir ParseKit."
   },
   "settings": {
     "title": "Ajustes",
@@ -138,8 +144,11 @@
     "ocrLanguageLabel": "Idioma del texto del documento",
     "appearanceTitle": "Apariencia",
     "appearanceHint": "Elige cómo se ve ParseKit en tu Mac.",
-    "workersTitle": "Trabajadores en paralelo",
-    "workersHint": "Cuántos archivos analizar a la vez. Más es más rápido en lotes grandes; menos usa menos CPU.",
+    "advancedTitle": "Avanzado",
+    "advancedExpand": "Mostrar avanzado",
+    "advancedCollapse": "Ocultar avanzado",
+    "workersTitle": "Hilos OCR",
+    "workersHint": "Hilos OCR por archivo. Más hilos aceleran PDF escaneados grandes; menos reduce el uso de CPU.",
     "launchAtLogin": "Iniciar al iniciar sesión",
     "launchAtLoginHint": "Inicia ParseKit automáticamente al iniciar sesión en tu Mac.",
     "finderTitle": "Finder",

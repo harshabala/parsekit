@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
-    "release:macos": "npm run tauri build && bash scripts/postbuild-macos.sh",
+    "icons:regenerate": "tauri icon src-tauri/icons/icon-1024.png",
+    "release:macos": "npm run icons:regenerate && npm run tauri build && bash scripts/postbuild-macos.sh",
     "publish:macos": "bash scripts/publish-release.sh"
   },
   "devDependencies": {

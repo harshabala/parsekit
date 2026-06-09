@@ -6,10 +6,12 @@
     batches,
     onOpenFolder,
     onRerun,
+    onSaveErrors,
   }: {
     batches: BatchResult[];
     onOpenFolder: (path: string) => void;
     onRerun?: (batch: BatchResult) => void;
+    onSaveErrors?: (batch: BatchResult) => void;
   } = $props();
 
   function canRerun(batch: BatchResult): boolean {
@@ -82,11 +84,22 @@
         </div>
       </div>
       {#if batch.errors > 0}
-        <span class="history-meta history-meta-error">
-          {batch.errors === 1
-            ? t("recent.errorsOne")
-            : t("recent.errors", { count: batch.errors })}
-        </span>
+        <div class="history-error-row">
+          <span class="history-meta history-meta-error">
+            {batch.errors === 1
+              ? t("recent.errorsOne")
+              : t("recent.errors", { count: batch.errors })}
+          </span>
+          {#if onSaveErrors && (batch.fileErrors?.length ?? 0) > 0}
+            <button
+              type="button"
+              class="secondary history-save-errors-btn"
+              onclick={() => onSaveErrors?.(batch)}
+            >
+              {t("history.saveErrors")}
+            </button>
+          {/if}
+        </div>
       {/if}
     </div>
   {/each}

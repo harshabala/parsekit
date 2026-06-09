@@ -15,7 +15,7 @@
     "format": "Format",
     "spreadsheetJsonHint": "Spreadsheets always export as JSON.",
     "ocr": "OCR (built-in)",
-    "ocrWorkersHint": "Scanned PDFs use more CPU — try 1–2 workers for large OCR batches.",
+    "ocrWorkersHint": "Scanned PDFs use more CPU. Adjust OCR threads in Settings → Advanced (try 1–2 for large batches).",
     "expand": "Show configuration",
     "collapse": "Hide configuration"
   },
@@ -38,7 +38,9 @@
     "missingNote": "Missing tools only affect matching file types — other formats still parse.",
     "libreoffice": "LibreOffice (Word, PowerPoint)",
     "imagemagick": "ImageMagick (PNG, JPG, SVG, …)",
-    "tesseract": "Tesseract OCR (built into ParseKit)"
+    "tesseract": "Tesseract OCR (built into ParseKit)",
+    "statusInstalled": "installed",
+    "statusMissing": "not detected"
   },
   "update": {
     "bannerAria": "Update available: version {version}",
@@ -79,7 +81,8 @@
     "openOutput": "Open Output",
     "copyOutputPath": "Copy Output Path",
     "copyLast": "Copy Last File",
-    "notifyDone": "Done: {parsed} parsed, {errors} errors"
+    "notifyDone": "Done: {parsed} parsed, {errors} errors",
+    "batchDoneWithErrors": "Batch finished with {errors} file errors. See the list below."
   },
   "progress": {
     "title": "Processing",
@@ -119,7 +122,8 @@
     "back": "Back",
     "empty": "No batches yet. Run a parse to see history here.",
     "hint": "Last {count} batches (newest first).",
-    "rerun": "Re-run"
+    "rerun": "Re-run",
+    "saveErrors": "Save errors"
   },
   "errors": {
     "addFiles": "Add files or a folder to parse.",
@@ -127,7 +131,9 @@
     "parseFailed": "Parsing failed.",
     "parseCancelled": "Parsing cancelled.",
     "batchInterrupted": "Batch stopped before this file finished.",
-    "engineStalled": "Parse engine stopped responding. Try again with fewer parallel workers."
+    "batchNotReached": "Batch ended before this file was processed.",
+    "engineStalled": "Parse engine stopped responding. Try again with fewer parallel workers.",
+    "engineNoOutput": "Parse engine did not run. Reinstall from the latest DMG or run npm run build:sidecar, then quit and reopen ParseKit."
   },
   "settings": {
     "title": "Settings",
@@ -139,8 +145,11 @@
     "ocrLanguageLabel": "Document text language",
     "appearanceTitle": "Appearance",
     "appearanceHint": "Choose how ParseKit looks on your Mac.",
-    "workersTitle": "Parallel workers",
-    "workersHint": "How many files to parse at once. Higher is faster on large batches; lower uses less CPU.",
+    "advancedTitle": "Advanced",
+    "advancedExpand": "Show advanced",
+    "advancedCollapse": "Hide advanced",
+    "workersTitle": "OCR threads",
+    "workersHint": "OCR threads per file. Higher is faster on large scanned PDFs; lower uses less CPU.",
     "launchAtLogin": "Launch at login",
     "launchAtLoginHint": "Start ParseKit automatically when you sign in to your Mac.",
     "finderTitle": "Finder",

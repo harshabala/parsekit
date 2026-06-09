@@ -15,7 +15,7 @@
     "format": "格式",
     "spreadsheetJsonHint": "电子表格始终导出为 JSON。",
     "ocr": "OCR（内置）",
-    "ocrWorkersHint": "扫描 PDF 占用更多 CPU — 大批量 OCR 建议将并行 worker 设为 1–2。",
+    "ocrWorkersHint": "扫描 PDF 占用更多 CPU。请在设置 → 高级中调整 OCR 线程数（大批量建议 1–2）。",
     "expand": "显示配置",
     "collapse": "隐藏配置"
   },
@@ -38,7 +38,9 @@
     "missingNote": "缺少的工具仅影响对应文件类型，其他格式仍可解析。",
     "libreoffice": "LibreOffice（Word、PowerPoint）",
     "imagemagick": "ImageMagick（PNG、JPG、SVG 等）",
-    "tesseract": "Tesseract OCR（ParseKit 内置）"
+    "tesseract": "Tesseract OCR（ParseKit 内置）",
+    "statusInstalled": "已安装",
+    "statusMissing": "未检测到"
   },
   "update": {
     "bannerAria": "有可用更新：版本 {version}",
@@ -78,7 +80,8 @@
     "openOutput": "打开输出",
     "copyOutputPath": "复制输出路径",
     "copyLast": "复制上一个文件",
-    "notifyDone": "完成：已解析 {parsed}，错误 {errors}"
+    "notifyDone": "完成：已解析 {parsed}，错误 {errors}",
+    "batchDoneWithErrors": "批次完成，{errors} 个文件出错。请查看下方列表。"
   },
   "progress": {
     "title": "处理中",
@@ -118,7 +121,8 @@
     "back": "返回",
     "empty": "暂无批次。运行解析后会显示在这里。",
     "hint": "最近 {count} 个批次（新的在前）。",
-    "rerun": "重新运行"
+    "rerun": "重新运行",
+    "saveErrors": "保存错误"
   },
   "errors": {
     "addFiles": "请添加文件或文件夹以解析。",
@@ -126,7 +130,9 @@
     "parseFailed": "解析失败。",
     "parseCancelled": "已取消解析。",
     "batchInterrupted": "批次已停止，此文件未完成。",
-    "engineStalled": "解析引擎无响应。请减少并行 worker 后重试。"
+    "batchNotReached": "批次已结束，此文件尚未处理。",
+    "engineStalled": "解析引擎无响应。请减少并行 worker 后重试。",
+    "engineNoOutput": "解析引擎未运行。请从最新 DMG 重新安装，或运行 npm run build:sidecar 后退出并重新打开 ParseKit。"
   },
   "settings": {
     "title": "设置",
@@ -138,8 +144,11 @@
     "ocrLanguageLabel": "文档文字语言",
     "appearanceTitle": "外观",
     "appearanceHint": "选择 ParseKit 在您 Mac 上的显示方式。",
-    "workersTitle": "并行工作线程",
-    "workersHint": "同时解析的文件数量。批量大时可提高速度；降低可减少 CPU 占用。",
+    "advancedTitle": "高级",
+    "advancedExpand": "显示高级选项",
+    "advancedCollapse": "隐藏高级选项",
+    "workersTitle": "OCR 线程数",
+    "workersHint": "每个文件的 OCR 线程数。数值越高，大型扫描 PDF 越快；越低则 CPU 占用越少。",
     "launchAtLogin": "登录时启动",
     "launchAtLoginHint": "登录 Mac 时自动启动 ParseKit。",
     "finderTitle": "Finder",

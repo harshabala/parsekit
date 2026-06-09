@@ -24,9 +24,11 @@
     type OcrLanguageCode,
   } from "./lib/ocrLanguages";
   import { fileBaseName, filterSupportedPaths } from "./lib/supportedExtensions";
+  import { truncatePath } from "./lib/pathDisplay";
   import {
     applyParseProgressEvent,
-    settleInFlightOnAbort,
+    settleBatchOnStop,
+    settleRemainingOnDone,
   } from "./lib/progress";
   import { applyTheme, DEFAULT_THEME, normalizeThemeMode } from "./lib/theme";
   import DropZone from "./components/DropZone.svelte";
@@ -50,21 +52,17 @@
     collapseSlideOut,
     hintFadeIn,
     hintFadeOut,
-    panelBlurFlyIn,
     panelBlurFlyOut,
-    panelBlurFlyInParams,
     panelBlurFlyOutParams,
     panelFadeIn,
     panelFadeOut,
     sectionFlyIn,
     sectionFlyOut,
-    subviewFadeIn,
     subviewFadeOut,
   } from "./lib/motion";
   import "./index.css";
 
   const reducedMotion = $derived(prefersReducedMotion.current);
-  const mainPanelIn = $derived(panelBlurFlyInParams(reducedMotion));
   const mainPanelOut = $derived(panelBlurFlyOutParams(reducedMotion));
   const mainFadeIn = $derived(panelFadeIn(reducedMotion));
   const mainFadeOut = $derived(panelFadeOut(reducedMotion));
@@ -72,7 +70,6 @@
   const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
   const configSlideIn = $derived(collapseSlideIn(reducedMotion));
   const configSlideOut = $derived(collapseSlideOut(reducedMotion));
-  const subviewFadeInParams = $derived(subviewFadeIn(reducedMotion));
   const subviewFadeOutParams = $derived(subviewFadeOut(reducedMotion));
   const bannerFlyInParams = $derived(bannerFlyIn(reducedMotion));
   const bannerFlyOutParams = $derived(bannerFlyOut(reducedMotion));
@@ -118,7 +115,18 @@
   let updateStatusNote = $state<string | null>(null);
   let updateStatusOk = $state(false);
 
-  const PARSE_STALL_MS = 90_000;
+  const PARSE_STALL_BASE_MS = 120_000;
+  const PARSE_STALL_PER_FILE_MS = 15_000;
+  const PARSE_STALL_MAX_MS = 600_000;
+
+  function parseStallTimeoutMs(fileCount: number): number {
+    return Math.min(
+      PARSE_STALL_MAX_MS,
+      PARSE_STALL_BASE_MS + fileCount * PARSE_STALL_PER_FILE_MS
+    );
+  }
+
+  let parseStallLimitMs = PARSE_STALL_BASE_MS;
   let lastParseEventAt = 0;
   let parseStallTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -521,7 +529,7 @@
     touchParseActivity();
     parseStallTimer = setInterval(() => {
       if (!isParsing) return;
-      if (Date.now() - lastParseEventAt < PARSE_STALL_MS) return;
+      if (Date.now() - lastParseEventAt < parseStallLimitMs) return;
       parseRun?.cancel();
       parseRun = null;
       stopParseUi(t("errors.engineStalled"), t("errors.engineStalled"));
@@ -531,7 +539,10 @@
   function stopParseUi(notice: string, error: string | null = null) {
     clearParseStallWatchdog();
     isParsing = false;
-    files = settleInFlightOnAbort(files, t("errors.batchInterrupted"));
+    files = settleBatchOnStop(files, {
+      parsing: t("errors.batchInterrupted"),
+      pending: t("errors.batchNotReached"),
+    });
     lastParsingId = null;
     errorMsg = error;
     noticeMsg = notice;
@@ -568,11 +579,21 @@
       return;
     }
 
+    filesToParse = [...new Map(filesToParse.map((p) => [p, p])).values()];
+    try {
+      filesToParse = await invoke<string[]>("canonicalize_paths", {
+        paths: filesToParse,
+      });
+    } catch (e) {
+      console.warn("[canonicalize_paths]", e);
+    }
+
     try {
       await invoke("trigger_haptic");
     } catch {}
 
     isParsing = true;
+    parseStallLimitMs = parseStallTimeoutMs(filesToParse.length);
     startParseStallWatchdog();
     lastParsingId = null;
     totalFiles = filesToParse.length;
@@ -616,6 +637,25 @@
             isParsing = false;
             lastParsingId = null;
             totalFiles = totalFiles || files.length;
+            const sawProgress = files.some((f) => f.status !== "pending");
+            if (!sawProgress) {
+              errorMsg = t("errors.engineNoOutput");
+              noticeMsg = t("errors.parseFailed");
+              files = settleBatchOnStop(files, {
+                parsing: t("errors.engineNoOutput"),
+                pending: t("errors.engineNoOutput"),
+              });
+              return;
+            }
+            files = settleRemainingOnDone(files, t("errors.batchNotReached"));
+            const errCount = files.filter((f) => f.status === "error").length;
+            if (errCount > 0) {
+              noticeMsg = t("run.batchDoneWithErrors", { errors: errCount });
+              errorMsg = null;
+            } else {
+              noticeMsg = null;
+              errorMsg = null;
+            }
             void addToHistory();
             if (!hasSuccessfulParse) {
               hasSuccessfulParse = true;
@@ -623,18 +663,21 @@
               void setSetting("hasSuccessfulParse", true);
             }
             const parsed = files.filter((f) => f.status === "done").length;
-            const errCount = files.filter((f) => f.status === "error").length;
+            const notifyErrors = files.filter((f) => f.status === "error").length;
             void invoke("show_completion_notification", {
               title: t("app.name"),
-              body: t("run.notifyDone", { parsed, errors: errCount }),
+              body: t("run.notifyDone", { parsed, errors: notifyErrors }),
             }).catch(() => {});
           } else if (event.type === "error") {
-            parseRun = null;
-            stopParseUi(
-              t("errors.parseFailed"),
-              event.message || t("errors.parseFailed")
-            );
-            console.error(event.message);
+            // Fatal sidecar error (see sidecar.ts protocol) — not per-file progress errors.
+            console.error("[parse batch]", event.message);
+            if (isParsing && event.message) {
+              parseRun?.cancel();
+              parseRun = null;
+              stopParseUi(t("errors.parseFailed"), event.message);
+            } else if (event.message) {
+              errorMsg = event.message;
+            }
           }
         }
     );
@@ -642,11 +685,28 @@
     try {
       await parseRun.promise;
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      const allSettled = files.every(
+        (f) =>
+          f.status === "done" ||
+          f.status === "error" ||
+          f.status === "skipped"
+      );
       if (isParsing) {
-        stopParseUi(
-          t("errors.parseFailed"),
-          e instanceof Error ? e.message : String(e)
-        );
+        if (allSettled) {
+          clearParseStallWatchdog();
+          isParsing = false;
+          lastParsingId = null;
+          const errCount = files.filter((f) => f.status === "error").length;
+          noticeMsg =
+            errCount > 0
+              ? t("run.batchDoneWithErrors", { errors: errCount })
+              : null;
+          errorMsg = errCount > 0 ? msg : null;
+          void addToHistory();
+        } else {
+          stopParseUi(t("errors.parseFailed"), msg);
+        }
         console.error(e);
       }
     } finally {
@@ -657,7 +717,8 @@
 
   async function addToHistory() {
     const parsed = files.filter((f) => f.status === "done").length;
-    const errors = files.filter((f) => f.status === "error").length;
+    const errored = files.filter((f) => f.status === "error");
+    const errors = errored.length;
     const newBatch: BatchResult = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
@@ -669,6 +730,13 @@
       errors,
       sourcePaths:
         selectedFiles.length > 0 ? [...selectedFiles] : undefined,
+      fileErrors:
+        errors > 0
+          ? errored.map((f) => ({
+              file: f.name,
+              error: f.error ?? t("errors.parseFailed"),
+            }))
+          : undefined,
     };
     recentBatches = [newBatch, ...recentBatches.slice(0, MAX_RECENT_BATCHES - 1)];
     await setSetting("recentBatches", recentBatches);
@@ -680,6 +748,42 @@
     } catch {
       const { Command } = await import("@tauri-apps/plugin-shell");
       await Command.create("open", [path]).spawn();
+    }
+  }
+
+  function buildErrorReport(batch: BatchResult): string {
+    const lines = [
+      "# ParseKit error report",
+      "",
+      `- Date: ${batch.timestamp}`,
+      `- ParseKit version: ${appVersion}`,
+      `- Output format: ${batch.format.toUpperCase()}`,
+      `- Files: ${batch.fileCount} · Parsed: ${batch.parsed} · Errors: ${batch.errors}`,
+      `- Output folder: ${batch.outputDir}`,
+      "",
+      "## Failed files",
+      "",
+    ];
+    (batch.fileErrors ?? []).forEach((fe, i) => {
+      lines.push(`${i + 1}. ${fe.file}`);
+      lines.push(`   ${fe.error}`);
+      lines.push("");
+    });
+    return lines.join("\n");
+  }
+
+  async function saveErrorReport(batch: BatchResult) {
+    if (!batch.fileErrors || batch.fileErrors.length === 0) return;
+    const stamp = batch.timestamp.replace(/[:.]/g, "-").slice(0, 19);
+    const fileName = `parsekit-errors-${stamp}.md`;
+    try {
+      await invoke<string>("save_error_report", {
+        dir: batch.outputDir,
+        fileName,
+        contents: buildErrorReport(batch),
+      });
+    } catch (e) {
+      errorMsg = e instanceof Error ? e.message : String(e);
     }
   }
 
@@ -703,7 +807,7 @@
 <div class="shell">
   {#if !showSettings && !showHistory}
     {#key "main"}
-      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
+      <div class="motion-panel" out:panelBlurFlyOut={mainPanelOut}>
         <div class="motion-panel-content">
   <header>
     <span>{t("app.name")}</span>
@@ -829,13 +933,19 @@
       {:else}
         <button
           type="button"
-          class="secondary config-collapsed-summary"
+          class="config-collapsed-summary"
+          title={outputDir || t("config.downloads")}
           in:slide={configSlideIn}
           out:slide={configSlideOut}
           onclick={toggleConfigCollapsed}
         >
-          {outputDir ? outputDir : t("config.downloads")} · {format.toUpperCase()}
-          {#if ocrEnabled} · OCR{/if}
+          <span class="config-summary-path"
+            >{outputDir ? truncatePath(outputDir, 26) : t("config.downloads")}</span
+          >
+          <span class="config-summary-chips">
+            <span class="config-summary-chip">{format.toUpperCase()}</span>
+            {#if ocrEnabled}<span class="config-summary-chip">OCR</span>{/if}
+          </span>
         </button>
       {/if}
     </div>
@@ -930,12 +1040,13 @@
 
   {#if showHistory}
     {#key "history"}
-      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
+      <div class="motion-panel" out:panelBlurFlyOut={mainPanelOut}>
         <div class="motion-panel-content">
           <HistoryScreen
             batches={recentBatches}
             onOpenFolder={openFolder}
             onRerun={rerunBatch}
+            onSaveErrors={saveErrorReport}
             onClose={() => (showHistory = false)}
           />
         </div>
@@ -945,10 +1056,10 @@
 
   {#if showSettings}
     {#key "settings"}
-      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
+      <div class="motion-panel" out:panelBlurFlyOut={mainPanelOut}>
         <div class="motion-panel-content">
     {#key showAbout}
-      <div in:fade={subviewFadeInParams} out:fade={subviewFadeOutParams}>
+      <div class="subview-fill" out:fade={subviewFadeOutParams}>
     {#if showAbout}
       <AboutScreen onClose={() => (showAbout = false)} />
     {:else}

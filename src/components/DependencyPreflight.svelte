@@ -4,7 +4,14 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
   import { t } from "../lib/i18n.svelte";
-  import { easingDecelerate, rowFlyOut } from "../lib/motion";
+  import { depRowAriaLabel } from "../lib/depsAria";
+  import {
+    depsPopDelayMs,
+    depsStaggerDelayMs,
+    easingDecelerate,
+    MOTION_DEPS_ENTER_MS,
+    rowFlyOut,
+  } from "../lib/motion";
 
   interface DepStatus {
     id: string;
@@ -31,8 +38,8 @@
   function itemFly(index: number) {
     return {
       y: reducedMotion ? 0 : 10,
-      duration: reducedMotion ? 0 : 220,
-      delay: reducedMotion ? 0 : index * 55,
+      duration: reducedMotion ? 0 : MOTION_DEPS_ENTER_MS,
+      delay: reducedMotion ? 0 : depsStaggerDelayMs(index),
       easing: easingDecelerate,
     };
   }
@@ -93,6 +100,12 @@
           class="deps-item"
           class:deps-item-installed={dep.installed}
           class:deps-item-missing={!dep.installed}
+          aria-label={depRowAriaLabel(
+            t(dep.labelKey),
+            dep.installed,
+            t("deps.statusInstalled"),
+            t("deps.statusMissing")
+          )}
           in:fly={itemFly(index)}
           out:fly={rowFlyOut(reducedMotion)}
         >
@@ -102,7 +115,7 @@
               class:deps-status-installed={dep.installed}
               class:deps-status-missing={!dep.installed}
               class:deps-status-pop={dep.installed && animGeneration > 0}
-              style:--deps-pop-delay="{reducedMotion ? 0 : index * 55}ms"
+              style:--deps-pop-delay="{reducedMotion ? 0 : depsPopDelayMs(index)}ms"
               aria-hidden="true"
             >
               {#if dep.installed}
@@ -113,6 +126,15 @@
                     stroke-width="1.6"
                     stroke-linecap="round"
                     stroke-linejoin="round"
+                  />
+                </svg>
+              {:else}
+                <svg class="deps-missing-icon" width="11" height="11" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M3.2 3.2 8.8 8.8M8.8 3.2 3.2 8.8"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
                   />
                 </svg>
               {/if}

@@ -514,20 +514,137 @@ struct DependencyStatus {
     brew_hint: String,
 }
 
-fn shell_which(name: &str) -> bool {
+/// PATH used for `which` and inherited by child processes (sidecar → liteparse shells out).
+const HOMEBREW_AUGMENTED_PATH: &str =
+    "/opt/homebrew/bin:/usr/local/bin:/opt/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+
+const TOOL_PATH_PREFIXES: &[&str] = &["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"];
+
+fn path_list_contains(path_var: &str, dir: &str) -> bool {
+    path_var.split(':').any(|p| p == dir)
+}
+
+/// Prepend common macOS tool dirs so Finder-launched apps (minimal PATH) can run `soffice` / `magick`.
+fn ensure_homebrew_on_process_path() {
+    let current = std::env::var("PATH").unwrap_or_default();
+    let mut prefix = String::new();
+    for dir in TOOL_PATH_PREFIXES {
+        if !path_list_contains(&current, dir) {
+            prefix.push_str(dir);
+            prefix.push(':');
+        }
+    }
+    if prefix.is_empty() {
+        return;
+    }
+    if current.is_empty() {
+        std::env::set_var("PATH", HOMEBREW_AUGMENTED_PATH);
+    } else {
+        std::env::set_var("PATH", format!("{prefix}{current}"));
+    }
+}
+
+fn shell_which_on_augmented_path(name: &str) -> bool {
     std::process::Command::new("/usr/bin/which")
         .arg(name)
+        .env("PATH", HOMEBREW_AUGMENTED_PATH)
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false)
 }
 
+/// True if the tool exists at a known install path or is found via augmented `which`.
+fn dependency_tool_installed(
+    candidate_paths: &[&str],
+    which_names: &[&str],
+    path_exists: impl Fn(&str) -> bool,
+    which: impl Fn(&str) -> bool,
+) -> bool {
+    candidate_paths.iter().any(|p| path_exists(p))
+        || which_names.iter().any(|n| which(n))
+}
+
+const LIBREOFFICE_CANDIDATE_PATHS: &[&str] = &[
+    "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+    "/opt/homebrew/bin/soffice",
+    "/usr/local/bin/soffice",
+    "/opt/local/bin/soffice",
+    "/opt/homebrew/bin/libreoffice",
+    "/usr/local/bin/libreoffice",
+    "/opt/local/bin/libreoffice",
+];
+
+const IMAGEMAGICK_CANDIDATE_PATHS: &[&str] = &[
+    "/opt/homebrew/bin/magick",
+    "/usr/local/bin/magick",
+    "/opt/local/bin/magick",
+    "/opt/homebrew/bin/convert",
+    "/usr/local/bin/convert",
+    "/opt/local/bin/convert",
+];
+
 fn libreoffice_available() -> bool {
-    shell_which("soffice") || shell_which("libreoffice")
+    dependency_tool_installed(
+        LIBREOFFICE_CANDIDATE_PATHS,
+        &["soffice", "libreoffice"],
+        |p| Path::new(p).exists(),
+        shell_which_on_augmented_path,
+    )
 }
 
 fn imagemagick_available() -> bool {
-    shell_which("magick") || shell_which("convert")
+    dependency_tool_installed(
+        IMAGEMAGICK_CANDIDATE_PATHS,
+        &["magick", "convert"],
+        |p| Path::new(p).exists(),
+        shell_which_on_augmented_path,
+    )
+}
+
+#[cfg(test)]
+mod dependency_detect_tests {
+    use super::*;
+
+    #[test]
+    fn detects_tool_at_absolute_path_without_which() {
+        assert!(dependency_tool_installed(
+            &["/fake/opt/homebrew/bin/magick"],
+            &["magick"],
+            |p| p == "/fake/opt/homebrew/bin/magick",
+            |_| false,
+        ));
+    }
+
+    #[test]
+    fn detects_via_which_when_path_missing() {
+        assert!(dependency_tool_installed(
+            &["/missing/magick"],
+            &["magick"],
+            |_| false,
+            |n| n == "magick",
+        ));
+    }
+
+    #[test]
+    fn intel_local_bin_candidate_in_libreoffice_list() {
+        assert!(LIBREOFFICE_CANDIDATE_PATHS.contains(&"/usr/local/bin/soffice"));
+    }
+
+    #[test]
+    fn intel_local_bin_candidate_in_imagemagick_list() {
+        assert!(IMAGEMAGICK_CANDIDATE_PATHS.contains(&"/usr/local/bin/magick"));
+    }
+
+    #[test]
+    fn libreoffice_app_bundle_path_listed() {
+        assert!(LIBREOFFICE_CANDIDATE_PATHS
+            .contains(&"/Applications/LibreOffice.app/Contents/MacOS/soffice"));
+    }
+
+    #[test]
+    fn macports_bin_candidate_in_imagemagick_list() {
+        assert!(IMAGEMAGICK_CANDIDATE_PATHS.contains(&"/opt/local/bin/magick"));
+    }
 }
 
 #[tauri::command]
@@ -547,6 +664,7 @@ fn check_dependencies() -> Result<Vec<DependencyStatus>, String> {
             optional: true,
             brew_hint: "brew install imagemagick".into(),
         },
+        // Tesseract is bundled with ParseKit (liteparse); no external install check.
         DependencyStatus {
             id: "tesseract".into(),
             label_key: "deps.tesseract".into(),
@@ -594,6 +712,35 @@ fn open_privacy_security_settings() -> Result<(), String> {
 #[tauri::command]
 fn gatekeeper_fix_command() -> String {
     "xattr -cr /Applications/ParseKit.app && xattr -d com.apple.FinderInfo /Applications/ParseKit.app 2>/dev/null || true".to_string()
+}
+
+/// Write a text report (error log) into `dir/file_name`, then reveal it in Finder.
+/// Returns the full path of the written file.
+#[tauri::command]
+fn save_error_report(dir: String, file_name: String, contents: String) -> Result<String, String> {
+    let mut path = std::path::PathBuf::from(&dir);
+    if !path.is_dir() {
+        // Fall back to ~/Downloads if the original output dir is gone.
+        let home = std::env::var("HOME")
+            .map_err(|_| "Could not resolve a folder to save the report".to_string())?;
+        let downloads = std::path::PathBuf::from(&home).join("Downloads");
+        path = if downloads.is_dir() {
+            downloads
+        } else {
+            std::path::PathBuf::from(home)
+        };
+    }
+    path.push(&file_name);
+    std::fs::write(&path, contents).map_err(|e| format!("Could not write report: {e}"))?;
+    let path_str = path.to_string_lossy().to_string();
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("open")
+            .arg("-R")
+            .arg(&path_str)
+            .spawn();
+    }
+    Ok(path_str)
 }
 
 /// Copy plain text to the system clipboard (macOS `pbcopy` — reliable for menu-bar apps).
@@ -691,6 +838,20 @@ fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
 #[tauri::command]
 fn path_is_directory(path: String) -> bool {
     Path::new(&normalize_user_path(path)).is_dir()
+}
+
+/// Resolve symlinks (/var vs /private/var) so sidecar progress events match UI row ids.
+#[tauri::command]
+fn canonicalize_paths(paths: Vec<String>) -> Vec<String> {
+    paths
+        .into_iter()
+        .map(|p| {
+            let p = normalize_user_path(p);
+            std::fs::canonicalize(&p)
+                .map(|c| c.to_string_lossy().into_owned())
+                .unwrap_or(p)
+        })
+        .collect()
 }
 
 /// Walks the tree off the UI thread so large folders do not beach-ball the webview.
@@ -908,6 +1069,7 @@ async fn install_update(app: AppHandle) -> Result<(), String> {
 }
 
 pub fn run() {
+    ensure_homebrew_on_process_path();
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
@@ -917,8 +1079,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             scan_directory,
             path_is_directory,
+            canonicalize_paths,
             open_in_finder,
             copy_file_to_clipboard,
+            save_error_report,
             get_system_info,
             check_dependencies,
             is_installed_in_applications,

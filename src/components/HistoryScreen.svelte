@@ -10,11 +10,13 @@
     batches,
     onOpenFolder,
     onRerun,
+    onSaveErrors,
     onClose,
   }: {
     batches: BatchResult[];
     onOpenFolder: (path: string) => void;
     onRerun: (batch: BatchResult) => void;
+    onSaveErrors?: (batch: BatchResult) => void;
     onClose: () => void;
   } = $props();
 
@@ -45,7 +47,7 @@
     {:else}
       <div in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
         <p class="settings-hint">{t("history.hint", { count: batches.length })}</p>
-        <BatchHistoryList {batches} {onOpenFolder} {onRerun} />
+        <BatchHistoryList {batches} {onOpenFolder} {onRerun} {onSaveErrors} />
       </div>
     {/if}
   </div>

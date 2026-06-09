@@ -25,6 +25,15 @@ export interface BatchResult {
   errors: number;
   /** Present when batch used explicit file selection (for re-run). */
   sourcePaths?: string[];
+  /** Per-file failures captured for the downloadable error report. */
+  fileErrors?: BatchFileError[];
+}
+
+export interface BatchFileError {
+  /** Display name of the failed file. */
+  file: string;
+  /** Error message reported by the parse engine. */
+  error: string;
 }
 
 export const MAX_RECENT_BATCHES = 10;
