@@ -5,7 +5,7 @@ import pLimit from "p-limit";
 import { createInterface } from "readline";
 import { stdin, stdout } from "process";
 
-/** Dev-only Node sidecar. Production uses the Rust parsedock-sidecar binary. */
+/** Dev-only Node sidecar. Production uses the Rust parsekit-sidecar binary. */
 const SPREADSHEET_EXTENSIONS = new Set([".xls", ".xlsx", ".xlsm", ".ods", ".csv", ".tsv"]);
 
 function isSpreadsheet(filePath) {

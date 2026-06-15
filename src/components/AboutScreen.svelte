@@ -3,7 +3,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { t } from "../lib/i18n.svelte";
 
-  const REPO_URL = "https://github.com/harshabala/parsedock";
+  const REPO_URL = "https://github.com/harshabala/parsekit";
 
   let { onClose }: { onClose: () => void } = $props();
 

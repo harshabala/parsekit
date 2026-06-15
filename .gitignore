@@ -6,6 +6,9 @@ src-tauri/binaries/
 src-tauri/gen/
 .DS_Store
 .brand-preview/
+
+# Claude Code local worktrees / session state — never commit
+.claude/
 *.css.bak
 *.log
 .env

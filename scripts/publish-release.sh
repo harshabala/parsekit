@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="$(node -p "require('$ROOT/package.json').version")"
 TAG="v${VERSION}"
-REPO="harshabala/parsedock"
+REPO="harshabala/parsekit"
 KEY_PATH="${TAURI_SIGNING_PRIVATE_KEY_PATH:-$HOME/.tauri/parsekit.key}"
 
 APP="$ROOT/src-tauri/target/release/bundle/macos/ParseKit.app"
@@ -70,7 +70,7 @@ const json = {
   platforms: {
     "darwin-aarch64": {
       signature,
-      url: `https://github.com/harshabala/parsedock/releases/download/v${version}/${process.env.UPDATER_NAME}`,
+      url: `https://github.com/harshabala/parsekit/releases/download/v${version}/${process.env.UPDATER_NAME}`,
     },
   },
 };

@@ -68,7 +68,7 @@ Build on each target platform (Apple Silicon vs Intel Mac) so the correct host t
 
 ParseKit includes the [Tauri v2 updater](https://v2.tauri.app/plugin/updater/). On launch (and via **Settings → Updates → Check for updates**), the app fetches a manifest from GitHub Releases:
 
-`https://github.com/harshabala/parsedock/releases/latest/download/parsekit-latest.json`
+`https://github.com/harshabala/parsekit/releases/latest/download/parsekit-latest.json`
 
 When a newer version is available, a gold banner appears in the popover: **Install & Restart** or **Later**. Updates download a signed `.app.tar.gz` and replace the app bundle (not the DMG installer flow).
 

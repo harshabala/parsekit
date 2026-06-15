@@ -4,7 +4,7 @@ set -euo pipefail
 
 VERSION="${1:-0.2.2}"
 TAG="v${VERSION}"
-REPO="harshabala/parsedock"
+REPO="harshabala/parsekit"
 TARBALL="ParseKit_${VERSION}_aarch64.app.tar.gz"
 URL="https://github.com/${REPO}/releases/download/${TAG}/${TARBALL}"
 WORKDIR="$(mktemp -d)"
