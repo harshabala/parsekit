@@ -351,6 +351,18 @@ fn normalize_user_path(path: String) -> String {
     trimmed.to_string()
 }
 
+/// Resolve and validate a user-supplied path before spawning `open` or similar OS commands.
+fn validate_user_path(path: &str) -> Result<std::path::PathBuf, String> {
+    let normalized = normalize_user_path(path.to_string());
+    if normalized.is_empty() {
+        return Err("Path is empty".into());
+    }
+    if normalized.as_bytes().contains(&0) || normalized.chars().any(|c| c.is_control()) {
+        return Err("Invalid path".into());
+    }
+    std::fs::canonicalize(&normalized).map_err(|e| format!("Path does not exist: {e}"))
+}
+
 fn file_path_to_string(path: tauri_plugin_dialog::FilePath) -> Option<String> {
     path.into_path()
         .ok()
@@ -735,10 +747,12 @@ fn save_error_report(dir: String, file_name: String, contents: String) -> Result
     let path_str = path.to_string_lossy().to_string();
     #[cfg(target_os = "macos")]
     {
-        let _ = std::process::Command::new("open")
-            .arg("-R")
-            .arg(&path_str)
-            .spawn();
+        if let Ok(canonical) = validate_user_path(&path_str) {
+            let _ = std::process::Command::new("open")
+                .arg("-R")
+                .arg(canonical)
+                .spawn();
+        }
     }
     Ok(path_str)
 }
@@ -943,8 +957,9 @@ fn set_launch_at_login(_enabled: bool) -> Result<(), String> {
 
 #[tauri::command]
 fn open_in_finder(path: String) -> Result<(), String> {
+    let canonical = validate_user_path(&path)?;
     std::process::Command::new("open")
-        .arg(&path)
+        .arg(canonical)
         .spawn()
         .map_err(|e| format!("Failed to open in Finder: {}", e))?;
     Ok(())

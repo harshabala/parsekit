@@ -811,6 +811,7 @@
         <div class="motion-panel-content">
   <header>
     <span>{t("app.name")}</span>
+    {#if appVersion}<span class="header-ver">{appVersion}</span>{/if}
     <div class="header-actions">
       <button
         class="icon-btn icon-btn-settings"

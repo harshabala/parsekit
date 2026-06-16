@@ -19,10 +19,7 @@ src-tauri/gen/
 !*.key.pub
 parsekit.key
 parsekit.key.pub
-src-tauri/com.parsedock.app
 src-tauri/*.app
-com.parsedock.app.lock
-**/com.parsedock.app.lock
 
 # macOS Finder duplicate copies (break cargo auto-discovery in src/bin/)
 * 2.rs
@@ -34,7 +31,8 @@ com.parsedock.app.lock
 * 2.ico
 * 2.md
 * 2.sh
-com.parsedock.app
-com.parsedock 2.app
 **/ParseKit*.app
 !src-tauri/target/release/bundle/**/*.app
+
+# Design preview prototypes (throwaway)
+design/*.preview.html
