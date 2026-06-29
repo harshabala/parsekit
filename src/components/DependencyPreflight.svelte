@@ -45,12 +45,15 @@
     const initial = options?.initial ?? false;
     error = null;
 
-    const cached = takeCachedDependencies();
-    if (cached) {
-      deps = cached;
-      loading = false;
-      listVisible = true;
-      return;
+    // Only consume prefetch cache on first settings load; Recheck always hits check_dependencies.
+    if (initial) {
+      const cached = takeCachedDependencies();
+      if (cached) {
+        deps = cached;
+        loading = false;
+        listVisible = true;
+        return;
+      }
     }
 
     if (!initial && deps.length > 0) {
