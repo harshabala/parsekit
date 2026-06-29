@@ -717,7 +717,7 @@ label {
   position: relative;
   flex: 1;
   min-width: 0;
-  height: 32px;
+  min-height: 44px;
   display: flex;
   align-items: center;
 }
@@ -765,8 +765,8 @@ label {
 
 .workers-slider-input::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   margin-top: -7px;
   border-radius: 50%;
   border: 0.5px solid var(--border-color);
@@ -781,8 +781,8 @@ label {
 }
 
 .workers-slider-input::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 0.5px solid var(--border-color);
   background: var(--glass-bg);

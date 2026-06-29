@@ -22,4 +22,9 @@ describe("UI token CSS", () => {
     expect(css).toMatch(/\.about-section-title\s*\{[^}]*text-wrap:\s*balance/s);
     expect(css).toMatch(/\.about-hero\s*\{[^}]*text-wrap:\s*balance/s);
   });
+
+  it("expands workers slider hit area", () => {
+    expect(css).toMatch(/\.workers-slider-track-wrap\s*\{[^}]*min-height:\s*44px/s);
+    expect(css).toMatch(/\.workers-slider-input::-webkit-slider-thumb\s*\{[^}]*width:\s*22px/s);
+  });
 });
