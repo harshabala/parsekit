@@ -4,157 +4,114 @@
 
 <h1 align="center">ParseKit</h1>
 
-<p align="center">
-  Turn PDFs and Office files into clean text on your Mac — nothing uploaded, no Terminal needed.
-</p>
+<h3 align="center">Turn documents into AI-ready Markdown</h3>
 
 <p align="center">
-  <a href="https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.2_aarch64.dmg"><img src="https://img.shields.io/badge/Download-DMG%20(Apple%20Silicon)-3F3830?style=for-the-badge" alt="Download DMG"></a>
+  <a href="https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.2_aarch64.dmg"><strong>Download for Mac (Apple Silicon)</strong></a>
+  &nbsp;·&nbsp;
+  <a href="docs/INSTALL.md">Install guide</a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/harshabala/parsekit/releases/latest"><strong>All releases</strong></a>
-  &nbsp;·&nbsp;
-  <a href="docs/INSTALL.md">Install help</a>
-  &nbsp;·&nbsp;
-  <a href="#how-to-use-it">How to use it</a>
-</p>
+ParseKit is a native macOS menu-bar app that converts PDFs, Office files, spreadsheets, and images into clean Markdown, plain text, or JSON — entirely on your Mac.
 
 ---
 
-## Get ParseKit (3 steps — no git, no coding)
+## Why ParseKit?
 
-**You do not need to clone this repo or run `npm install`.** That's only for developers. If you just want the app:
+Large language models work best with clean, structured text.
 
-| Step | What to do |
-|------|------------|
-| **1. Download** | Click **[Download DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.2_aarch64.dmg)** (Apple Silicon Mac). Or open [Releases](https://github.com/harshabala/parsekit/releases/latest) and grab the `.dmg` under **Assets**. |
-| **2. Install** | Open the DMG → drag **ParseKit** into **Applications** → eject the DMG. |
-| **3. Open** | Open ParseKit from **Applications**. Look for the icon in your **menu bar** (top-right), not the Dock. |
+Unfortunately, PDFs, Office documents, and scanned files often require unnecessary parsing before the model can understand your content.
 
-**Requirements:** macOS 12+, Apple Silicon (M1/M2/M3/M4). First launch may need a one-time security approval — see **[Install guide](docs/INSTALL.md)**.
+ParseKit converts those documents into structured Markdown locally on your Mac, making them easier to use with ChatGPT, Claude, Gemini, Codex, and other AI tools.
 
-<details>
-<summary><strong>Clicked the green <code>Code</code> button by mistake?</strong></summary>
+Everything happens on-device.
 
-That copies a git URL for developers. **End users should ignore it.** Use the DMG link above instead.
+No cloud upload.
 
-</details>
+No subscriptions.
+
+No API keys.
 
 ---
 
-## What is this?
+## Features
 
-ParseKit lives in your **menu bar**. Point it at documents, get back `.md`, `.txt`, or `.json` files you can paste into ChatGPT, Obsidian, or any AI tool.
+- Local-first processing
+- Native macOS app
+- AI-ready Markdown
+- Plain Text export
+- JSON export
+- OCR for scanned documents
+- Office document support
+- PDF support
+- Spreadsheet support
+- Fast batch conversion
+- Privacy-first — no telemetry
 
-- **Private** — parsing happens on your Mac
-- **Batch** — drop a whole folder at once
-- **OCR built in** — scanned PDFs work offline
+---
 
-**Good for:** contracts, research papers, Word docs, slide decks, scanned pages.  
-**Not for:** editing files, Windows/Linux, or pixel-perfect layout recreation.
+## Why Markdown?
 
-## See it in 30 seconds
+Markdown is a clean, structured format that both humans and language models understand well.
 
-```mermaid
-flowchart LR
-  A["📁 Your folder<br/>PDFs, Word, Excel…"] --> B["ParseKit<br/>menu bar app"]
-  B --> C["📄 Output folder<br/>.md, .txt, or .json"]
-  C --> D["Paste into ChatGPT,<br/>Obsidian, code, etc."]
-```
+Converting documents once before sharing them with an AI assistant helps:
 
-1. Click the ParseKit icon in the menu bar.
-2. Pick an output folder.
-3. Drag in files or a folder.
-4. Hit **Run Parse**.
-5. Open the output folder.
+- eliminate repeated parsing
+- preserve document hierarchy
+- create cleaner context
+- improve prompt quality
+- reduce unnecessary formatting overhead
 
-## How to use it
+ParseKit focuses on cleaner context and lower parsing overhead — not a promise that Markdown always uses fewer tokens.
 
-### The main screen
+---
 
-| Step | What to do |
-|------|------------|
-| 1 | Choose an **output folder** |
-| 2 | **Drop files or a folder**, or use Select Files / Select Folder |
-| 3 | Click **Run Parse** |
+## Get ParseKit
 
-### Output formats
+**You do not need `git clone`.** End users install the DMG:
 
-| Format | Best for |
-|--------|----------|
-| **Markdown** (.md) | Notes apps, AI chat |
-| **Plain text** (.txt) | Simple copy-paste |
-| **JSON** (.json) | Code, spreadsheets, RAG pipelines |
+1. **[Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.2_aarch64.dmg)** (macOS 12+, Apple Silicon)
+2. Open it → drag **ParseKit** to **Applications**
+3. Open from Applications → look for the icon in your **menu bar** (top-right)
 
-### File types
+First-launch security steps: **[docs/INSTALL.md](docs/INSTALL.md)**
 
-| Type | Examples | Notes |
-|------|----------|-------|
-| PDF | `.pdf` | Works immediately. OCR for scans. |
-| Word / PowerPoint | `.docx`, `.pptx`, … | Needs free [LibreOffice](https://www.libreoffice.org/) |
-| Spreadsheets | `.xlsx`, `.csv` | Always → JSON |
-| Images | `.png`, `.jpg` | Needs `brew install imagemagick` |
-
-ParseKit shows what's missing under **Settings → Optional converters**.
-
-### Right-click in Finder (Quick Action)
-
-After installing the Quick Action in **Settings → Finder**:
-
-> Right-click a PDF → **Quick Actions** → **Parse to Markdown with ParseKit**
-
-The menu item is **not** called "Convert to Markdown" — that's usually a different app or macOS shortcut. ParseKit's action name includes **ParseKit** in it.
-
-If you've set an output folder, it parses silently and notifies you when done. Otherwise ParseKit opens with the file loaded.
-
-### Settings worth knowing
-
-| Setting | What it does |
-|---------|--------------|
-| **App language** | English, 中文, Español |
-| **Appearance** | Light, dark, or system |
-| **Launch at login** | Start with macOS |
-| **Updates** | In-app update from GitHub Releases |
+---
 
 ## Privacy
 
-- Files stay on your Mac
-- No analytics or accounts
-- Parsing uses no network (updates and optional OCR language downloads are separate)
+Everything runs locally.
 
-## Troubleshooting
+Your files never leave your Mac.
 
-| Problem | Fix |
-|---------|-----|
-| App blocked on first launch | [Install guide](docs/INSTALL.md#step-3--first-launch-the-annoying-part) |
-| Can't find the app | Menu bar only — check the `›` overflow area |
-| Office files fail | Install LibreOffice, hit **Recheck** in Settings |
-| Wrong Finder menu item | Use **Parse to Markdown with ParseKit**, not "Convert to Markdown" |
-| Update fails | Re-download the [latest DMG](https://github.com/harshabala/parsekit/releases/latest) |
+No cloud processing.
 
-More help: **[docs/INSTALL.md](docs/INSTALL.md)** · **[docs/README.md](docs/README.md)**
+No telemetry.
+
+No tracking.
+
+---
 
 ## For developers
-
-Clone only if you're building or contributing:
 
 ```bash
 git clone https://github.com/harshabala/parsekit.git
 cd parsekit
 npm install
-npm run build:sidecar   # first run: ~10 min
+npm run build:sidecar
 npm run tauri dev
 ```
 
-Release and updater notes: **[docs/RELEASING.md](docs/RELEASING.md)**
+Release notes: **[docs/RELEASING.md](docs/RELEASING.md)**
 
-## License
-
-Apache-2.0 — see [LICENSE](LICENSE). Third-party notices in [NOTICE.md](NOTICE.md).
+---
 
 ## Credits
 
-**Built by** [Harsha Balakrishnan](https://github.com/harshabala), with development help from **Claude** (Anthropic), **Grok** (xAI), and **Gemini** (Google) coding agents. Details in **[docs/ACKNOWLEDGMENTS.md](docs/ACKNOWLEDGMENTS.md)**.
+Created and crafted by [Harsha Balakrishnan](https://github.com/harshabala).
 
-**Powered by** [LiteParse v2](https://github.com/run-llama/liteparse) · [Tauri](https://tauri.app) · [Svelte](https://svelte.dev)
+Development help from Claude (Anthropic), Grok (xAI), and Gemini (Google) coding agents — see **[docs/ACKNOWLEDGMENTS.md](docs/ACKNOWLEDGMENTS.md)**.
+
+Powered by [LiteParse v2](https://github.com/run-llama/liteparse) · [Tauri](https://tauri.app) · [Svelte](https://svelte.dev)
+
+Apache-2.0 — see [LICENSE](LICENSE)

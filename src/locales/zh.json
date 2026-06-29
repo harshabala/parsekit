@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "ParseKit",
-    "tagline": "ParseKit — 文档解析工具包。"
+    "tagline": "将文档转换为干净的、可供 AI 使用的 Markdown。"
   },
   "header": {
     "settings": "设置",
@@ -21,7 +21,7 @@
   },
   "onboarding": {
     "title": "快速上手",
-    "lead": "ParseKit 在菜单栏运行。完成以下步骤即可开始第一批解析。",
+    "lead": "让每个文档都准备好交给 AI。完成以下步骤即可开始第一批转换。",
     "dismiss": "知道了",
     "installHint": "请将 ParseKit 拖到「应用程序」（不要放在桌面），退出后从应用程序重新打开。若 macOS 阻止启动，请右键 → 打开一次。",
     "chooseOutput": "选择输出文件夹",
@@ -114,7 +114,37 @@
     "errors": "{count} 个错误"
   },
   "about": {
-    "back": "返回"
+    "back": "返回",
+    "title": "ParseKit",
+    "versionLabel": "版本 {version}",
+    "heroLead": "在 Mac 上将文档转换为干净的、可供 AI 使用的 Markdown。",
+    "heroBody": "ParseKit 可将 PDF、Office 文档、电子表格和图片转换为 AI 助手易于理解的结构化 Markdown。",
+    "heroValue": "无需反复让语言模型解析复杂格式，ParseKit 一次性转换为轻量、结构化的 Markdown，并尽可能保留文档结构。",
+    "localLine": "一切都在本机运行。",
+    "privacyLine": "您的文件不会离开 Mac。",
+    "benefitsTitle": "优势",
+    "benefit1": "可供 AI 使用的 Markdown",
+    "benefit2": "为语言模型提供更清晰的上下文",
+    "benefit3": "更快的文档准备",
+    "benefit4": "本地优先处理",
+    "benefit5": "不上传云端",
+    "benefit6": "无需订阅",
+    "benefit7": "无需 API 密钥",
+    "formatsTitle": "支持格式",
+    "convertLabel": "转换",
+    "intoLabel": "为",
+    "formatPdf": "PDF",
+    "formatWord": "Microsoft Word",
+    "formatExcel": "Excel",
+    "formatPowerPoint": "PowerPoint",
+    "formatImages": "图片（OCR）",
+    "outputMarkdown": "Markdown",
+    "outputText": "纯文本",
+    "outputJson": "JSON",
+    "poweredBy": "基于 LiteParse v2 (Rust)",
+    "licenseLine": "Apache 2.0 许可",
+    "craftedBy": "创作者",
+    "craftedByName": "Harsha Balakrishnan"
   },
   "history": {
     "title": "历史",
@@ -139,11 +169,11 @@
     "back": "返回",
     "appLanguageTitle": "应用语言",
     "appLanguageHint": "ParseKit 界面（按钮、标签、菜单）的语言。不会改变导出文件的内容。",
-    "ocrLanguageTitle": "OCR 语言（输入）",
-    "ocrLanguageHint": "待解析的扫描 PDF 或图片中文本的语言。仅在开启 OCR 时使用。输出格式（TXT/MD/JSON）单独设置；导出内容仍保留文档原有语言。",
+    "ocrLanguageTitle": "OCR 语言",
+    "ocrLanguageHint": "选择扫描 PDF 和图片中使用的语言。\n仅在开启 OCR 时使用。",
     "ocrLanguageLabel": "文档文字语言",
     "appearanceTitle": "外观",
-    "appearanceHint": "选择 ParseKit 在您 Mac 上的显示方式。",
+    "appearanceHint": "选择 ParseKit 的外观。",
     "advancedTitle": "高级",
     "advancedExpand": "显示高级选项",
     "advancedCollapse": "隐藏高级选项",
@@ -157,17 +187,7 @@
     "finderInstalling": "正在安装…",
     "finderInstalled": "已安装。如未显示，请在系统设置 → 键盘 → 键盘快捷键 → 服务 中启用。",
     "finderInstallFailed": "无法安装 Finder 快速操作。",
-    "aboutTitle": "关于 ParseKit",
-    "aboutTagline": "本机解析 — 不上传云端",
-    "aboutPrivacy": "文件仅在本 Mac 上读取和写入。开启 OCR 时使用本机 Tesseract（首次使用某语言时可能会下载一次语言数据）。",
-    "aboutDescription": "ParseKit — 文档解析工具包。",
-    "aboutPoweredBy": "技术支持",
-    "aboutPoweredByValue": "LiteParse v2 (Rust)",
-    "aboutFormats": "PDF、Office、电子表格、图片 → Markdown、文本或 JSON。",
-    "aboutLicense": "许可证",
-    "aboutLicenseValue": "Apache-2.0",
-    "aboutLicenseNote": "ParseKit 使用 LlamaIndex 的 LiteParse v2，基于 Apache License 2.0 许可。",
-    "aboutRepository": "在 GitHub 上查看"
+    "aboutTitle": "关于 ParseKit"
   },
   "language": {
     "en": "English",

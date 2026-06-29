@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "ParseKit",
-    "tagline": "ParseKit — un kit de herramientas para analizar documentos."
+    "tagline": "Convierte documentos en Markdown limpio y listo para IA."
   },
   "header": {
     "settings": "Ajustes",
@@ -21,7 +21,7 @@
   },
   "onboarding": {
     "title": "Primeros pasos",
-    "lead": "ParseKit vive en la barra de menú. Completa estos pasos para tu primer lote.",
+    "lead": "Prepara cada documento para la IA. Completa estos pasos para tu primer lote.",
     "dismiss": "Entendido",
     "installHint": "Arrastra ParseKit a Aplicaciones (no al Escritorio), cierra y vuelve a abrir desde Aplicaciones. Si macOS bloquea el inicio, clic derecho → Abrir una vez.",
     "chooseOutput": "Elegir carpeta de salida",
@@ -114,7 +114,37 @@
     "errors": "{count} errores"
   },
   "about": {
-    "back": "Atrás"
+    "back": "Atrás",
+    "title": "ParseKit",
+    "versionLabel": "Versión {version}",
+    "heroLead": "Convierte documentos en Markdown limpio y listo para IA — todo en tu Mac.",
+    "heroBody": "ParseKit transforma PDF, Office, hojas de cálculo e imágenes en Markdown estructurado que los asistentes de IA entienden con eficiencia.",
+    "heroValue": "En lugar de hacer que los modelos de lenguaje analicen formatos complejos una y otra vez, ParseKit los convierte una vez en Markdown ligero y estructurado, preservando la estructura del documento en la medida de lo posible.",
+    "localLine": "Todo se ejecuta localmente.",
+    "privacyLine": "Tus archivos nunca salen de tu Mac.",
+    "benefitsTitle": "Ventajas",
+    "benefit1": "Markdown listo para IA",
+    "benefit2": "Contexto más limpio para modelos de lenguaje",
+    "benefit3": "Preparación de documentos más rápida",
+    "benefit4": "Procesamiento local primero",
+    "benefit5": "Sin subida a la nube",
+    "benefit6": "Sin suscripciones",
+    "benefit7": "Sin claves API",
+    "formatsTitle": "Formatos compatibles",
+    "convertLabel": "Convertir",
+    "intoLabel": "en",
+    "formatPdf": "PDF",
+    "formatWord": "Microsoft Word",
+    "formatExcel": "Excel",
+    "formatPowerPoint": "PowerPoint",
+    "formatImages": "Imágenes (OCR)",
+    "outputMarkdown": "Markdown",
+    "outputText": "Texto plano",
+    "outputJson": "JSON",
+    "poweredBy": "Desarrollado con LiteParse v2 (Rust)",
+    "licenseLine": "Licencia Apache 2.0",
+    "craftedBy": "Creado por",
+    "craftedByName": "Harsha Balakrishnan"
   },
   "history": {
     "title": "Historial",
@@ -139,11 +169,11 @@
     "back": "Atrás",
     "appLanguageTitle": "Idioma de la app",
     "appLanguageHint": "Idioma de botones, etiquetas y menús de ParseKit. No cambia el contenido de los archivos exportados.",
-    "ocrLanguageTitle": "Idioma OCR (entrada)",
-    "ocrLanguageHint": "Idioma del texto en PDF escaneados e imágenes que analizas. Solo se usa con OCR activado. El formato de salida (TXT/MD/JSON) es aparte; el contenido exportado conserva el idioma del documento.",
+    "ocrLanguageTitle": "Idioma OCR",
+    "ocrLanguageHint": "Elige el idioma usado en PDF escaneados e imágenes.\nSolo se usa cuando el OCR está activado.",
     "ocrLanguageLabel": "Idioma del texto del documento",
     "appearanceTitle": "Apariencia",
-    "appearanceHint": "Elige cómo se ve ParseKit en tu Mac.",
+    "appearanceHint": "Elige la apariencia de ParseKit.",
     "advancedTitle": "Avanzado",
     "advancedExpand": "Mostrar avanzado",
     "advancedCollapse": "Ocultar avanzado",
@@ -157,17 +187,7 @@
     "finderInstalling": "Instalando…",
     "finderInstalled": "Acción instalada. Actívala en Ajustes del Sistema → Teclado → Atajos de teclado → Servicios si hace falta.",
     "finderInstallFailed": "No se pudo instalar la acción de Finder.",
-    "aboutTitle": "Acerca de ParseKit",
-    "aboutTagline": "Análisis en el dispositivo — sin subida a la nube",
-    "aboutPrivacy": "Tus archivos solo se leen y guardan en este Mac. Con OCR activado, el reconocimiento usa Tesseract local (los datos de idioma pueden descargarse una vez en el primer uso).",
-    "aboutDescription": "ParseKit — un kit de herramientas para analizar documentos.",
-    "aboutPoweredBy": "Desarrollado con",
-    "aboutPoweredByValue": "LiteParse v2 (Rust)",
-    "aboutFormats": "PDF, Office, hojas de cálculo, imágenes → Markdown, texto o JSON.",
-    "aboutLicense": "Licencia",
-    "aboutLicenseValue": "Apache-2.0",
-    "aboutLicenseNote": "ParseKit usa LiteParse v2 de LlamaIndex, bajo licencia Apache License 2.0.",
-    "aboutRepository": "Ver en GitHub"
+    "aboutTitle": "Acerca de ParseKit"
   },
   "language": {
     "en": "English",

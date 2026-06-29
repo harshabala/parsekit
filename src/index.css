@@ -69,11 +69,31 @@
   --motion-deps-pop: 220ms;
 
   color-scheme: light dark;
+  --link-color: oklch(0.38 0.06 50);
   --focus-ring: oklch(0.32 0.03 50 / 0.2);
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
+  --bg-color: oklch(0.98 0.005 85 / 0.72);
+  --text-color: oklch(0.18 0.01 50);
+  --text-primary: var(--text-color);
+  --text-secondary: oklch(0.48 0.03 50);
+  --accent-color: oklch(0.32 0.03 50);
+  --accent-color-hover: oklch(0.26 0.035 50);
+  --accent-fg: oklch(0.98 0.005 85);
+  --link-color: oklch(0.38 0.06 50);
+  --border-color: oklch(0.72 0.02 50 / 0.95);
+  --glass-bg: oklch(0.97 0.01 85 / 1);
+  --secondary-bg: oklch(0.92 0.012 85 / 0.95);
+  --gradient-bg: linear-gradient(
+    145deg,
+    oklch(0.96 0.015 85) 0%,
+    oklch(0.91 0.025 95) 100%
+  );
+  --shadow-color: oklch(0.18 0.01 50 / 0.18);
+  --shadow-color-strong: oklch(0.18 0.01 50 / 0.32);
+  --focus-ring: oklch(0.32 0.03 50 / 0.2);
 }
 
 :root[data-theme="dark"] {
@@ -96,6 +116,7 @@
 
   --shadow-color: oklch(0.18 0.01 50 / 0.35);
   --shadow-color-strong: oklch(0.18 0.01 50 / 0.48);
+  --link-color: oklch(0.78 0.08 75);
   --focus-ring: oklch(0.78 0.08 75 / 0.25);
   --icon-btn-border: oklch(0.62 0.03 85 / 0.95);
   --icon-btn-bg: oklch(0.24 0.015 85 / 0.72);
@@ -419,6 +440,11 @@ button:disabled {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 button.secondary {
@@ -1260,19 +1286,38 @@ label {
   gap: 8px;
 }
 
-.config-collapse-btn {
+button.config-collapse-btn {
   font-size: 11px;
   font-weight: 500;
-  color: var(--accent-color);
-  background: none;
+  color: var(--link-color, var(--accent-color));
+  background: transparent;
   border: none;
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: none;
   min-height: 32px;
-  min-width: 32px;
+  min-width: auto;
   cursor: pointer;
   line-height: 1.4;
+  transform: none;
+}
+
+button.config-collapse-btn:hover {
+  background: color-mix(in srgb, var(--link-color, var(--accent-color)) 10%, transparent);
+  color: var(--accent-color-hover);
+  box-shadow: none;
+  transform: none;
+}
+
+button.config-collapse-btn:active {
+  background: color-mix(in srgb, var(--link-color, var(--accent-color)) 16%, transparent);
+  box-shadow: none;
+  transform: none;
+}
+
+button.config-collapse-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .config-collapsed-summary {
@@ -2028,6 +2073,130 @@ label {
 .about-wrap {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.about-hero {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.about-body {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.about-local {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.about-emphasis + .about-emphasis {
+  margin-top: 2px;
+}
+
+.about-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.about-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.about-list-compact {
+  gap: 4px;
+  padding-left: 16px;
+}
+
+.about-formats {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.about-formats-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.about-formats-into {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin: 18px 0 0;
+  align-self: center;
+}
+
+.about-formats-output {
+  margin-top: 18px;
+}
+
+.about-powered,
+.about-license {
+  margin: 0;
+}
+
+.about-attribution {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+button.about-author-link {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--link-color, var(--accent-color));
+  font-size: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transform: none;
+}
+
+button.about-author-link:hover {
+  color: var(--accent-color-hover);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+button.about-author-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.settings-hint--multiline {
+  white-space: pre-line;
 }
 
 .settings-panel {

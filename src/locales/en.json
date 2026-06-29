@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "ParseKit",
-    "tagline": "ParseKit — a toolkit for parsing documents."
+    "tagline": "Convert documents into clean, AI-ready Markdown."
   },
   "header": {
     "settings": "Settings",
@@ -21,7 +21,7 @@
   },
   "onboarding": {
     "title": "Get started",
-    "lead": "ParseKit runs from your menu bar. Complete these steps for your first batch.",
+    "lead": "Make every document ready for AI. Complete these steps for your first batch.",
     "dismiss": "Got it",
     "installHint": "Drag ParseKit to Applications (not Desktop), then quit and reopen from Applications. If macOS blocks launch, right-click → Open once.",
     "chooseOutput": "Choose output folder",
@@ -115,7 +115,37 @@
     "errors": "{count} errors"
   },
   "about": {
-    "back": "Back"
+    "back": "Back",
+    "title": "ParseKit",
+    "versionLabel": "Version {version}",
+    "heroLead": "Convert documents into clean, AI-ready Markdown — entirely on your Mac.",
+    "heroBody": "ParseKit transforms PDFs, Office documents, spreadsheets and images into structured Markdown that AI assistants can understand efficiently.",
+    "heroValue": "Instead of repeatedly making language models parse complex document formats, ParseKit converts them once into lightweight, structured Markdown while preserving document structure as closely as possible.",
+    "localLine": "Everything runs locally.",
+    "privacyLine": "Your files never leave your Mac.",
+    "benefitsTitle": "Benefits",
+    "benefit1": "AI-ready Markdown",
+    "benefit2": "Cleaner context for language models",
+    "benefit3": "Faster document preparation",
+    "benefit4": "Local-first processing",
+    "benefit5": "No cloud upload",
+    "benefit6": "No subscriptions",
+    "benefit7": "No API keys",
+    "formatsTitle": "Supported formats",
+    "convertLabel": "Convert",
+    "intoLabel": "into",
+    "formatPdf": "PDF",
+    "formatWord": "Microsoft Word",
+    "formatExcel": "Excel",
+    "formatPowerPoint": "PowerPoint",
+    "formatImages": "Images (OCR)",
+    "outputMarkdown": "Markdown",
+    "outputText": "Plain Text",
+    "outputJson": "JSON",
+    "poweredBy": "Powered by LiteParse v2 (Rust)",
+    "licenseLine": "Licensed under Apache 2.0",
+    "craftedBy": "Crafted by",
+    "craftedByName": "Harsha Balakrishnan"
   },
   "history": {
     "title": "History",
@@ -138,19 +168,19 @@
   "settings": {
     "title": "Settings",
     "back": "Back",
-    "appLanguageTitle": "App language",
+    "appLanguageTitle": "App Language",
     "appLanguageHint": "Language for buttons, labels, and menus in ParseKit. Does not change your exported files.",
-    "ocrLanguageTitle": "OCR language (input)",
-    "ocrLanguageHint": "Language of text inside scanned PDFs and images you parse. Used only when OCR is on. Output format (TXT/MD/JSON) is separate; exported content keeps the document language.",
+    "ocrLanguageTitle": "OCR Language",
+    "ocrLanguageHint": "Choose the language used in scanned PDFs and images.\nOnly used when OCR is enabled.",
     "ocrLanguageLabel": "Document text language",
     "appearanceTitle": "Appearance",
-    "appearanceHint": "Choose how ParseKit looks on your Mac.",
+    "appearanceHint": "Choose the appearance of ParseKit.",
     "advancedTitle": "Advanced",
-    "advancedExpand": "Show advanced",
-    "advancedCollapse": "Hide advanced",
-    "workersTitle": "OCR threads",
+    "advancedExpand": "Show Advanced",
+    "advancedCollapse": "Hide Advanced",
+    "workersTitle": "OCR Threads",
     "workersHint": "OCR threads per file. Higher is faster on large scanned PDFs; lower uses less CPU.",
-    "launchAtLogin": "Launch at login",
+    "launchAtLogin": "Launch at Login",
     "launchAtLoginHint": "Start ParseKit automatically when you sign in to your Mac.",
     "finderTitle": "Finder",
     "finderHint": "Right-click files in Finder → Quick Actions → Parse to Markdown with ParseKit. If an output folder is set in ParseKit, files parse there silently; otherwise ParseKit opens with the files loaded.",
@@ -158,17 +188,7 @@
     "finderInstalling": "Installing…",
     "finderInstalled": "Quick Action installed. Enable it in System Settings → Keyboard → Keyboard Shortcuts → Services if needed.",
     "finderInstallFailed": "Could not install Finder Quick Action.",
-    "aboutTitle": "About ParseKit",
-    "aboutTagline": "On-device parsing — no cloud upload",
-    "aboutPrivacy": "Your files are read and written only on this Mac. When OCR is on, recognition runs with on-device Tesseract (language data may download once on first use).",
-    "aboutDescription": "ParseKit — a toolkit for parsing documents.",
-    "aboutPoweredBy": "Powered by",
-    "aboutPoweredByValue": "LiteParse v2 (Rust)",
-    "aboutFormats": "PDF, Office, spreadsheets, images → Markdown, text, or JSON.",
-    "aboutLicense": "License",
-    "aboutLicenseValue": "Apache-2.0",
-    "aboutLicenseNote": "ParseKit uses LiteParse v2 by LlamaIndex, licensed under the Apache License 2.0.",
-    "aboutRepository": "View on GitHub"
+    "aboutTitle": "About ParseKit"
   },
   "language": {
     "en": "English",

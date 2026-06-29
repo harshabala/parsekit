@@ -138,7 +138,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title">{t("settings.ocrLanguageTitle")}</div>
-      <p class="settings-hint">{t("settings.ocrLanguageHint")}</p>
+      <p class="settings-hint settings-hint--multiline">{t("settings.ocrLanguageHint")}</p>
       <OcrLanguageSelector
         value={ocrLanguage}
         disabled={!ocrEnabled}

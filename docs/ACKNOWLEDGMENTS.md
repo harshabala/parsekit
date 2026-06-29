@@ -1,6 +1,6 @@
 # Acknowledgments
 
-ParseKit was built by [Harsha Balakrishnan](https://github.com/harshabala), with substantial help from AI coding agents used as development tools — not as product owners or runtime dependencies.
+ParseKit was created and crafted by [Harsha Balakrishnan](https://github.com/harshabala), with substantial help from AI coding agents used as development tools — not as product owners or runtime dependencies.
 
 ## How this project was built
 
