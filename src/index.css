@@ -197,6 +197,11 @@ body {
   font-synthesis: none;
 }
 
+::selection {
+  background: color-mix(in srgb, var(--accent-color) 35%, transparent);
+  color: var(--text-primary);
+}
+
 .shell,
 header,
 .section-title,
@@ -563,7 +568,7 @@ label {
   background: var(--accent-color);
   transform-origin: left;
   transform: scaleX(0);
-  transition: transform var(--timing-slow) var(--easing-decelerate);
+  transition: transform var(--timing-fast) linear;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1988,6 +1993,7 @@ button.config-collapse-btn:focus-visible {
   font-size: 12px;
   text-decoration: none;
   margin-top: 4px;
+  text-underline-offset: 2px;
 }
 
 .settings-repo-link:hover {
@@ -2105,6 +2111,7 @@ button.config-collapse-btn:focus-visible {
   color: var(--text-primary);
   margin: 0;
   line-height: 1.45;
+  text-wrap: balance;
 }
 
 .about-body {
@@ -2127,10 +2134,11 @@ button.config-collapse-btn:focus-visible {
 .about-section-title {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-secondary);
   margin: 0;
+  text-wrap: balance;
 }
 
 .about-list {
