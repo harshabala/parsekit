@@ -1,151 +1,230 @@
-# ParseKit
+<p align="center">
+  <img src="assets/branding/app-icon.png" alt="ParseKit icon" width="96" height="96">
+</p>
 
-The fastest way to turn any folder of documents into LLM-ready files — zero terminal, zero cloud.
+<h1 align="center">ParseKit</h1>
 
-ParseKit — a toolkit for parsing documents. A lightweight macOS menu-bar app that batch-converts PDFs, Office docs, and images into clean Markdown, text, or JSON. Built for knowledge workers who need instant, private document preprocessing before feeding LLMs or building RAG indexes.
+<p align="center">
+  Turn a folder of PDFs and Office files into clean text files — on your Mac, without uploading anything anywhere.
+</p>
 
-## Features
+<p align="center">
+  <a href="https://github.com/harshabala/parsekit/releases/latest"><strong>Download for Mac (Apple Silicon)</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#how-to-use-it">How to use it</a>
+  &nbsp;·&nbsp;
+  <a href="docs/INSTALL.md">Install help</a>
+</p>
 
-- **Menu-bar native** — lives in your tray, one click away
-- **Batch processing** — drop a folder, get clean output in seconds
-- **Smart Markdown** — document titles, page headers, and separators
-- **OCR built-in** — powered by LiteParse v2’s native Tesseract engine, works offline
-- **LiteParse v2** — Rust core for up to ~100× faster parsing on small docs
-- **On-device parsing** — no cloud upload; optional one-time Tesseract language data download when OCR is on
-- **Automatic updates** — checks GitHub Releases on launch; in-app banner to install (menu-bar friendly, no system dialog)
-- **Dark mode** — follows macOS system preference
+---
 
-## Supported Formats
+## What is this?
 
-| Input | Output |
-|-------|--------|
-| PDF | Markdown (.md), Plain Text (.txt), or JSON (.json) |
-| Word (DOC, DOCX, ODT, RTF, …) | Same (via LibreOffice) |
-| PowerPoint (PPT, PPTX, ODP, …) | Same (via LibreOffice) |
-| Spreadsheets (XLS, XLSX, CSV, …) | Always JSON (.json) |
-| Images (PNG, JPG, WEBP, SVG, …) | Same (via ImageMagick) |
+ParseKit is a small Mac app that lives in your **menu bar** (the strip of icons at the top-right of your screen). You point it at a folder of documents, and it spits out readable text files you can paste into ChatGPT, Claude, a notes app, or whatever you use.
 
-## Prerequisites
+Nothing gets uploaded. Parsing happens on your Mac. You don't need to open Terminal for normal use.
 
-- **macOS** 12.0+
-- **Node.js** 20+ (frontend build tooling)
-- **Rust** (Tauri app + LiteParse v2 sidecar)
-- **LibreOffice** (optional, for Office document conversion)
-- **ImageMagick** (optional, for image formats)
+**Good for:**
+- A pile of PDF contracts you want to search or summarize
+- Research papers you need as plain text
+- Word docs and PowerPoints before feeding them to an AI
+- Scanned documents (OCR is built in)
 
-## Development
+**Not good for:**
+- Editing documents (ParseKit only reads and exports)
+- Windows or Linux (macOS only for now)
+- Perfect layout preservation (you get text, not a pixel-perfect replica)
 
-```bash
-# Install dependencies
-npm install
+## See it in 30 seconds
 
-# Build the LiteParse v2 sidecar (skipped if already up to date)
-npm run build:sidecar
-
-# Run in development mode (rebuilds sidecar only when sources change)
-npm run tauri dev
-
-# Skip sidecar rebuild if you already built it (faster iteration)
-npm run tauri:dev:fast
+```mermaid
+flowchart LR
+  A["📁 Your folder<br/>PDFs, Word, Excel…"] --> B["ParseKit<br/>menu bar app"]
+  B --> C["📄 Output folder<br/>.md, .txt, or .json"]
+  C --> D["Paste into ChatGPT,<br/>Obsidian, code, etc."]
 ```
 
-**First-time note:** The initial `build:sidecar` compiles LiteParse v2 and Tesseract (~10 minutes on a clean machine). Later runs are incremental and usually instant.
+1. Click the ParseKit icon in the menu bar.
+2. Pick an output folder (where converted files go).
+3. Drag in files or a whole folder.
+4. Hit **Run Parse**.
+5. Open the output folder and grab your files.
 
-The `sidecar/` Node package is **dev-only** for testing the JSON protocol; the shipped app uses the Rust `parsekit-sidecar` binary.
+That's the whole job.
 
-## Release checklist
+## Download and install
 
-`src-tauri/binaries/` is not committed. Before packaging or distributing:
+**Requirements:** macOS 12 (Monterey) or newer. Apple Silicon Mac (M1/M2/M3/M4). An Intel build isn't published yet.
 
-```bash
-npm run release:macos    # build + scripts/postbuild-macos.sh (sign, strict verify, DMG)
-npm run publish:macos    # release build + sign updater bundle + upload to GitHub Releases
+1. Go to **[Releases](https://github.com/harshabala/parsekit/releases/latest)** and download `ParseKit_*_aarch64.dmg`.
+2. Open the DMG. You'll see a window that says to drag ParseKit into Applications — do that. Don't run it straight from the DMG.
+3. Eject the DMG, quit any copy that was running from it, then open **ParseKit** from your Applications folder.
+
+macOS may block the app the first time because it isn't notarized. That's normal for indie Mac apps. Full step-by-step with screenshots-level detail is in **[docs/INSTALL.md](docs/INSTALL.md)**.
+
+> **Where did it go?** ParseKit doesn't show up in the Dock. Look for its icon in the menu bar at the top of your screen. If you don't see it, click the `›` chevron on the left side of the menu bar to reveal hidden icons.
+
+## How to use it
+
+### The main screen
+
+When you click the menu bar icon, a panel drops down. The first-run checklist walks you through three steps:
+
+| Step | What to do |
+|------|------------|
+| 1 | Choose an **output folder** — this is where your converted files land |
+| 2 | **Drop files or a folder** into the drop zone, or use Select Files / Select Folder |
+| 3 | Click **Run Parse** |
+
+While it runs, you'll see a progress list per file. When it's done, hit **Open Output** to jump straight to the results in Finder.
+
+### Output formats
+
+| You pick | You get | Best for |
+|----------|---------|----------|
+| **Markdown** (.md) | Headings, page breaks, readable structure | Notes apps, AI chat, GitHub |
+| **Plain text** (.txt) | Just the words, no formatting | Simple copy-paste |
+| **JSON** (.json) | Structured data with metadata | Code, databases, RAG pipelines |
+
+Spreadsheets (`.xlsx`, `.csv`, etc.) always export as JSON — that's intentional, tables don't map cleanly to Markdown.
+
+### What file types work?
+
+| Type | Examples | Notes |
+|------|----------|-------|
+| PDF | `.pdf` | Works out of the box. Scanned PDFs use built-in OCR. |
+| Word | `.doc`, `.docx`, `.odt`, `.rtf` | Needs [LibreOffice](https://www.libreoffice.org/) installed (free) |
+| PowerPoint | `.ppt`, `.pptx`, `.odp` | Same — LibreOffice |
+| Spreadsheets | `.xls`, `.xlsx`, `.csv`, `.tsv` | Always → JSON |
+| Images | `.png`, `.jpg`, `.webp`, `.svg` | Needs [ImageMagick](https://imagemagick.org/) (`brew install imagemagick`) |
+
+PDFs work immediately. Office docs and images need optional tools — ParseKit tells you what's missing in **Settings → Optional converters**. Missing LibreOffice won't stop your PDFs from working.
+
+### OCR (reading scanned pages)
+
+OCR is on by default. If a PDF is a scan (a photo of a page, not selectable text), ParseKit reads it with Tesseract, which is bundled inside the app.
+
+- Toggle it off if you only have digital PDFs and want faster runs.
+- Change the document language under **Settings → OCR language** if your scans aren't in English.
+- Heavy OCR batches? Lower **Settings → Advanced → OCR threads** to 1–2 so your Mac doesn't choke.
+
+### Finder Quick Action
+
+In **Settings → Finder**, you can install a right-click shortcut:
+
+> Right-click a file in Finder → **Quick Actions** → **Parse to Markdown with ParseKit**
+
+If you've already set an output folder, it runs silently. Otherwise ParseKit opens with the file loaded.
+
+### Settings worth knowing
+
+| Setting | What it does |
+|---------|--------------|
+| **App language** | English, 中文, Español — changes the UI, not your exported files |
+| **Appearance** | Light, dark, or follow system |
+| **Launch at login** | ParseKit starts when you sign in |
+| **Updates** | Checks GitHub for new versions; install from the gold banner |
+
+## How it works (under the hood)
+
+ParseKit is a native Mac shell around **[LiteParse v2](https://github.com/run-llama/liteparse)** — a Rust library that extracts text from documents locally. No API keys, no cloud, no account.
+
+```mermaid
+flowchart TB
+  subgraph mac["Your Mac"]
+    UI["Menu bar UI<br/>(Svelte)"]
+    TAURI["Tauri app<br/>settings, file picking, updates"]
+    SIDE["parsekit-sidecar<br/>Rust + LiteParse v2"]
+    UI <--> TAURI
+    TAURI <--> SIDE
+    SIDE --> OUT["Output .md / .txt / .json"]
+  end
+
+  subgraph optional["Optional, on your Mac"]
+    LO["LibreOffice<br/>Word, PowerPoint"]
+    IM["ImageMagick<br/>images"]
+  end
+
+  SIDE -.-> LO
+  SIDE -.-> IM
+
+  NET["Internet"] -. "update checks only" .-> TAURI
+  NET -. "OCR language data<br/>(first use)" .-> SIDE
 ```
 
-Build on each target platform (Apple Silicon vs Intel Mac) so the correct host triple is embedded in the sidecar filename.
-
-### Automatic updates
-
-ParseKit includes the [Tauri v2 updater](https://v2.tauri.app/plugin/updater/). On launch (and via **Settings → Updates → Check for updates**), the app fetches a manifest from GitHub Releases:
-
-`https://github.com/harshabala/parsekit/releases/latest/download/parsekit-latest.json`
-
-When a newer version is available, a gold banner appears in the popover: **Install & Restart** or **Later**. Updates download a signed `.app.tar.gz` and replace the app bundle (not the DMG installer flow).
-
-The updater tarball is built **after** `postbuild-macos.sh` seals the `.app` with `codesign --deep` (`createUpdaterArtifacts` is **off** so Tauri does not emit a pre-sign tar.gz).
-
-**Publishing a release (maintainers):**
-
-1. Generate a signing key once (keep private key local, never commit):
-
-   ```bash
-   npx tauri signer generate -w ~/.tauri/parsekit.key -f --ci -p ''
-   ```
-
-2. The public key is already in `src-tauri/tauri.conf.json` (`plugins.updater.pubkey`).
-
-3. Build and upload:
-
-   ```bash
-   export TAURI_SIGNING_PRIVATE_KEY="$HOME/.tauri/parsekit.key"
-   export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
-   RELEASE_NOTES="ParseKit v0.2.1 — …" npm run publish:macos
-   ```
-
-   This uploads the DMG, `ParseKit_<version>_aarch64.app.tar.gz`, and `parsekit-latest.json` to the `v<version>` GitHub release. The repo must be **public** so clients can download assets without authentication.
-
-**Note:** GitHub serves `latest.json` as 404; the manifest must be named **`parsekit-latest.json`**.
-
-Output (Apple Silicon example):
-
-- App: `src-tauri/target/release/bundle/macos/ParseKit.app`
-- DMG: `src-tauri/target/release/bundle/dmg/ParseKit_<version>_aarch64.dmg`
-
-### Install from DMG (ad-hoc signed, not notarized)
-
-The release `.app` is ad-hoc signed with sealed resources (`codesign --verify --deep --strict` passes on the build artifact). Gatekeeper may still require a one-time approval for downloaded DMGs.
-
-The DMG opens a guided installer window: **“Drag ParseKit to Applications”** with a frosted layout, arrow cue, and icon labels (same idea as modern app installers). Finder cannot animate that window live — the guidance is baked into the background art.
-
-1. Drag **ParseKit** to **Applications** (not Desktop or Downloads). Quit any copy running from the DMG, then open **ParseKit** from Applications only.
-2. Clear Finder xattrs the installer adds (does not modify Mach-O):
-
-```bash
-xattr -cr /Applications/ParseKit.app
-xattr -d com.apple.FinderInfo /Applications/ParseKit.app 2>/dev/null || true
-```
-
-3. **First launch:** Right-click **ParseKit** → **Open** → confirm, or use **Privacy & Security → Open Anyway**.
-4. Use the **ParseKit** icon in the **menu bar** (top-right). ParseKit is menu-bar-only (`LSUIElement`); it does not remain in the Dock.
-
-Popover debug traces (`/tmp/parsekit-popover-trace.log`) are written only in **debug** builds, not in release.
-
-## How It Works
-
-ParseKit uses [LiteParse v2](https://github.com/run-llama/liteparse) by LlamaIndex for document parsing. LiteParse v2 is a Rust-native engine (custom PDFium + built-in Tesseract OCR) — no cloud APIs, no API keys, no data ever leaves your machine.
-
-### Architecture
-
-1. **Tauri v2** — native macOS app with system tray
-2. **Svelte 5** — reactive UI in the popover panel
-3. **Rust sidecar binary** — a native `parsekit-sidecar` executable linked against LiteParse v2 (bundled with the app, no Node.js required at runtime)
-4. **Tauri Store** — persists settings and batch history
+Your files never leave the machine during parsing. The only network calls are optional: checking for app updates, and downloading OCR language packs the first time you need them.
 
 ## Privacy
 
-ParseKit is designed with privacy as a core principle:
+Straight answer:
 
-- **On-device parsing — no cloud upload.** Files are read and written only on your Mac.
-- No telemetry, no analytics, no tracking
-- No network during parsing except optional Tesseract language data (OCR) and optional update checks when you use automatic updates
-- Your documents are never uploaded anywhere
+- Files are read from and written to your Mac. Period.
+- No analytics, no telemetry, no accounts.
+- Parsing itself uses zero network. Updates and OCR language downloads are the only things that might hit the internet, and you control updates.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| "App can't be opened" on first launch | Right-click ParseKit → **Open** → confirm. Or see [docs/INSTALL.md](docs/INSTALL.md). |
+| Can't find ParseKit after opening | It's menu-bar only. Check the top-right of your screen, including behind the `›` overflow menu. |
+| Office files fail, PDFs work | Install LibreOffice. ParseKit will show it as missing in Settings. |
+| Images fail | `brew install imagemagick`, then hit **Recheck** in Settings. |
+| Parse seems stuck | Cancel, drop **OCR threads** to 1–2 in Settings → Advanced, try again with fewer files. |
+| Update banner won't install | Download the latest DMG from [Releases](https://github.com/harshabala/parsekit/releases) manually. |
+
+## Automatic updates
+
+ParseKit checks for updates when it launches (and when you tap **Check for updates** in Settings). If a new version exists, a gold banner offers **Install & Restart**.
+
+Updates download a signed `.app.tar.gz` from GitHub Releases and swap the app in place. You don't need to re-download the DMG for every update.
+
+## For developers
+
+Want to hack on ParseKit or build from source?
+
+**Prerequisites:** macOS 12+, Node.js 20+, Rust, and optionally LibreOffice + ImageMagick for full format coverage.
+
+```bash
+git clone https://github.com/harshabala/parsekit.git
+cd parsekit
+npm install
+npm run build:sidecar   # first run: ~10 min (compiles LiteParse + Tesseract)
+npm run tauri dev
+```
+
+`npm run tauri:dev:fast` skips the sidecar rebuild if you already built it.
+
+The `sidecar/` folder is dev-only (Node test harness). The shipped app runs the Rust `parsekit-sidecar` binary bundled inside the `.app`.
+
+### Release build (maintainers)
+
+`src-tauri/binaries/` is gitignored. To package:
+
+```bash
+npm run release:macos    # build + sign + DMG
+npm run publish:macos    # above + upload to GitHub Releases
+```
+
+Build on the target Mac (Apple Silicon vs Intel) so the sidecar binary matches the host.
+
+Updater details, signing keys, and the `parsekit-latest.json` manifest naming quirk are documented in **[docs/RELEASING.md](docs/RELEASING.md)**.
+
+### Stack
+
+| Piece | Role |
+|-------|------|
+| [Tauri v2](https://tauri.app) | Native Mac app, system tray, updater |
+| [Svelte 5](https://svelte.dev) | Popover UI |
+| [LiteParse v2](https://github.com/run-llama/liteparse) | Document parsing engine |
+| Tauri Store | Settings and batch history |
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE)
+Apache-2.0 — see [LICENSE](LICENSE). Third-party notices in [NOTICE.md](NOTICE.md).
 
 ## Credits
 
-- [LiteParse](https://github.com/run-llama/liteparse) by LlamaIndex — local document parsing engine
-- [Tauri](https://tauri.app) — native app framework
-- [Svelte](https://svelte.dev) — reactive UI framework
+- [LiteParse](https://github.com/run-llama/liteparse) by LlamaIndex — parsing engine
+- [Tauri](https://tauri.app) — app framework
+- [Svelte](https://svelte.dev) — UI
