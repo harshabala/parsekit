@@ -14,6 +14,82 @@
 
 ParseKit is a native macOS menu-bar app that converts PDFs, Office files, spreadsheets, and images into clean Markdown, plain text, or JSON — entirely on your Mac.
 
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph input["① Your documents"]
+    PDF["PDF"]
+    OFF["Word · Excel · PowerPoint"]
+    IMG["Images · scans"]
+  end
+
+  subgraph app["② ParseKit on your Mac"]
+    MB["Menu bar app"]
+    ENG["Parse engine\n(LiteParse v2)"]
+    MB --> ENG
+  end
+
+  subgraph output["③ Output folder"]
+    MD[".md Markdown"]
+    TXT[".txt plain text"]
+    JSON[".json data"]
+  end
+
+  subgraph use["④ Use anywhere"]
+    AI["ChatGPT · Claude · Gemini"]
+    NOTES["Obsidian · Notes"]
+  end
+
+  PDF --> MB
+  OFF --> MB
+  IMG --> MB
+  ENG --> MD
+  ENG --> TXT
+  ENG --> JSON
+  MD --> AI
+  MD --> NOTES
+  TXT --> AI
+  JSON --> AI
+```
+
+**In plain terms:**
+
+1. Click the ParseKit icon in your menu bar.
+2. Drop in a folder of PDFs, Office files, or images.
+3. ParseKit converts them on your Mac — nothing is uploaded.
+4. Open the output folder and paste the results into your AI tool or notes app.
+
+<details>
+<summary><strong>What's happening under the hood?</strong></summary>
+
+```mermaid
+flowchart TB
+  subgraph mac["Your Mac — no cloud"]
+    UI["Menu bar UI"]
+    CORE["ParseKit app\nsettings · file picking"]
+    SIDE["parsekit-sidecar\nRust + LiteParse v2"]
+    UI <--> CORE
+    CORE <--> SIDE
+    SIDE --> OUT[".md / .txt / .json files"]
+  end
+
+  subgraph optional["Optional helpers on your Mac"]
+    LO["LibreOffice\nWord & PowerPoint"]
+    IM["ImageMagick\nimages"]
+  end
+
+  SIDE -.-> LO
+  SIDE -.-> IM
+
+  NET(("Internet")) -. "update checks only" .-> CORE
+  NET -. "OCR language data\n(first use)" .-> SIDE
+```
+
+Your files are read and written only on your machine. The only network calls are optional: checking for app updates, and downloading OCR language packs the first time you need them.
+
+</details>
+
 ---
 
 ## Why ParseKit?
