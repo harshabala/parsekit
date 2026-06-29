@@ -192,10 +192,34 @@ body {
   line-height: 1.4;
   color: var(--text-color);
   background: transparent;
-  user-select: none;
   overflow: hidden;
   min-height: 100vh;
   font-synthesis: none;
+}
+
+.shell,
+header,
+.section-title,
+.config-summary-chip,
+.file-status-badge .status-label,
+.parse-spinner {
+  user-select: none;
+}
+
+.selectable-content {
+  user-select: text;
+}
+
+.settings-scroll,
+.about-scroll,
+.error-banner,
+.notice-banner,
+.deps-brew-hint,
+.deps-error,
+.file-error,
+.gatekeeper-actions code,
+.settings-hint--multiline {
+  user-select: text;
 }
 
 .boot-fallback {

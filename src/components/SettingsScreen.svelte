@@ -119,7 +119,7 @@
     <span class="settings-header-title" id="settings-title">{t("settings.title")}</span>
   </div>
 
-  <div class="settings-scroll">
+  <div class="settings-scroll selectable-content">
     <div class="settings-section">
       <div class="settings-section-title">{t("settings.appLanguageTitle")}</div>
       <p class="settings-hint">{t("settings.appLanguageHint")}</p>

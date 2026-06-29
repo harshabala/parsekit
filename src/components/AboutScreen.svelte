@@ -42,7 +42,7 @@
     <span class="settings-header-title" id="about-title">{t("about.title")}</span>
   </div>
 
-  <div class="settings-scroll about-scroll">
+  <div class="settings-scroll about-scroll selectable-content">
     <p class="about-version" aria-label={t("about.versionLabel", { version })}>v{version}</p>
 
     <p class="about-hero">{t("about.heroLead")}</p>
