@@ -5,35 +5,54 @@
 <h1 align="center">ParseKit</h1>
 
 <p align="center">
-  Turn a folder of PDFs and Office files into clean text files — on your Mac, without uploading anything anywhere.
+  Turn PDFs and Office files into clean text on your Mac — nothing uploaded, no Terminal needed.
 </p>
 
 <p align="center">
-  <a href="https://github.com/harshabala/parsekit/releases/latest"><strong>Download for Mac (Apple Silicon)</strong></a>
-  &nbsp;·&nbsp;
-  <a href="#how-to-use-it">How to use it</a>
+  <a href="https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.2_aarch64.dmg"><img src="https://img.shields.io/badge/Download-DMG%20(Apple%20Silicon)-3F3830?style=for-the-badge" alt="Download DMG"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/harshabala/parsekit/releases/latest"><strong>All releases</strong></a>
   &nbsp;·&nbsp;
   <a href="docs/INSTALL.md">Install help</a>
+  &nbsp;·&nbsp;
+  <a href="#how-to-use-it">How to use it</a>
 </p>
+
+---
+
+## Get ParseKit (3 steps — no git, no coding)
+
+**You do not need to clone this repo or run `npm install`.** That's only for developers. If you just want the app:
+
+| Step | What to do |
+|------|------------|
+| **1. Download** | Click **[Download DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.2_aarch64.dmg)** (Apple Silicon Mac). Or open [Releases](https://github.com/harshabala/parsekit/releases/latest) and grab the `.dmg` under **Assets**. |
+| **2. Install** | Open the DMG → drag **ParseKit** into **Applications** → eject the DMG. |
+| **3. Open** | Open ParseKit from **Applications**. Look for the icon in your **menu bar** (top-right), not the Dock. |
+
+**Requirements:** macOS 12+, Apple Silicon (M1/M2/M3/M4). First launch may need a one-time security approval — see **[Install guide](docs/INSTALL.md)**.
+
+<details>
+<summary><strong>Clicked the green <code>Code</code> button by mistake?</strong></summary>
+
+That copies a git URL for developers. **End users should ignore it.** Use the DMG link above instead.
+
+</details>
 
 ---
 
 ## What is this?
 
-ParseKit is a small Mac app that lives in your **menu bar** (the strip of icons at the top-right of your screen). You point it at a folder of documents, and it spits out readable text files you can paste into ChatGPT, Claude, a notes app, or whatever you use.
+ParseKit lives in your **menu bar**. Point it at documents, get back `.md`, `.txt`, or `.json` files you can paste into ChatGPT, Obsidian, or any AI tool.
 
-Nothing gets uploaded. Parsing happens on your Mac. You don't need to open Terminal for normal use.
+- **Private** — parsing happens on your Mac
+- **Batch** — drop a whole folder at once
+- **OCR built in** — scanned PDFs work offline
 
-**Good for:**
-- A pile of PDF contracts you want to search or summarize
-- Research papers you need as plain text
-- Word docs and PowerPoints before feeding them to an AI
-- Scanned documents (OCR is built in)
-
-**Not good for:**
-- Editing documents (ParseKit only reads and exports)
-- Windows or Linux (macOS only for now)
-- Perfect layout preservation (you get text, not a pixel-perfect replica)
+**Good for:** contracts, research papers, Word docs, slide decks, scanned pages.  
+**Not for:** editing files, Windows/Linux, or pixel-perfect layout recreation.
 
 ## See it in 30 seconds
 
@@ -45,179 +64,90 @@ flowchart LR
 ```
 
 1. Click the ParseKit icon in the menu bar.
-2. Pick an output folder (where converted files go).
-3. Drag in files or a whole folder.
+2. Pick an output folder.
+3. Drag in files or a folder.
 4. Hit **Run Parse**.
-5. Open the output folder and grab your files.
-
-That's the whole job.
-
-## Download and install
-
-**Requirements:** macOS 12 (Monterey) or newer. Apple Silicon Mac (M1/M2/M3/M4). An Intel build isn't published yet.
-
-1. Go to **[Releases](https://github.com/harshabala/parsekit/releases/latest)** and download `ParseKit_*_aarch64.dmg`.
-2. Open the DMG. You'll see a window that says to drag ParseKit into Applications — do that. Don't run it straight from the DMG.
-3. Eject the DMG, quit any copy that was running from it, then open **ParseKit** from your Applications folder.
-
-macOS may block the app the first time because it isn't notarized. That's normal for indie Mac apps. Full step-by-step with screenshots-level detail is in **[docs/INSTALL.md](docs/INSTALL.md)**.
-
-> **Where did it go?** ParseKit doesn't show up in the Dock. Look for its icon in the menu bar at the top of your screen. If you don't see it, click the `›` chevron on the left side of the menu bar to reveal hidden icons.
+5. Open the output folder.
 
 ## How to use it
 
 ### The main screen
 
-When you click the menu bar icon, a panel drops down. The first-run checklist walks you through three steps:
-
 | Step | What to do |
 |------|------------|
-| 1 | Choose an **output folder** — this is where your converted files land |
-| 2 | **Drop files or a folder** into the drop zone, or use Select Files / Select Folder |
+| 1 | Choose an **output folder** |
+| 2 | **Drop files or a folder**, or use Select Files / Select Folder |
 | 3 | Click **Run Parse** |
-
-While it runs, you'll see a progress list per file. When it's done, hit **Open Output** to jump straight to the results in Finder.
 
 ### Output formats
 
-| You pick | You get | Best for |
-|----------|---------|----------|
-| **Markdown** (.md) | Headings, page breaks, readable structure | Notes apps, AI chat, GitHub |
-| **Plain text** (.txt) | Just the words, no formatting | Simple copy-paste |
-| **JSON** (.json) | Structured data with metadata | Code, databases, RAG pipelines |
+| Format | Best for |
+|--------|----------|
+| **Markdown** (.md) | Notes apps, AI chat |
+| **Plain text** (.txt) | Simple copy-paste |
+| **JSON** (.json) | Code, spreadsheets, RAG pipelines |
 
-Spreadsheets (`.xlsx`, `.csv`, etc.) always export as JSON — that's intentional, tables don't map cleanly to Markdown.
-
-### What file types work?
+### File types
 
 | Type | Examples | Notes |
 |------|----------|-------|
-| PDF | `.pdf` | Works out of the box. Scanned PDFs use built-in OCR. |
-| Word | `.doc`, `.docx`, `.odt`, `.rtf` | Needs [LibreOffice](https://www.libreoffice.org/) installed (free) |
-| PowerPoint | `.ppt`, `.pptx`, `.odp` | Same — LibreOffice |
-| Spreadsheets | `.xls`, `.xlsx`, `.csv`, `.tsv` | Always → JSON |
-| Images | `.png`, `.jpg`, `.webp`, `.svg` | Needs [ImageMagick](https://imagemagick.org/) (`brew install imagemagick`) |
+| PDF | `.pdf` | Works immediately. OCR for scans. |
+| Word / PowerPoint | `.docx`, `.pptx`, … | Needs free [LibreOffice](https://www.libreoffice.org/) |
+| Spreadsheets | `.xlsx`, `.csv` | Always → JSON |
+| Images | `.png`, `.jpg` | Needs `brew install imagemagick` |
 
-PDFs work immediately. Office docs and images need optional tools — ParseKit tells you what's missing in **Settings → Optional converters**. Missing LibreOffice won't stop your PDFs from working.
+ParseKit shows what's missing under **Settings → Optional converters**.
 
-### OCR (reading scanned pages)
+### Right-click in Finder (Quick Action)
 
-OCR is on by default. If a PDF is a scan (a photo of a page, not selectable text), ParseKit reads it with Tesseract, which is bundled inside the app.
+After installing the Quick Action in **Settings → Finder**:
 
-- Toggle it off if you only have digital PDFs and want faster runs.
-- Change the document language under **Settings → OCR language** if your scans aren't in English.
-- Heavy OCR batches? Lower **Settings → Advanced → OCR threads** to 1–2 so your Mac doesn't choke.
+> Right-click a PDF → **Quick Actions** → **Parse to Markdown with ParseKit**
 
-### Finder Quick Action
+The menu item is **not** called "Convert to Markdown" — that's usually a different app or macOS shortcut. ParseKit's action name includes **ParseKit** in it.
 
-In **Settings → Finder**, you can install a right-click shortcut:
-
-> Right-click a file in Finder → **Quick Actions** → **Parse to Markdown with ParseKit**
-
-If you've already set an output folder, it runs silently. Otherwise ParseKit opens with the file loaded.
+If you've set an output folder, it parses silently and notifies you when done. Otherwise ParseKit opens with the file loaded.
 
 ### Settings worth knowing
 
 | Setting | What it does |
 |---------|--------------|
-| **App language** | English, 中文, Español — changes the UI, not your exported files |
-| **Appearance** | Light, dark, or follow system |
-| **Launch at login** | ParseKit starts when you sign in |
-| **Updates** | Checks GitHub for new versions; install from the gold banner |
-
-## How it works (under the hood)
-
-ParseKit is a native Mac shell around **[LiteParse v2](https://github.com/run-llama/liteparse)** — a Rust library that extracts text from documents locally. No API keys, no cloud, no account.
-
-```mermaid
-flowchart TB
-  subgraph mac["Your Mac"]
-    UI["Menu bar UI<br/>(Svelte)"]
-    TAURI["Tauri app<br/>settings, file picking, updates"]
-    SIDE["parsekit-sidecar<br/>Rust + LiteParse v2"]
-    UI <--> TAURI
-    TAURI <--> SIDE
-    SIDE --> OUT["Output .md / .txt / .json"]
-  end
-
-  subgraph optional["Optional, on your Mac"]
-    LO["LibreOffice<br/>Word, PowerPoint"]
-    IM["ImageMagick<br/>images"]
-  end
-
-  SIDE -.-> LO
-  SIDE -.-> IM
-
-  NET["Internet"] -. "update checks only" .-> TAURI
-  NET -. "OCR language data<br/>(first use)" .-> SIDE
-```
-
-Your files never leave the machine during parsing. The only network calls are optional: checking for app updates, and downloading OCR language packs the first time you need them.
+| **App language** | English, 中文, Español |
+| **Appearance** | Light, dark, or system |
+| **Launch at login** | Start with macOS |
+| **Updates** | In-app update from GitHub Releases |
 
 ## Privacy
 
-Straight answer:
-
-- Files are read from and written to your Mac. Period.
-- No analytics, no telemetry, no accounts.
-- Parsing itself uses zero network. Updates and OCR language downloads are the only things that might hit the internet, and you control updates.
+- Files stay on your Mac
+- No analytics or accounts
+- Parsing uses no network (updates and optional OCR language downloads are separate)
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| "App can't be opened" on first launch | Right-click ParseKit → **Open** → confirm. Or see [docs/INSTALL.md](docs/INSTALL.md). |
-| Can't find ParseKit after opening | It's menu-bar only. Check the top-right of your screen, including behind the `›` overflow menu. |
-| Office files fail, PDFs work | Install LibreOffice. ParseKit will show it as missing in Settings. |
-| Images fail | `brew install imagemagick`, then hit **Recheck** in Settings. |
-| Parse seems stuck | Cancel, drop **OCR threads** to 1–2 in Settings → Advanced, try again with fewer files. |
-| Update banner won't install | Download the latest DMG from [Releases](https://github.com/harshabala/parsekit/releases) manually. |
+| App blocked on first launch | [Install guide](docs/INSTALL.md#step-3--first-launch-the-annoying-part) |
+| Can't find the app | Menu bar only — check the `›` overflow area |
+| Office files fail | Install LibreOffice, hit **Recheck** in Settings |
+| Wrong Finder menu item | Use **Parse to Markdown with ParseKit**, not "Convert to Markdown" |
+| Update fails | Re-download the [latest DMG](https://github.com/harshabala/parsekit/releases/latest) |
 
-## Automatic updates
-
-ParseKit checks for updates when it launches (and when you tap **Check for updates** in Settings). If a new version exists, a gold banner offers **Install & Restart**.
-
-Updates download a signed `.app.tar.gz` from GitHub Releases and swap the app in place. You don't need to re-download the DMG for every update.
+More help: **[docs/INSTALL.md](docs/INSTALL.md)** · **[docs/README.md](docs/README.md)**
 
 ## For developers
 
-Want to hack on ParseKit or build from source?
-
-**Prerequisites:** macOS 12+, Node.js 20+, Rust, and optionally LibreOffice + ImageMagick for full format coverage.
+Clone only if you're building or contributing:
 
 ```bash
 git clone https://github.com/harshabala/parsekit.git
 cd parsekit
 npm install
-npm run build:sidecar   # first run: ~10 min (compiles LiteParse + Tesseract)
+npm run build:sidecar   # first run: ~10 min
 npm run tauri dev
 ```
 
-`npm run tauri:dev:fast` skips the sidecar rebuild if you already built it.
-
-The `sidecar/` folder is dev-only (Node test harness). The shipped app runs the Rust `parsekit-sidecar` binary bundled inside the `.app`.
-
-### Release build (maintainers)
-
-`src-tauri/binaries/` is gitignored. To package:
-
-```bash
-npm run release:macos    # build + sign + DMG
-npm run publish:macos    # above + upload to GitHub Releases
-```
-
-Build on the target Mac (Apple Silicon vs Intel) so the sidecar binary matches the host.
-
-Updater details, signing keys, and the `parsekit-latest.json` manifest naming quirk are documented in **[docs/RELEASING.md](docs/RELEASING.md)**.
-
-### Stack
-
-| Piece | Role |
-|-------|------|
-| [Tauri v2](https://tauri.app) | Native Mac app, system tray, updater |
-| [Svelte 5](https://svelte.dev) | Popover UI |
-| [LiteParse v2](https://github.com/run-llama/liteparse) | Document parsing engine |
-| Tauri Store | Settings and batch history |
+Release and updater notes: **[docs/RELEASING.md](docs/RELEASING.md)**
 
 ## License
 
@@ -225,6 +155,6 @@ Apache-2.0 — see [LICENSE](LICENSE). Third-party notices in [NOTICE.md](NOTICE
 
 ## Credits
 
-- [LiteParse](https://github.com/run-llama/liteparse) by LlamaIndex — parsing engine
-- [Tauri](https://tauri.app) — app framework
-- [Svelte](https://svelte.dev) — UI
+**Built by** [Harsha Balakrishnan](https://github.com/harshabala), with development help from **Claude** (Anthropic), **Grok** (xAI), and **Gemini** (Google) coding agents. Details in **[docs/ACKNOWLEDGMENTS.md](docs/ACKNOWLEDGMENTS.md)**.
+
+**Powered by** [LiteParse v2](https://github.com/run-llama/liteparse) · [Tauri](https://tauri.app) · [Svelte](https://svelte.dev)

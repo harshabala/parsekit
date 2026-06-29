@@ -1,6 +1,8 @@
 # Installing ParseKit on your Mac
 
-This guide assumes you've never installed an app outside the Mac App Store. No judgment — macOS makes this harder than it should be.
+**Fast path:** [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.2_aarch64.dmg) → open it → drag to Applications → open from Applications.
+
+You do **not** need `git clone` or Terminal for a normal install. This guide covers the details macOS doesn't explain well.
 
 ## Before you start
 
@@ -80,6 +82,22 @@ PDFs work immediately. Word and PowerPoint files need LibreOffice, which is free
 1. Download from **[libreoffice.org](https://www.libreoffice.org/download/download-libreoffice/)**.
 2. Install it the normal way (drag to Applications).
 3. In ParseKit, open **Settings**. Under **Optional converters**, LibreOffice should show as installed. If not, hit **Recheck**.
+
+## Optional — Finder Quick Action (right-click PDFs)
+
+ParseKit can add a Finder shortcut. In the app: **Settings → Finder → Install Finder Quick Action**.
+
+After that, right-click a file in Finder:
+
+> **Quick Actions** → **Parse to Markdown with ParseKit**
+
+**Important:** the menu item includes the word **ParseKit**. If you only see **"Convert to Markdown"** with no ParseKit name, that's a different tool — not this app.
+
+**How it behaves:**
+- If you've set an **output folder** in ParseKit → parses in the background, macOS notification when done
+- If no output folder yet → ParseKit opens with the file ready to parse
+
+Enable the action in **System Settings → Keyboard → Keyboard Shortcuts → Services** (or **Finder → Quick Actions**) if it doesn't show up.
 
 ## Optional — ImageMagick (for PNG, JPG, etc.)
 
