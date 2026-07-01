@@ -2,8 +2,6 @@
 
 #[cfg(target_os = "macos")]
 pub fn display_notification(title: &str, body: &str) -> Result<(), String> {
-    use std::path::PathBuf;
-
     let mut notification = notify_rust::Notification::new();
     notification.summary(title).body(body);
 
