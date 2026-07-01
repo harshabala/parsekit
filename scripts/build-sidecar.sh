@@ -55,6 +55,15 @@ if [[ "$needs_build" == "false" ]]; then
   exit 0
 fi
 
+# Tauri build.rs requires binaries/parsekit-sidecar-<triple> before any cargo build
+# in this crate (including --bin parsekit-sidecar). Seed a valid Mach-O stub on CI
+# and fresh clones where no legacy/install bootstrap exists.
+if [[ ! -f "$OUT" ]]; then
+  cp /usr/bin/true "$OUT"
+  chmod +x "$OUT"
+  echo "Bootstrapped $OUT from /usr/bin/true (replaced after sidecar compile)"
+fi
+
 echo "Building LiteParse v2 sidecar (first build may take ~10 minutes)..."
 cargo build --release --manifest-path src-tauri/Cargo.toml --bin parsekit-sidecar
 

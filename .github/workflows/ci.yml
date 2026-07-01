@@ -17,6 +17,8 @@ jobs:
           node-version: "20"
           cache: npm
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install frontend dependencies
         run: npm ci
 

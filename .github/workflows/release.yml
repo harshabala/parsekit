@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Frontend unit tests
+        run: npm test
+
+      - name: Svelte typecheck
+        run: npm run check
+
+      - name: Build parsekit sidecar
+        run: npm run build:sidecar
+
+      - name: Rust unit tests
+        run: cargo test
+        working-directory: src-tauri
+
+  release:
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Configure Tauri updater signing key
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [[ -z "$TAURI_SIGNING_PRIVATE_KEY" ]]; then
+            echo "::error::Missing GitHub secret TAURI_SIGNING_PRIVATE_KEY (minisign private key for updater)."
+            exit 1
+          fi
+          mkdir -p "$HOME/.tauri"
+          printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" > "$HOME/.tauri/parsekit.key"
+
+      - name: Build, sign, and publish macOS release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ github.workspace }}/.tauri-ci/parsekit.key
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+          RELEASE_NOTES: ${{ github.event.head_commit.message }}
+        run: |
+          mkdir -p .tauri-ci
+          cp "$HOME/.tauri/parsekit.key" "$TAURI_SIGNING_PRIVATE_KEY_PATH"
+          bash scripts/publish-release.sh

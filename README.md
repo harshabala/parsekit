@@ -7,7 +7,7 @@
 <h3 align="center">Turn documents into AI-ready Markdown</h3>
 
 <p align="center">
-  <a href="https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.3_aarch64.dmg"><strong>Download for Mac (Apple Silicon)</strong></a>
+  <a href="https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.4_aarch64.dmg"><strong>Download for Mac (Apple Silicon)</strong></a>
   &nbsp;·&nbsp;
   <a href="docs/INSTALL.md">Install guide</a>
 </p>
@@ -162,7 +162,7 @@ Or use **Settings → General → Copy fix command**, then open Privacy & Securi
 
 **You don't need `git clone`.** End users install the DMG:
 
-1. [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.3_aarch64.dmg) (macOS 12+, Apple Silicon)
+1. [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.4_aarch64.dmg) (macOS 12+, Apple Silicon)
 2. Open it → drag **ParseKit** to **Applications**
 3. Open from Applications → look for the icon in your **menu bar** (top-right)
 

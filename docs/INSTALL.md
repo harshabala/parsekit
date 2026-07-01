@@ -1,6 +1,6 @@
 # Installing ParseKit on your Mac
 
-**Fast path:** [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.3_aarch64.dmg) → open it → drag to Applications → open from Applications.
+**Fast path:** [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.4_aarch64.dmg) → open it → drag to Applications → open from Applications.
 
 You do **not** need `git clone` or Terminal for a normal install. This guide covers the details macOS doesn't explain well.
 
@@ -13,7 +13,7 @@ You do **not** need `git clone` or Terminal for a normal install. This guide cov
 ## Step 1 — Download
 
 1. Open **[github.com/harshabala/parsekit/releases/latest](https://github.com/harshabala/parsekit/releases/latest)** in Safari or Chrome.
-2. Under **Assets**, click **`ParseKit_0.2.3_aarch64.dmg`**.
+2. Under **Assets**, click **`ParseKit_0.2.4_aarch64.dmg`**.
 3. Wait for the download to finish. It'll land in your **Downloads** folder.
 
 ## Step 2 — Open the installer
