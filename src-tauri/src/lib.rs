@@ -112,6 +112,9 @@ struct TrayHandle<R: Runtime> {
     icon: TrayIcon<R>,
 }
 
+#[derive(Clone, Default)]
+struct TrayRectState(Arc<Mutex<Option<Rect>>>);
+
 #[derive(Clone)]
 struct TrayMenuState {
     tray_id: Arc<Mutex<TrayIconId>>,
@@ -1017,12 +1020,57 @@ fn show_main_window(
     Ok(())
 }
 
-fn position_progress_hud<R: Runtime>(window: &WebviewWindow<R>) -> bool {
+fn position_progress_hud_under_tray<R: Runtime>(window: &WebviewWindow<R>, rect: &Rect) -> bool {
     let Ok(win_size) = window.outer_size() else {
         return false;
     };
     let scale = window.scale_factor().unwrap_or(1.0);
+
+    let icon_x = match rect.position {
+        Position::Physical(p) => p.x as f64,
+        Position::Logical(p) => p.x * scale,
+    };
+    let icon_y = match rect.position {
+        Position::Physical(p) => p.y as f64,
+        Position::Logical(p) => p.y * scale,
+    };
+    let icon_w = match rect.size {
+        Size::Physical(s) => s.width as f64,
+        Size::Logical(s) => s.width * scale,
+    };
+    let icon_h = match rect.size {
+        Size::Physical(s) => s.height as f64,
+        Size::Logical(s) => s.height * scale,
+    };
+    let win_w = win_size.width as f64;
+    let win_h = win_size.height as f64;
+
     let (monitor_width, monitor_height) = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .map(|m| (m.size().width as f64, m.size().height as f64))
+        .unwrap_or((f64::MAX, f64::MAX));
+
+    // Anchor below menu bar icon, right-aligned to tray.
+    let x = (icon_x + icon_w - win_w)
+        .max(8.0)
+        .min(monitor_width - win_w - 8.0) as i32;
+    let menu_bar = 28.0 * scale;
+    let y = (icon_y + icon_h + 6.0) as i32;
+    let y = y.clamp(menu_bar as i32, (monitor_height - win_h - 8.0).max(menu_bar) as i32);
+
+    window
+        .set_position(PhysicalPosition::new(x, y))
+        .is_ok()
+}
+
+fn position_progress_hud_top_right<R: Runtime>(window: &WebviewWindow<R>) -> bool {
+    let Ok(win_size) = window.outer_size() else {
+        return false;
+    };
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let (monitor_width, _) = window
         .current_monitor()
         .ok()
         .flatten()
@@ -1030,22 +1078,34 @@ fn position_progress_hud<R: Runtime>(window: &WebviewWindow<R>) -> bool {
         .unwrap_or((1920.0 * scale, 1080.0 * scale));
 
     let margin = 16.0 * scale;
+    let menu_bar = 36.0 * scale;
     let x = (monitor_width - win_size.width as f64 - margin).max(8.0) as i32;
-    let y = (monitor_height - win_size.height as f64 - margin).max(24.0) as i32;
     window
-        .set_position(PhysicalPosition::new(x, y))
+        .set_position(PhysicalPosition::new(x, menu_bar as i32))
         .is_ok()
 }
 
 #[tauri::command]
-fn show_progress_hud(app: tauri::AppHandle) -> Result<(), String> {
+fn show_progress_hud(
+    app: tauri::AppHandle,
+    tray_rect: State<'_, TrayRectState>,
+) -> Result<(), String> {
     let window = app
         .get_webview_window("progress-hud")
         .ok_or_else(|| "Progress HUD window not found".to_string())?;
-    macos_popover::ensure_hud_window_configured(&window);
-    let _ = window.set_always_on_top(true);
-    let _ = position_progress_hud(&window);
-    window.show().map_err(|e| e.to_string())?;
+
+    let rect = tray_rect
+        .0
+        .lock()
+        .ok()
+        .and_then(|g| g.clone());
+    if let Some(r) = rect.as_ref() {
+        let _ = position_progress_hud_under_tray(&window, r);
+    } else {
+        let _ = position_progress_hud_top_right(&window);
+    }
+
+    macos_popover::present_hud_window(&window);
     Ok(())
 }
 
@@ -1261,6 +1321,10 @@ pub fn run() {
             app.manage(clipboard_convert::ClipboardWatchState::default());
             let tray_click_debounce = TrayClickDebounce::new();
 
+            macos_notification::init_notification_bundle();
+
+            app.manage(TrayRectState::default());
+
             // Tray menu labels (tray_id filled in after the icon is built).
             app.manage(TrayMenuState {
                 tray_id: Arc::new(Mutex::new(TrayIconId::new("pending"))),
@@ -1355,6 +1419,12 @@ pub fn run() {
                                 popover_trace("Tray Click: ABORT (main window missing)");
                                 return;
                             };
+                            if let Some(tray_rect_state) = app.try_state::<TrayRectState>() {
+                                if let Ok(mut guard) = tray_rect_state.0.lock() {
+                                    *guard = Some(rect.clone());
+                                }
+                            }
+
                             match button {
                                 MouseButton::Left => {
                                     if !tray_click_debounce.accept_click() {

@@ -3,10 +3,10 @@
 fn notify_already_running() {
     #[cfg(target_os = "macos")]
     {
-        let _ = std::process::Command::new("osascript").args([
-            "-e",
-            r#"display notification "ParseKit is already running. Click the ParseKit icon in the menu bar (top-right of your screen)." with title "ParseKit""#,
-        ]).spawn();
+        let _ = parsekit_lib::macos_notification::display_notification(
+            "ParseKit",
+            "ParseKit is already running. Click the ParseKit icon in the menu bar (top-right of your screen).",
+        );
     }
     eprintln!(
         "ParseKit is already running. Look for the ParseKit icon in the menu bar (top-right), or quit ParseKit in Activity Monitor."

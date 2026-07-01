@@ -46,30 +46,19 @@
     <p class="about-version" aria-label={t("about.versionLabel", { version })}>v{version}</p>
 
     <p class="about-hero">{t("about.heroLead")}</p>
-    <p class="settings-hint about-body">{t("about.heroBody")}</p>
-    <p class="settings-hint about-body">{t("about.heroValue")}</p>
-    <p class="about-local about-emphasis">{t("about.localLine")}</p>
-    <p class="about-local about-emphasis">{t("about.privacyLine")}</p>
-
-    <div class="settings-divider"></div>
+    <p class="about-local">{t("about.localLine")}</p>
 
     <h2 class="about-section-title">{t("about.benefitsTitle")}</h2>
-    <ul class="about-list">
+    <ul class="about-list about-list-compact">
       <li>{t("about.benefit1")}</li>
       <li>{t("about.benefit2")}</li>
-      <li>{t("about.benefit3")}</li>
       <li>{t("about.benefit4")}</li>
       <li>{t("about.benefit5")}</li>
-      <li>{t("about.benefit6")}</li>
-      <li>{t("about.benefit7")}</li>
     </ul>
-
-    <div class="settings-divider"></div>
 
     <h2 class="about-section-title">{t("about.formatsTitle")}</h2>
     <div class="about-formats">
       <div class="about-formats-col">
-        <p class="about-formats-label">{t("about.convertLabel")}</p>
         <ul class="about-list about-list-compact">
           <li>{t("about.formatPdf")}</li>
           <li>{t("about.formatWord")}</li>
@@ -88,12 +77,7 @@
       </div>
     </div>
 
-    <div class="settings-divider"></div>
-
-    <p class="settings-hint about-powered">{t("about.poweredBy")}</p>
-    <p class="settings-hint about-license">{t("about.licenseLine")}</p>
-
-    <div class="settings-divider"></div>
+    <p class="settings-hint about-powered">{t("about.poweredBy")} · {t("about.licenseLine")}</p>
 
     <p class="about-attribution">
       {t("about.craftedBy")}

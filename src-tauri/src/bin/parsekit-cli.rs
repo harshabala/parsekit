@@ -25,6 +25,7 @@ Usage:
   parsekit convert <file> [--out <path>] [--format md|txt|json]
   parsekit convert <folder> --batch [--out <folder>]
   parsekit trash <file>...          (macOS only — move files to Trash)
+  parsekit notify <message>         (macOS only — native notification with ParseKit icon)
 
 Options:
   --out <path>     Output file or folder (default: same directory as input)
@@ -105,6 +106,11 @@ fn run() -> Result<(), String> {
     if args[0] == "trash" {
         args.remove(0);
         return execute_trash(&args);
+    }
+
+    if args[0] == "notify" {
+        args.remove(0);
+        return execute_notify(&args);
     }
 
     Err(format!(
@@ -530,6 +536,25 @@ fn resolve_sidecar() -> Result<PathBuf, String> {
         "parsekit-sidecar not found. Build with: npm run build:sidecar (or set PARSEKIT_SIDECAR)"
             .to_string(),
     )
+}
+
+fn execute_notify(args: &[String]) -> Result<(), String> {
+    if args.is_empty() || matches!(args[0].as_str(), "--help" | "-h") {
+        eprintln!("Usage: parsekit notify <message>");
+        return Ok(());
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = args;
+        return Err("parsekit notify is only available on macOS.".into());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let message = args.join(" ");
+        parsekit_lib::macos_notification::display_notification("ParseKit", &message)
+    }
 }
 
 fn execute_trash(args: &[String]) -> Result<(), String> {

@@ -68,10 +68,20 @@ export async function hideProgressHudWindow(): Promise<void> {
   }
 }
 
-export async function syncProgressHud(state: ProgressHudState): Promise<void> {
-  try {
-    await emitTo(PROGRESS_HUD_WINDOW_LABEL, PROGRESS_HUD_SYNC_EVENT, state);
-  } catch (e) {
-    console.warn("[progressHud] sync failed", e);
+export async function syncProgressHud(
+  state: ProgressHudState,
+  retries = 4,
+): Promise<void> {
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      await emitTo(PROGRESS_HUD_WINDOW_LABEL, PROGRESS_HUD_SYNC_EVENT, state);
+      return;
+    } catch (e) {
+      if (attempt === retries - 1) {
+        console.warn("[progressHud] sync failed", e);
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 60 * (attempt + 1)));
+    }
   }
 }

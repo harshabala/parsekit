@@ -135,7 +135,7 @@
   let tokenStats = $state<TokenStats | null>(null);
   let tokenStatsPeriod = $state<TokenStatsPeriod>(DEFAULT_TOKEN_STATS_PERIOD);
   let batchTokenSavings = $state<BatchTokenSavings>(createBatchTokenSavings());
-  let showFloatingHud = $state(false);
+  let showFloatingHud = $state(true);
   let isBackgroundBatch = $state(false);
   let hudActive = $state(false);
 
@@ -295,6 +295,8 @@
     if (!showFloatingHud) return;
     hudActive = true;
     await showProgressHudWindow();
+    await syncProgressHud(buildHudState());
+    await new Promise((resolve) => setTimeout(resolve, 120));
     await syncHudIfActive();
   }
 
@@ -432,7 +434,7 @@
     launchAtLogin = await getSetting<boolean>("launchAtLogin", false);
     autoConvertOnCopy = await getSetting<boolean>("autoConvertOnCopy", false);
     globalShortcut = await getSetting("globalShortcut", DEFAULT_GLOBAL_SHORTCUT);
-    showFloatingHud = await getSetting("showFloatingHud", false);
+    showFloatingHud = await getSetting("showFloatingHud", true);
     if (launchAtLogin) {
       try {
         await invoke("set_launch_at_login", { enabled: true });
@@ -786,13 +788,10 @@
             const notifyErrors = files.filter((f) => f.status === "error").length;
             void refreshTokenStats();
             void syncHudIfActive();
-            // HUD shows completion summary; skip duplicate system notification when HUD is active.
-            if (!hudActive) {
-              void invoke("show_completion_notification", {
-                title: t("app.name"),
-                body: t("run.notifyDone", { parsed, errors: notifyErrors }),
-              }).catch(() => {});
-            }
+            void invoke("show_completion_notification", {
+              title: t("app.name"),
+              body: t("run.notifyDone", { parsed, errors: notifyErrors }),
+            }).catch(() => {});
             isBackgroundBatch = false;
           } else if (event.type === "error") {
             // Fatal sidecar error (see sidecar.ts protocol) — not per-file progress errors.

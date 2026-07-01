@@ -32,7 +32,7 @@
     launchAtLogin,
     autoConvertOnCopy = false,
     globalShortcut = DEFAULT_GLOBAL_SHORTCUT,
-    showFloatingHud = false,
+    showFloatingHud = true,
     onLocaleChange,
     onOcrLanguageChange,
     onThemeChange,

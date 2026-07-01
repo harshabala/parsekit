@@ -14,7 +14,7 @@ if [[ -d "/Applications/ParseKit.app" ]]; then
 elif [[ -d "${HOME}/Applications/ParseKit.app" ]]; then
   APP_BUNDLE="${HOME}/Applications/ParseKit.app"
 else
-  osascript -e 'display notification "Install ParseKit in Applications first." with title "ParseKit"' 2>/dev/null || true
+  echo "Install ParseKit in Applications first." >&2
   exit 1
 fi
 
@@ -120,10 +120,15 @@ def record_token_savings(file_type, tokens_saved, pages_unlocked, documents_unlo
     save_token_stats(stats)
 
 def notify(message):
-    subprocess.run(
-        ["osascript", "-e", f'display notification "{message}" with title "ParseKit"'],
-        check=False,
-    )
+    candidates = [
+        os.environ.get("PARSEKIT_CLI", ""),
+        os.path.join(app_bundle, "Contents/MacOS/parsekit-cli"),
+    ]
+    for cli in candidates:
+        if cli and os.path.isfile(cli) and os.access(cli, os.X_OK):
+            subprocess.run([cli, "notify", message], check=False)
+            return
+    print(f"ParseKit notification skipped (CLI missing): {message}", file=sys.stderr)
 
 def open_app():
     subprocess.run(["open", "-ga", app_name], check=False)
@@ -168,12 +173,11 @@ if not output_dir:
     open_app()
     sys.exit(0)
 
-show_hud = bool(settings.get("showFloatingHud", False))
-app_running = subprocess.run(["pgrep", "-xq", app_name]).returncode == 0
-if show_hud and app_running:
+show_hud = bool(settings.get("showFloatingHud", True))
+if show_hud:
     with open(queue_path, "w") as f:
         json.dump({"paths": paths, "background": True}, f, indent=2)
-    subprocess.run(["open", "-ga", app_name], check=False)
+    open_app()
     sys.exit(0)
 
 if not os.path.isfile(sidecar) or not os.access(sidecar, os.X_OK):

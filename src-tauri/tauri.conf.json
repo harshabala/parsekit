@@ -30,7 +30,7 @@
         "label": "progress-hud",
         "title": "ParseKit Progress",
         "width": 280,
-        "height": 90,
+        "height": 120,
         "resizable": false,
         "visible": false,
         "decorations": false,

@@ -115,6 +115,26 @@ pub fn ensure_hud_window_configured<R: tauri::Runtime>(window: &WebviewWindow<R>
     }
 }
 
+/// Show the HUD above other windows without stealing focus from the user's app.
+#[cfg(target_os = "macos")]
+pub fn present_hud_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
+    ensure_hud_window_configured(window);
+    let _ = window.set_always_on_top(true);
+    if let Ok(ns_ptr) = window.ns_window() {
+        unsafe {
+            let ns_window: &NSWindow = &*ns_ptr.cast();
+            ns_window.orderFrontRegardless();
+        }
+    }
+    let _ = window.show();
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn present_hud_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
+    let _ = window.set_always_on_top(true);
+    let _ = window.show();
+}
+
 #[cfg(target_os = "macos")]
 pub fn configure_hud_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
     let Ok(ns_ptr) = window.ns_window() else {
