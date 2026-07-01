@@ -15,13 +15,28 @@ After a release build on Apple Silicon:
 
 `src-tauri/binaries/` is gitignored. The sidecar must be built on the target architecture before packaging.
 
-## Commands
+## Automated releases (default)
+
+**You do not need to manually build or upload DMGs.** On every push to `master`:
+
+1. CI runs unit tests and typechecks.
+2. If there are new commits since the last release tag, the workflow auto-bumps the **patch** version (e.g. `0.2.4` → `0.2.5`).
+3. It builds the signed `.app`, styled DMG, updater tarball, and `parsekit-latest.json`.
+4. It publishes a GitHub Release and commits the synced version files back to `master` with `[skip release]` so the bot does not loop.
+
+Push code → wait ~25 minutes → fresh DMG on [Releases](https://github.com/harshabala/parsekit/releases/latest).
+
+To ship a **minor/major** bump instead of patch, set the version in `package.json` higher than the latest published release before pushing (e.g. `0.3.0`). The workflow keeps your manual bump.
+
+To re-run without new commits: **Actions → Release → Run workflow**.
+
+## Manual release (optional)
 
 ```bash
-# Local release (sign, verify, DMG)
+# Local build only (sign, verify, DMG)
 npm run release:macos
 
-# Release + upload to GitHub
+# Manual upload to GitHub (normally handled by CI)
 export TAURI_SIGNING_PRIVATE_KEY="$HOME/.tauri/parsekit.key"
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
 RELEASE_NOTES="ParseKit v0.2.x — …" npm run publish:macos

@@ -57,7 +57,10 @@
   "bundle": {
     "active": true,
     "createUpdaterArtifacts": false,
-    "targets": ["app", "dmg"],
+    "targets": [
+      "app",
+      "dmg"
+    ],
     "macOS": {
       "infoPlist": "Info.plist",
       "dmg": {
@@ -87,7 +90,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/parsekit-sidecar"],
+    "externalBin": [
+      "binaries/parsekit-sidecar"
+    ],
     "resources": {
       "resources/macos/": "macos/"
     }

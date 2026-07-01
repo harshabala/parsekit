@@ -14,6 +14,9 @@ permissions:
 
 jobs:
   test:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      !contains(github.event.head_commit.message, '[skip release]')
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,9 +46,16 @@ jobs:
 
   release:
     needs: test
+    if: >-
+      always() &&
+      needs.test.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' ||
+       !contains(github.event.head_commit.message, '[skip release]'))
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -57,7 +67,18 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Resolve release version
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/bump-version-if-needed.sh
+
+      - name: Skip — already released at this commit
+        if: steps.version.outputs.skip == 'true'
+        run: echo "No new release needed."
+
       - name: Configure Tauri updater signing key
+        if: steps.version.outputs.skip != 'true'
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
@@ -69,6 +90,7 @@ jobs:
           printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" > "$HOME/.tauri/parsekit.key"
 
       - name: Build, sign, and publish macOS release
+        if: steps.version.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ github.workspace }}/.tauri-ci/parsekit.key
@@ -78,3 +100,18 @@ jobs:
           mkdir -p .tauri-ci
           cp "$HOME/.tauri/parsekit.key" "$TAURI_SIGNING_PRIVATE_KEY_PATH"
           bash scripts/publish-release.sh
+
+      - name: Commit synced version back to master
+        if: steps.version.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
+          if git diff --cached --quiet; then
+            echo "Version files already match v${VERSION}"
+            exit 0
+          fi
+          git commit -m "chore(release): sync v${VERSION} [skip release]"
+          git push
