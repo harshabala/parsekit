@@ -30,6 +30,6 @@ Knowledge workers, researchers, lawyers, consultants, and power users who live i
 ## Non-Functional Requirements
 - 100% local (LiteParse v2 native OCR; optional first-run Tesseract language data).
 - Native macOS look & feel (dark mode, SF Symbols, accessibility, haptics).
-- Zero telemetry, zero network except LiteParse necessities.
+- Zero telemetry. Network use is limited to optional GitHub release checks (updater) and first-run OCR language data downloads when needed.
 - Minimal CPU/memory; smart concurrency (max 4-6 workers on M-series).
-- Signed & notarized .app build ready.
+- Ad-hoc signed `.app` builds (see `docs/RELEASING.md`); notarization is planned for public distribution.

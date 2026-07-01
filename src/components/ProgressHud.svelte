@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
+  import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
   import { emit } from "@tauri-apps/api/event";
+  import { hintFadeIn, hintFadeOut } from "../lib/motion";
   import { t } from "../lib/i18n.svelte";
   import { isConverterDependencyError } from "../lib/converterErrors";
   import {
@@ -22,6 +25,10 @@
 
   let selectedErrorId = $state<string | null>(null);
   let dismissTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const reducedMotion = $derived(prefersReducedMotion.current);
+  const fadeInParams = $derived(hintFadeIn(reducedMotion));
+  const fadeOutParams = $derived(hintFadeOut(reducedMotion));
 
   const total = $derived(hudState.total || hudState.files.length);
   const finished = $derived(
@@ -120,7 +127,7 @@
   </div>
 
   {#if isComplete}
-    <div class="progress-hud-complete">
+    <div class="progress-hud-complete" in:fade={fadeInParams} out:fade={fadeOutParams}>
       {#if tokensSaved > 0}
         <span class="progress-hud-tokens">
           {t("progressHud.tokensSaved", {
@@ -139,7 +146,13 @@
   {/if}
 
   {#if errorCount > 0 && selectedError}
-    <div class="progress-hud-error-detail" role="region" aria-label={selectedError.name}>
+    <div
+      class="progress-hud-error-detail"
+      role="region"
+      aria-label={selectedError.name}
+      in:fade={fadeInParams}
+      out:fade={fadeOutParams}
+    >
       <button
         type="button"
         class="progress-hud-error-file"

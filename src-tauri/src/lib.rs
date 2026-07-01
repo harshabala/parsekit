@@ -648,6 +648,26 @@ fn imagemagick_available() -> bool {
 }
 
 #[cfg(test)]
+mod security_path_tests {
+    use super::sanitize_report_file_name;
+
+    #[test]
+    fn sanitize_report_file_name_accepts_simple_names() {
+        assert_eq!(
+            sanitize_report_file_name("parsekit-errors.txt").unwrap(),
+            "parsekit-errors.txt"
+        );
+    }
+
+    #[test]
+    fn sanitize_report_file_name_rejects_traversal() {
+        assert!(sanitize_report_file_name("../secrets.txt").is_err());
+        assert!(sanitize_report_file_name("sub/file.txt").is_err());
+        assert!(sanitize_report_file_name("").is_err());
+    }
+}
+
+#[cfg(test)]
 mod dependency_detect_tests {
     use super::*;
 
@@ -760,10 +780,41 @@ fn gatekeeper_fix_command() -> String {
     "xattr -cr /Applications/ParseKit.app && xattr -d com.apple.FinderInfo /Applications/ParseKit.app 2>/dev/null || true".to_string()
 }
 
+/// Reject path components in report filenames (IPC boundary).
+pub(crate) fn sanitize_report_file_name(file_name: &str) -> Result<String, String> {
+    let trimmed = file_name.trim();
+    if trimmed.is_empty() {
+        return Err("File name is empty".into());
+    }
+    if trimmed.contains('/') || trimmed.contains('\\') || trimmed.contains("..") {
+        return Err("Invalid file name".into());
+    }
+    if trimmed.chars().any(|c| c.is_control()) {
+        return Err("Invalid file name".into());
+    }
+    Ok(trimmed.to_string())
+}
+
+/// Ensure the parent directory of `target` stays under `base_dir`.
+fn path_stays_within_base(base_dir: &std::path::Path, target: &std::path::Path) -> Result<(), String> {
+    let base = std::fs::canonicalize(base_dir)
+        .map_err(|e| format!("Could not resolve output folder: {e}"))?;
+    let parent = target
+        .parent()
+        .ok_or_else(|| "Invalid report path".to_string())?;
+    let parent_resolved = std::fs::canonicalize(parent)
+        .map_err(|e| format!("Could not resolve report folder: {e}"))?;
+    if !parent_resolved.starts_with(&base) {
+        return Err("Report path escapes the output folder".into());
+    }
+    Ok(())
+}
+
 /// Write a text report (error log) into `dir/file_name`, then reveal it in Finder.
 /// Returns the full path of the written file.
 #[tauri::command]
 fn save_error_report(dir: String, file_name: String, contents: String) -> Result<String, String> {
+    let safe_name = sanitize_report_file_name(&file_name)?;
     let mut path = std::path::PathBuf::from(&dir);
     if !path.is_dir() {
         // Fall back to ~/Downloads if the original output dir is gone.
@@ -776,7 +827,9 @@ fn save_error_report(dir: String, file_name: String, contents: String) -> Result
             std::path::PathBuf::from(home)
         };
     }
-    path.push(&file_name);
+    let base_dir = path.clone();
+    path.push(&safe_name);
+    path_stays_within_base(&base_dir, &path)?;
     std::fs::write(&path, contents).map_err(|e| format!("Could not write report: {e}"))?;
     let path_str = path.to_string_lossy().to_string();
     #[cfg(target_os = "macos")]
@@ -870,6 +923,9 @@ pub(crate) const SUPPORTED_EXTENSIONS: &[&str] = &[
     "xlsm", "ods", "csv", "tsv", "png", "jpg", "jpeg", "gif", "bmp", "tiff", "tif", "webp", "svg",
 ];
 
+const SCAN_MAX_DEPTH: usize = 32;
+const SCAN_MAX_FILES: usize = 10_000;
+
 pub(crate) fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
     let path = normalize_user_path(path);
     let dir = Path::new(&path);
@@ -878,9 +934,19 @@ pub(crate) fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
     }
 
     let mut files = Vec::new();
-    for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
+    for entry in WalkDir::new(dir)
+        .max_depth(SCAN_MAX_DEPTH)
+        .follow_links(false)
+        .into_iter()
+    {
+        let entry = entry.map_err(|e| format!("Could not scan directory: {e}"))?;
         let entry_path = entry.path();
         if entry_path.is_file() {
+            if files.len() >= SCAN_MAX_FILES {
+                return Err(format!(
+                    "Too many supported files (max {SCAN_MAX_FILES}). Choose a smaller folder."
+                ));
+            }
             if let Some(ext) = entry_path.extension().and_then(|e| e.to_str()) {
                 let ext_lower = ext.to_lowercase();
                 if SUPPORTED_EXTENSIONS.contains(&ext_lower.as_str()) {
@@ -1001,11 +1067,6 @@ fn open_in_finder(path: String) -> Result<(), String> {
         .spawn()
         .map_err(|e| format!("Failed to open in Finder: {}", e))?;
     Ok(())
-}
-
-#[tauri::command]
-fn copy_file_to_clipboard(path: String) -> Result<Vec<u8>, String> {
-    std::fs::read(&path).map_err(|e| format!("Failed to read file: {}", e))
 }
 
 #[tauri::command]
@@ -1276,7 +1337,6 @@ pub fn run() {
             path_is_directory,
             canonicalize_paths,
             open_in_finder,
-            copy_file_to_clipboard,
             save_error_report,
             get_system_info,
             check_dependencies,
@@ -1503,6 +1563,7 @@ pub fn run() {
             }
 
             // Test-only: same `install_update` path as the gold banner "Install & Restart" button.
+            #[cfg(debug_assertions)]
             if std::env::var("PARSEKIT_E2E_INSTALL_UPDATE").as_deref() == Ok("1") {
                 let handle = app.handle().clone();
                 tauri::async_runtime::spawn(async move {

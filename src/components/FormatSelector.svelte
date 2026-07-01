@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../lib/i18n.svelte";
   import type { OutputFormat } from "../lib/types";
 
   let { value, onChange }: { value: OutputFormat; onChange: (format: OutputFormat) => void } = $props();
@@ -10,11 +11,13 @@
   ];
 </script>
 
-<div class="segmented-control">
+<div class="segmented-control" role="group" aria-label={t("config.format")}>
   {#each formats as fmt}
     <button
+      type="button"
       class="segment"
       class:active={value === fmt.value}
+      aria-pressed={value === fmt.value}
       onclick={() => onChange(fmt.value)}
     >
       {fmt.label}

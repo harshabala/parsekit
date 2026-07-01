@@ -3,7 +3,7 @@
   import { prefersReducedMotion } from "svelte/motion";
   import type { AppLocale } from "../lib/i18n.svelte";
   import { t } from "../lib/i18n.svelte";
-  import { hintFadeIn, hintFadeOut } from "../lib/motion";
+  import { hintFadeIn, hintFadeOut, panelFadeIn, panelFadeOut } from "../lib/motion";
   import type { OcrLanguageCode } from "../lib/ocrLanguages";
   import type { ThemeMode } from "../lib/types";
   import type { SettingsTab } from "../lib/converterErrors";
@@ -96,6 +96,8 @@
   const reducedMotion = $derived(prefersReducedMotion.current);
   const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
   const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
+  const tabFadeInParams = $derived(panelFadeIn(reducedMotion));
+  const tabFadeOutParams = $derived(panelFadeOut(reducedMotion));
 
   let activeTab = $state<SettingsTab>("general");
   let gatekeeperCopied = $state(false);
@@ -208,9 +210,11 @@
         <button
           type="button"
           role="tab"
+          id="settings-tab-{tab.id}"
           class="segment"
           class:active={activeTab === tab.id}
           aria-selected={activeTab === tab.id}
+          aria-controls="settings-panel-{tab.id}"
           onclick={() => (activeTab = tab.id)}
         >
           {t(tab.labelKey)}
@@ -220,8 +224,15 @@
   </div>
 
   <div class="settings-scroll selectable-content">
-    {#if activeTab === "general"}
-      <div role="tabpanel" aria-label={t("settings.tabGeneral")}>
+    {#key activeTab}
+      {#if activeTab === "general"}
+      <div
+        id="settings-panel-general"
+        role="tabpanel"
+        aria-labelledby="settings-tab-general"
+        in:fade={tabFadeInParams}
+        out:fade={tabFadeOutParams}
+      >
         <div class="settings-section">
           <div class="settings-section-title">{t("settings.appLanguageTitle")}</div>
           <p class="settings-hint">{t("settings.appLanguageHint")}</p>
@@ -302,13 +313,25 @@
                 {recordingHotkey ? t("settings.hotkeyRecording") : t("settings.hotkeyChange")}
               </button>
               {#if globalShortcut !== DEFAULT_GLOBAL_SHORTCUT}
-                <button type="button" class="secondary" onclick={resetHotkey}>
+                <button
+                  type="button"
+                  class="secondary"
+                  in:fade={hintFadeInParams}
+                  out:fade={hintFadeOutParams}
+                  onclick={resetHotkey}
+                >
                   {t("settings.hotkeyReset")}
                 </button>
               {/if}
             </div>
             {#if hotkeyError}
-              <p class="settings-hint deps-error">{hotkeyError}</p>
+              <p
+                class="settings-hint deps-error"
+                in:fade={hintFadeInParams}
+                out:fade={hintFadeOutParams}
+              >
+                {hotkeyError}
+              </p>
             {/if}
           </div>
           <div class="settings-divider"></div>
@@ -417,7 +440,13 @@
         </div>
       </div>
     {:else}
-      <div role="tabpanel" aria-label={t("settings.tabFileSupport")}>
+      <div
+        id="settings-panel-file-support"
+        role="tabpanel"
+        aria-labelledby="settings-tab-file-support"
+        in:fade={tabFadeInParams}
+        out:fade={tabFadeOutParams}
+      >
         <div class="settings-section">
           <div class="settings-section-title">{t("settings.ocrLanguageTitle")}</div>
           <p class="settings-hint settings-hint--multiline">{t("settings.ocrLanguageHint")}</p>
@@ -447,6 +476,7 @@
         </div>
       </div>
     {/if}
+    {/key}
 
     <div class="settings-divider"></div>
 

@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 const STATS_FILE_NAME: &str = "token-stats.json";
+const MAX_TOKEN_EVENTS: usize = 500;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct FileTypeStats {
@@ -128,6 +129,10 @@ fn apply_record(stats: &mut TokenStats, input: &RecordInput) {
         tokens_saved,
         pages_unlocked,
     });
+    if stats.events.len() > MAX_TOKEN_EVENTS {
+        let overflow = stats.events.len() - MAX_TOKEN_EVENTS;
+        stats.events.drain(0..overflow);
+    }
 }
 
 #[cfg(test)]
@@ -248,6 +253,22 @@ mod tests {
         let stats = reset().expect("reset");
         assert_eq!(stats, TokenStats::default());
         assert_eq!(load(), TokenStats::default());
+    }
+
+    #[test]
+    fn events_are_capped_at_max() {
+        let _guard = TestDirGuard::new();
+        for i in 0..(MAX_TOKEN_EVENTS + 25) {
+            record(RecordInput {
+                file_type: format!("pdf{i}"),
+                tokens_saved: 1,
+                pages_unlocked: 0,
+                documents_unlocked: 0,
+            })
+            .expect("record");
+        }
+        let stats = load();
+        assert_eq!(stats.events.len(), MAX_TOKEN_EVENTS);
     }
 
     #[test]

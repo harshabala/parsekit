@@ -31,6 +31,7 @@
     type="button"
     class="output-folder-path-btn"
     title={value || t("config.downloads")}
+    aria-label="{t('config.outputFolder')}: {value || t('config.downloads')}"
     onclick={pick}
   >
     <span class="output-folder-path-text">{displayPath}</span>

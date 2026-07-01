@@ -76,6 +76,8 @@
     collapseSlideOut,
     hintFadeIn,
     hintFadeOut,
+    panelBlurFlyIn,
+    panelBlurFlyInParams,
     panelBlurFlyOut,
     panelBlurFlyOutParams,
     panelFadeIn,
@@ -87,6 +89,7 @@
   import "./index.css";
 
   const reducedMotion = $derived(prefersReducedMotion.current);
+  const mainPanelIn = $derived(panelBlurFlyInParams(reducedMotion));
   const mainPanelOut = $derived(panelBlurFlyOutParams(reducedMotion));
   const mainFadeIn = $derived(panelFadeIn(reducedMotion));
   const mainFadeOut = $derived(panelFadeOut(reducedMotion));
@@ -934,13 +937,14 @@
 <div class="shell">
   {#if !showSettings && !showHistory}
     {#key "main"}
-      <div class="motion-panel" out:panelBlurFlyOut={mainPanelOut}>
+      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
         <div class="motion-panel-content">
   <header>
     <span>{t("app.name")}</span>
     {#if appVersion}<span class="header-ver">{appVersion}</span>{/if}
     <div class="header-actions">
       <button
+        type="button"
         class="icon-btn icon-btn-settings"
         onclick={() => openSettings()}
         onmouseenter={warmDependencies}
@@ -964,6 +968,7 @@
         </svg>
       </button>
       <button
+        type="button"
         class="icon-btn"
         onclick={quitApp}
         title={t("header.quit")}
@@ -1014,6 +1019,8 @@
           <button
             type="button"
             class="config-collapse-btn"
+            in:fade={hintFadeInParams}
+            out:fade={hintFadeOutParams}
             onclick={toggleConfigCollapsed}
             aria-expanded={!configCollapsed}
           >
@@ -1185,7 +1192,7 @@
 
   {#if showHistory}
     {#key "history"}
-      <div class="motion-panel" out:panelBlurFlyOut={mainPanelOut}>
+      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
         <div class="motion-panel-content">
           <HistoryScreen
             batches={recentBatches}
@@ -1201,12 +1208,14 @@
 
   {#if showSettings}
     {#key "settings"}
-      <div class="motion-panel" out:panelBlurFlyOut={mainPanelOut}>
+      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
         <div class="motion-panel-content">
     {#key showAbout}
       <div class="subview-fill" out:fade={subviewFadeOutParams}>
     {#if showAbout}
+      <div in:fade={mainFadeIn} out:fade={mainFadeOut}>
       <AboutScreen onClose={() => (showAbout = false)} />
+      </div>
     {:else}
       <SettingsScreen
         locale={getLocale()}

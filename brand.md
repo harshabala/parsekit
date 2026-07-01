@@ -48,13 +48,13 @@ ParseKit uses custom CSS variables (not shadcn). Backup at `src/index.css.bak`.
 
 Body, primary CTA, and muted text pairs verified for WCAG AA in light and dark derivations.
 
-## Typography — Instrument Serif + Inter + JetBrains Mono
+## Typography — Instrument Serif + System Sans + JetBrains Mono
 
 - **Display (app title, about header):** Instrument Serif
-- **Body (UI):** Inter
+- **Body (UI):** System sans (`-apple-system`, SF Pro Text) for native macOS feel
 - **Mono (counts, workers):** JetBrains Mono
 
-Loaded via Google Fonts in `src/index.css`. Variables: `--font-serif`, `--font-sans`, `--font-mono`.
+Instrument Serif and JetBrains Mono are bundled locally in `src/index.css`. Variables: `--font-serif`, `--font-sans`, `--font-mono`.
 
 ## Gradients
 
