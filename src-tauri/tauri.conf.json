@@ -25,6 +25,21 @@
         "center": false,
         "skipTaskbar": true,
         "shadow": true
+      },
+      {
+        "label": "progress-hud",
+        "title": "ParseKit Progress",
+        "width": 280,
+        "height": 90,
+        "resizable": false,
+        "visible": false,
+        "decorations": false,
+        "transparent": true,
+        "backgroundColor": "#00000000",
+        "alwaysOnTop": true,
+        "center": false,
+        "skipTaskbar": true,
+        "shadow": true
       }
     ],
     "security": {

@@ -168,6 +168,14 @@ if not output_dir:
     open_app()
     sys.exit(0)
 
+show_hud = bool(settings.get("showFloatingHud", False))
+app_running = subprocess.run(["pgrep", "-xq", app_name]).returncode == 0
+if show_hud and app_running:
+    with open(queue_path, "w") as f:
+        json.dump({"paths": paths, "background": True}, f, indent=2)
+    subprocess.run(["open", "-ga", app_name], check=False)
+    sys.exit(0)
+
 if not os.path.isfile(sidecar) or not os.access(sidecar, os.X_OK):
     notify("Parse engine missing. Reinstall ParseKit.")
     sys.exit(1)

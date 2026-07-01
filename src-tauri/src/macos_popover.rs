@@ -101,3 +101,36 @@ pub(crate) fn activate_app_for_popover<R: tauri::Runtime>(
 
 #[cfg(not(target_os = "macos"))]
 pub fn configure_popover_window<R: tauri::Runtime>(_window: &WebviewWindow<R>) {}
+
+static HUD_WINDOW_CONFIGURED: AtomicBool = AtomicBool::new(false);
+
+/// Apply NSWindow settings for the floating progress HUD (non-activating, all spaces).
+pub fn ensure_hud_window_configured<R: tauri::Runtime>(window: &WebviewWindow<R>) {
+    if HUD_WINDOW_CONFIGURED.load(Ordering::SeqCst) {
+        return;
+    }
+    if window.ns_window().is_ok() {
+        configure_hud_window(window);
+        HUD_WINDOW_CONFIGURED.store(true, Ordering::SeqCst);
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn configure_hud_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
+    let Ok(ns_ptr) = window.ns_window() else {
+        return;
+    };
+    unsafe {
+        let ns_window: &NSWindow = &*ns_ptr.cast();
+        ns_window.setLevel(NSFloatingWindowLevel);
+        let behavior = NSWindowCollectionBehavior::CanJoinAllSpaces
+            | NSWindowCollectionBehavior::FullScreenAuxiliary;
+        ns_window.setCollectionBehavior(behavior);
+        ns_window.setHasShadow(true);
+        ns_window.setOpaque(false);
+        ns_window.setBackgroundColor(Some(&NSColor::clearColor()));
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn configure_hud_window<R: tauri::Runtime>(_window: &WebviewWindow<R>) {}

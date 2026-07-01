@@ -30,13 +30,17 @@
     theme,
     workers,
     launchAtLogin,
+    autoConvertOnCopy = false,
     globalShortcut = DEFAULT_GLOBAL_SHORTCUT,
+    showFloatingHud = false,
     onLocaleChange,
     onOcrLanguageChange,
     onThemeChange,
     onWorkersChange,
     onLaunchAtLoginChange,
+    onAutoConvertOnCopyChange,
     onGlobalShortcutChange,
+    onShowFloatingHudChange,
     tokenStats = null,
     tokenStatsPeriod = "month",
     onTokenStatsPeriodChange,
@@ -60,13 +64,17 @@
     theme: ThemeMode;
     workers: number;
     launchAtLogin: boolean;
+    autoConvertOnCopy?: boolean;
     globalShortcut?: string;
+    showFloatingHud?: boolean;
     onLocaleChange: (code: AppLocale) => void;
     onOcrLanguageChange: (code: OcrLanguageCode) => void;
     onThemeChange: (mode: ThemeMode) => void;
     onWorkersChange: (value: number) => void;
     onLaunchAtLoginChange: (enabled: boolean) => void;
+    onAutoConvertOnCopyChange?: (enabled: boolean) => void | Promise<void>;
     onGlobalShortcutChange?: (shortcut: string) => void | Promise<void>;
+    onShowFloatingHudChange?: (enabled: boolean) => void | Promise<void>;
     tokenStats?: TokenStats | null;
     tokenStatsPeriod?: TokenStatsPeriod;
     onTokenStatsPeriodChange?: (period: TokenStatsPeriod) => void;
@@ -244,10 +252,45 @@
 
         <div class="settings-divider"></div>
 
+        {#if onAutoConvertOnCopyChange}
+          <div class="settings-section settings-toggle-row">
+            <label class="settings-launch-label">
+              <input
+                type="checkbox"
+                checked={autoConvertOnCopy}
+                onchange={(e) =>
+                  onAutoConvertOnCopyChange(
+                    (e.currentTarget as HTMLInputElement).checked,
+                  )}
+              />
+              <span>{t("settings.autoConvertOnCopy")}</span>
+            </label>
+            <p class="settings-hint">{t("settings.autoConvertOnCopyHint")}</p>
+          </div>
+          <div class="settings-divider"></div>
+        {/if}
+
+        {#if onShowFloatingHudChange}
+          <div class="settings-section settings-toggle-row">
+            <label class="settings-launch-label">
+              <input
+                type="checkbox"
+                checked={showFloatingHud}
+                onchange={(e) =>
+                  onShowFloatingHudChange((e.currentTarget as HTMLInputElement).checked)}
+              />
+              <span>{t("settings.floatingHudTitle")}</span>
+            </label>
+            <p class="settings-hint">{t("settings.floatingHudHint")}</p>
+          </div>
+          <div class="settings-divider"></div>
+        {/if}
+
         {#if onGlobalShortcutChange}
           <div class="settings-section">
             <div class="settings-section-title">{t("settings.hotkeyTitle")}</div>
             <p class="settings-hint">{t("settings.hotkeyHint")}</p>
+            <p class="settings-hint">{t("settings.clipboardConvertHint")}</p>
             <div class="hotkey-row">
               <kbd class="hotkey-display" aria-label={hotkeyDisplay}>{hotkeyDisplay}</kbd>
               <button

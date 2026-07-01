@@ -2498,3 +2498,197 @@ button.about-author-link:focus-visible {
 .token-savings-reset-btn {
   align-self: flex-start;
 }
+
+/* ── Floating progress HUD (Task 14) ── */
+
+.progress-hud-shell {
+  width: 280px;
+  height: 90px;
+  min-height: 90px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  background: var(--gradient-bg), var(--glass-bg);
+  background-color: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.4) inset,
+    0 4px 16px var(--shadow-color-strong);
+  overflow: visible;
+  position: relative;
+}
+
+.progress-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  position: relative;
+}
+
+.progress-hud-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.progress-hud-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.progress-hud-fraction {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.progress-hud-bar {
+  margin: 0;
+}
+
+.progress-hud-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-hud-stat-ok {
+  color: var(--text-secondary);
+}
+
+.progress-hud-stat-err {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--error-color, #c0392b);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.progress-hud-stat-err:hover {
+  opacity: 0.85;
+}
+
+.progress-hud-complete {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.progress-hud-tokens {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-hud-summary {
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-hud-error-detail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 4px 12px var(--shadow-color-strong);
+  z-index: 2;
+  max-height: 120px;
+  overflow: auto;
+}
+
+.progress-hud-error-file {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress-hud-error-msg {
+  margin: 4px 0 0;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+.progress-hud-error-link {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 6px 0 0;
+  font: inherit;
+  font-size: 10px;
+  color: var(--accent-color);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.progress-hud-error-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.progress-hud-error-chip {
+  appearance: none;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--secondary-bg) 80%, transparent);
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-size: 9px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress-hud-error-chip.active {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+}

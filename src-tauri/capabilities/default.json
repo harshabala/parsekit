@@ -1,7 +1,7 @@
 {
   "identifier": "default",
   "description": "Default capabilities for ParseKit",
-  "windows": ["main"],
+  "windows": ["main", "progress-hud"],
   "permissions": [
     "core:default",
     "store:default",

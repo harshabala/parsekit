@@ -108,6 +108,13 @@
     "statusSkipped": "跳过",
     "statusWaiting": "等待"
   },
+  "progressHud": {
+    "parsing": "解析中…",
+    "complete": "完成",
+    "success": "{count} 已完成",
+    "failed": "{count} 失败",
+    "tokensSaved": "+{count} tokens 已节省"
+  },
   "recent": {
     "title": "最近",
     "selectedFiles": "已选文件",
@@ -188,11 +195,16 @@
     "launchAtLogin": "登录时启动",
     "launchAtLoginHint": "登录 Mac 时自动启动 ParseKit。",
     "hotkeyTitle": "全局快捷键",
-    "hotkeyHint": "解析 Finder 选中项或剪贴板中的文件路径，无需打开弹窗。需先设置输出文件夹。",
+    "hotkeyHint": "在 Finder 中选中文件时，在后台解析到输出文件夹。需先设置输出文件夹。",
+    "clipboardConvertHint": "在 Finder 中复制支持的文件（⌘C），然后按快捷键或使用托盘菜单，将 Markdown 复制到剪贴板。",
+    "autoConvertOnCopy": "复制时自动转换",
+    "autoConvertOnCopyHint": "在 Finder 中复制支持的文件时，ParseKit 会自动解析并将 Markdown 放入剪贴板。",
     "hotkeyChange": "更改快捷键",
     "hotkeyRecording": "请按键…",
     "hotkeyReset": "重置为 ⌃⇧M",
     "hotkeyUpdateFailed": "无法注册快捷键，可能已被其他应用占用。",
+    "floatingHudTitle": "浮动进度面板",
+    "floatingHudHint": "通过全局快捷键或 Finder 快速操作在后台解析时，显示小型置顶进度面板。默认关闭。",
     "finderTitle": "Finder",
     "finderHint": "在 Finder 中右键 → 快速操作。Parse to Markdown with ParseKit 保留原文件；Parse to Markdown with ParseKit (Replace Original) 在解析成功后将原文件移至废纸篓（可在 Finder 中恢复）。两者均需在设置中指定输出文件夹才能静默转换，否则将打开 ParseKit 并载入文件。",
     "finderInstall": "安装 Finder 快速操作",
@@ -214,6 +226,7 @@
   },
   "tray": {
     "open": "打开 ParseKit",
+    "parseClipboard": "解析剪贴板文件 → 复制 Markdown",
     "quit": "退出 ParseKit"
   },
   "tokenSavings": {

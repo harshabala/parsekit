@@ -108,6 +108,13 @@
     "statusSkipped": "Omitido",
     "statusWaiting": "En espera"
   },
+  "progressHud": {
+    "parsing": "Analizando…",
+    "complete": "Listo",
+    "success": "{count} listos",
+    "failed": "{count} fallidos",
+    "tokensSaved": "+{count} tokens ahorrados"
+  },
   "recent": {
     "title": "Reciente",
     "selectedFiles": "Archivos seleccionados",
@@ -188,11 +195,16 @@
     "launchAtLogin": "Iniciar al iniciar sesión",
     "launchAtLoginHint": "Inicia ParseKit automáticamente al iniciar sesión en tu Mac.",
     "hotkeyTitle": "Atajo global",
-    "hotkeyHint": "Analiza archivos de la selección de Finder o del portapapeles sin abrir el panel. Requiere carpeta de salida.",
+    "hotkeyHint": "Con archivos seleccionados en Finder, analiza en segundo plano a tu carpeta de salida. Requiere carpeta de salida.",
+    "clipboardConvertHint": "Copia un archivo compatible en Finder (⌘C), luego pulsa el atajo o usa el menú de la bandeja para analizar y copiar Markdown al portapapeles.",
+    "autoConvertOnCopy": "Convertir al copiar",
+    "autoConvertOnCopyHint": "Al copiar un archivo compatible en Finder, ParseKit lo analiza y pone Markdown en el portapapeles automáticamente.",
     "hotkeyChange": "Cambiar atajo",
     "hotkeyRecording": "Pulsa teclas…",
     "hotkeyReset": "Restablecer a ⌃⇧M",
     "hotkeyUpdateFailed": "No se pudo registrar el atajo. Puede estar en uso por otra app.",
+    "floatingHudTitle": "Panel de progreso flotante",
+    "floatingHudHint": "Muestra un panel pequeño siempre visible al analizar con el atajo global o la acción rápida de Finder en segundo plano. Desactivado por defecto.",
     "finderTitle": "Finder",
     "finderHint": "Clic derecho en Finder → Acciones rápidas. Parse to Markdown with ParseKit conserva los originales. Parse to Markdown with ParseKit (Replace Original) mueve el archivo fuente a la Papelera tras un análisis correcto (recuperable en Finder). Ambas requieren carpeta de salida en Ajustes para conversión silenciosa; si no, abre ParseKit con los archivos.",
     "finderInstall": "Instalar acciones rápidas de Finder",
@@ -214,6 +226,7 @@
   },
   "tray": {
     "open": "Abrir ParseKit",
+    "parseClipboard": "Analizar archivo del portapapeles → Copiar Markdown",
     "quit": "Salir de ParseKit"
   },
   "tokenSavings": {

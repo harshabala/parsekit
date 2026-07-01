@@ -9,6 +9,9 @@ use tauri::{AppHandle, Emitter};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct OpenQueueFile {
     paths: Vec<String>,
+    /// When true, emit `background-parse` instead of opening the popover.
+    #[serde(default)]
+    background: bool,
 }
 
 fn queue_path() -> Result<PathBuf, String> {
@@ -42,6 +45,7 @@ pub fn enqueue_paths(paths: Vec<String>) -> Result<(), String> {
         .and_then(|s| serde_json::from_str::<OpenQueueFile>(&s).ok())
         .unwrap_or(OpenQueueFile {
             paths: Vec::new(),
+            background: false,
         });
     existing.paths.extend(supported);
 
@@ -66,19 +70,14 @@ pub fn forward_argv_from_duplicate_instance() {
         .status();
 }
 
-fn drain_queue() -> Vec<String> {
-    let path = match queue_path() {
-        Ok(p) => p,
-        Err(_) => return Vec::new(),
-    };
-    let raw = match std::fs::read_to_string(&path) {
-        Ok(s) if !s.trim().is_empty() => s,
-        _ => return Vec::new(),
-    };
+fn drain_queue() -> Option<OpenQueueFile> {
+    let path = queue_path().ok()?;
+    let raw = std::fs::read_to_string(&path).ok()?;
+    if raw.trim().is_empty() {
+        return None;
+    }
     let _ = std::fs::remove_file(&path);
-    serde_json::from_str::<OpenQueueFile>(&raw)
-        .map(|q| q.paths)
-        .unwrap_or_default()
+    serde_json::from_str::<OpenQueueFile>(&raw).ok()
 }
 
 pub fn emit_opened_urls(app: &AppHandle, urls: Vec<url::Url>) {
@@ -99,15 +98,22 @@ pub fn start_open_queue_watcher(app: AppHandle) {
     std::thread::spawn(move || {
         loop {
             std::thread::sleep(Duration::from_millis(800));
-            let paths = if let Ok(_guard) = DRAIN_LOCK.lock() {
+            let queue = if let Ok(_guard) = DRAIN_LOCK.lock() {
                 drain_queue()
             } else {
                 continue;
             };
-            if paths.is_empty() {
+            let Some(queue) = queue else {
+                continue;
+            };
+            if queue.paths.is_empty() {
                 continue;
             }
-            let _ = app.emit("open-files", paths);
+            if queue.background {
+                let _ = app.emit("background-parse", queue.paths);
+            } else {
+                let _ = app.emit("open-files", queue.paths);
+            }
         }
     });
 }

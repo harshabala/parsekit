@@ -4,6 +4,12 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
+  import {
+    hideProgressHudWindow,
+    showProgressHudWindow,
+    syncProgressHud,
+    type ProgressHudState,
+  } from "./lib/progressHud";
   import { downloadDir } from "@tauri-apps/api/path";
 
   import {
@@ -119,6 +125,7 @@
   let parseRun = $state<ParseRunHandle | null>(null);
   let isIngesting = $state(false);
   let launchAtLogin = $state(false);
+  let autoConvertOnCopy = $state(false);
   let globalShortcut = $state(DEFAULT_GLOBAL_SHORTCUT);
   let showOnboarding = $state(false);
   let showInstallHint = $state(false);
@@ -128,6 +135,9 @@
   let tokenStats = $state<TokenStats | null>(null);
   let tokenStatsPeriod = $state<TokenStatsPeriod>(DEFAULT_TOKEN_STATS_PERIOD);
   let batchTokenSavings = $state<BatchTokenSavings>(createBatchTokenSavings());
+  let showFloatingHud = $state(false);
+  let isBackgroundBatch = $state(false);
+  let hudActive = $state(false);
 
   $effect(() => {
     if (updateState.available) {
@@ -184,6 +194,7 @@
     try {
       await invoke("update_tray_menu_labels", {
         openLabel: t("tray.open"),
+        clipboardLabel: t("tray.parseClipboard"),
         quitLabel: t("tray.quit"),
       });
     } catch {
@@ -266,6 +277,33 @@
     }
   }
 
+  function buildHudState(): ProgressHudState {
+    return {
+      files,
+      total: totalFiles || files.length,
+      isParsing,
+      batchTokenSavings,
+    };
+  }
+
+  async function syncHudIfActive() {
+    if (!hudActive) return;
+    await syncProgressHud(buildHudState());
+  }
+
+  async function maybeShowHud() {
+    if (!showFloatingHud || !isBackgroundBatch) return;
+    hudActive = true;
+    await showProgressHudWindow();
+    await syncHudIfActive();
+  }
+
+  async function maybeHideHud() {
+    if (!hudActive) return;
+    hudActive = false;
+    await hideProgressHudWindow();
+  }
+
   async function handleBackgroundParse(paths: string[]) {
     if (!outputDir) {
       void invoke("show_completion_notification", {
@@ -282,9 +320,18 @@
       }).catch(() => {});
       return;
     }
+    isBackgroundBatch = true;
     await ingestExternalPaths(supported, { openPopover: false });
     if (!isParsing) {
       void startParse();
+    }
+  }
+
+  async function handleShowFloatingHudChange(enabled: boolean) {
+    showFloatingHud = enabled;
+    await setSetting("showFloatingHud", enabled);
+    if (!enabled) {
+      await maybeHideHud();
     }
   }
 
@@ -341,6 +388,7 @@
   onMount(() => {
     let unlistenOpen: (() => void) | undefined;
     let unlistenBackgroundParse: (() => void) | undefined;
+    let unlistenHudFileSupport: (() => void) | undefined;
 
     void (async () => {
     theme = normalizeThemeMode(await getSetting("theme", DEFAULT_THEME));
@@ -382,7 +430,9 @@
     }
     await resolveDefaultWorkers(await getSetting<number>("workers", 0));
     launchAtLogin = await getSetting<boolean>("launchAtLogin", false);
+    autoConvertOnCopy = await getSetting<boolean>("autoConvertOnCopy", false);
     globalShortcut = await getSetting("globalShortcut", DEFAULT_GLOBAL_SHORTCUT);
+    showFloatingHud = await getSetting("showFloatingHud", false);
     if (launchAtLogin) {
       try {
         await invoke("set_launch_at_login", { enabled: true });
@@ -390,6 +440,11 @@
         launchAtLogin = false;
         await setSetting("launchAtLogin", false);
       }
+    }
+    try {
+      await invoke("set_auto_convert_on_copy", { enabled: autoConvertOnCopy });
+    } catch {
+      /* tray/native only */
     }
     await syncTrayMenu();
 
@@ -430,11 +485,16 @@
         void handleBackgroundParse(paths);
       }
     });
+
+    unlistenHudFileSupport = await listen("hud-open-file-support", () => {
+      openFileSupportSettings();
+    });
     })();
 
     return () => {
       unlistenOpen?.();
       unlistenBackgroundParse?.();
+      unlistenHudFileSupport?.();
     };
   });
 
@@ -541,6 +601,16 @@
     await setSetting("launchAtLogin", enabled);
   }
 
+  async function handleAutoConvertOnCopyChange(enabled: boolean) {
+    autoConvertOnCopy = enabled;
+    await setSetting("autoConvertOnCopy", enabled);
+    try {
+      await invoke("set_auto_convert_on_copy", { enabled });
+    } catch {
+      /* native only */
+    }
+  }
+
   function clearParseStallWatchdog() {
     if (parseStallTimer) {
       clearInterval(parseStallTimer);
@@ -574,6 +644,8 @@
     lastParsingId = null;
     errorMsg = error;
     noticeMsg = notice;
+    void syncHudIfActive();
+    isBackgroundBatch = false;
   }
 
   function cancelParse() {
@@ -632,6 +704,8 @@
       status: "pending" as const,
     }));
 
+    await maybeShowHud();
+
     parseRun = runParse(
       {
         inputDir: inputDir || filesToParse[0],
@@ -656,6 +730,7 @@
               documents_unlocked: event.documents_unlocked,
             };
             batchTokenSavings = applyTokenSavingsEvent(batchTokenSavings, savingsEvent);
+            void syncHudIfActive();
             void recordTokenSavingsFromSidecarEvent(savingsEvent)
               .then((next) => {
                 if (next) tokenStats = next;
@@ -676,6 +751,7 @@
             );
             files = applied.files;
             lastParsingId = applied.lastParsingId;
+            void syncHudIfActive();
           } else if (event.type === "done") {
             clearParseStallWatchdog();
             isParsing = false;
@@ -713,6 +789,8 @@
               body: t("run.notifyDone", { parsed, errors: notifyErrors }),
             }).catch(() => {});
             void refreshTokenStats();
+            void syncHudIfActive();
+            isBackgroundBatch = false;
           } else if (event.type === "error") {
             // Fatal sidecar error (see sidecar.ts protocol) — not per-file progress errors.
             console.error("[parse batch]", event.message);
@@ -749,6 +827,8 @@
               : null;
           errorMsg = errCount > 0 ? msg : null;
           void addToHistory();
+          void syncHudIfActive();
+          isBackgroundBatch = false;
         } else {
           stopParseUi(t("errors.parseFailed"), msg);
         }
@@ -1133,7 +1213,9 @@
         {theme}
         {workers}
         {launchAtLogin}
+        {autoConvertOnCopy}
         {globalShortcut}
+        {showFloatingHud}
         initialTab={settingsTab}
         tokenStats={tokenStats}
         tokenStatsPeriod={tokenStatsPeriod}
@@ -1142,7 +1224,9 @@
         onThemeChange={handleThemeChange}
         onWorkersChange={handleWorkersChange}
         onLaunchAtLoginChange={handleLaunchAtLoginChange}
+        onAutoConvertOnCopyChange={handleAutoConvertOnCopyChange}
         onGlobalShortcutChange={handleGlobalShortcutChange}
+        onShowFloatingHudChange={handleShowFloatingHudChange}
         onTokenStatsPeriodChange={handleTokenStatsPeriodChange}
         onTokenStatsChange={handleTokenStatsChange}
         onOpenAbout={() => (showAbout = true)}

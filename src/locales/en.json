@@ -109,6 +109,13 @@
     "statusSkipped": "Skipped",
     "statusWaiting": "Waiting"
   },
+  "progressHud": {
+    "parsing": "Parsing…",
+    "complete": "Done",
+    "success": "{count} done",
+    "failed": "{count} failed",
+    "tokensSaved": "+{count} tokens saved"
+  },
   "recent": {
     "title": "Recent",
     "selectedFiles": "Selected files",
@@ -189,11 +196,16 @@
     "launchAtLogin": "Launch at Login",
     "launchAtLoginHint": "Start ParseKit automatically when you sign in to your Mac.",
     "hotkeyTitle": "Global Hotkey",
-    "hotkeyHint": "Parse files from Finder selection or clipboard without opening the popover. Requires an output folder.",
+    "hotkeyHint": "With files selected in Finder, parse to your output folder in the background. Requires an output folder.",
+    "clipboardConvertHint": "Copy a supported file in Finder (⌘C), then press the hotkey or use the tray menu to parse and copy Markdown to the clipboard.",
+    "autoConvertOnCopy": "Auto-convert on copy",
+    "autoConvertOnCopyHint": "When you copy a supported file in Finder, ParseKit parses it and puts Markdown on the clipboard automatically.",
     "hotkeyChange": "Change shortcut",
     "hotkeyRecording": "Press keys…",
     "hotkeyReset": "Reset to ⌃⇧M",
     "hotkeyUpdateFailed": "Could not register shortcut. It may be in use by another app.",
+    "floatingHudTitle": "Floating progress HUD",
+    "floatingHudHint": "Show a small always-on-top progress panel when parsing from the global hotkey or Finder Quick Action in the background. Off by default.",
     "finderTitle": "Finder",
     "finderHint": "Right-click files in Finder → Quick Actions. Parse to Markdown with ParseKit keeps originals. Parse to Markdown with ParseKit (Replace Original) moves the source file to Trash after a successful parse (recoverable in Finder). Both require an output folder in Settings for silent conversion; otherwise ParseKit opens with the files loaded.",
     "finderInstall": "Install Finder Quick Actions",
@@ -215,6 +227,7 @@
   },
   "tray": {
     "open": "Open ParseKit",
+    "parseClipboard": "Parse Clipboard File → Copy Markdown",
     "quit": "Quit ParseKit"
   },
   "tokenSavings": {

@@ -1,3 +1,5 @@
+pub mod clipboard_convert;
+pub mod clipboard_paths;
 pub mod global_hotkey;
 pub mod macos_popover;
 #[cfg(target_os = "macos")]
@@ -112,6 +114,7 @@ struct TrayHandle<R: Runtime> {
 struct TrayMenuState {
     tray_id: Arc<Mutex<TrayIconId>>,
     open_label: Arc<Mutex<String>>,
+    clipboard_label: Arc<Mutex<String>>,
     quit_label: Arc<Mutex<String>>,
 }
 
@@ -159,12 +162,23 @@ impl TrayClickDebounce {
 fn build_tray_menu<R: Runtime>(
     app: &AppHandle<R>,
     open_label: &str,
+    clipboard_label: &str,
     quit_label: &str,
 ) -> tauri::Result<Menu<R>> {
     let open_item = MenuItem::with_id(app, "open_parsekit", open_label, true, None::<&str>)?;
+    let clipboard_item = MenuItem::with_id(
+        app,
+        "parse_clipboard",
+        clipboard_label,
+        true,
+        None::<&str>,
+    )?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit_item = PredefinedMenuItem::quit(app, Some(quit_label))?;
-    Menu::with_items(app, &[&open_item, &separator, &quit_item])
+    Menu::with_items(
+        app,
+        &[&open_item, &clipboard_item, &separator, &quit_item],
+    )
 }
 
 fn popup_tray_menu<R: Runtime>(app: &AppHandle<R>, tray_state: &TrayMenuState) -> Result<(), String> {
@@ -173,11 +187,16 @@ fn popup_tray_menu<R: Runtime>(app: &AppHandle<R>, tray_state: &TrayMenuState) -
         .open_label
         .lock()
         .map_err(|e| e.to_string())?;
+    let clipboard_label = tray_state
+        .clipboard_label
+        .lock()
+        .map_err(|e| e.to_string())?;
     let quit_label = tray_state
         .quit_label
         .lock()
         .map_err(|e| e.to_string())?;
-    let menu = build_tray_menu(app, &open_label, &quit_label).map_err(|e| e.to_string())?;
+    let menu = build_tray_menu(app, &open_label, &clipboard_label, &quit_label)
+        .map_err(|e| e.to_string())?;
     let window = app
         .get_webview_window("main")
         .ok_or_else(|| "Main window not found".to_string())?;
@@ -319,6 +338,7 @@ fn open_popover_from_menu<R: Runtime>(
 fn update_tray_menu_labels(
     tray_state: State<TrayMenuState>,
     open_label: String,
+    clipboard_label: String,
     quit_label: String,
 ) -> Result<(), String> {
     // Only update labels — never call tray.set_menu(), which re-attaches the menu to
@@ -327,6 +347,10 @@ fn update_tray_menu_labels(
         .open_label
         .lock()
         .map_err(|e| e.to_string())? = open_label;
+    *tray_state
+        .clipboard_label
+        .lock()
+        .map_err(|e| e.to_string())? = clipboard_label;
     *tray_state
         .quit_label
         .lock()
@@ -762,6 +786,28 @@ fn save_error_report(dir: String, file_name: String, contents: String) -> Result
     Ok(path_str)
 }
 
+/// Show a macOS notification (shared by IPC and background clipboard conversion).
+pub(crate) fn display_notification(title: &str, body: &str) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let script = format!(
+            "display notification {} with title {}",
+            serde_json::to_string(body).map_err(|e| e.to_string())?,
+            serde_json::to_string(title).map_err(|e| e.to_string())?
+        );
+        std::process::Command::new("osascript")
+            .args(["-e", &script])
+            .spawn()
+            .map_err(|e| format!("notification failed: {e}"))?;
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (title, body);
+        Ok(())
+    }
+}
+
 /// Copy plain text to the system clipboard (macOS `pbcopy` — reliable for menu-bar apps).
 #[tauri::command]
 fn copy_text_to_clipboard(text: String) -> Result<(), String> {
@@ -903,16 +949,7 @@ fn maybe_show_menu_bar_hint() {
 #[cfg(target_os = "macos")]
 #[tauri::command]
 fn show_completion_notification(title: String, body: String) -> Result<(), String> {
-    let script = format!(
-        "display notification {} with title {}",
-        serde_json::to_string(&body).map_err(|e| e.to_string())?,
-        serde_json::to_string(&title).map_err(|e| e.to_string())?
-    );
-    std::process::Command::new("osascript")
-        .args(["-e", &script])
-        .spawn()
-        .map_err(|e| format!("notification failed: {e}"))?;
-    Ok(())
+    display_notification(&title, &body)
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -984,6 +1021,47 @@ fn show_main_window(
         .get_webview_window("main")
         .ok_or_else(|| "Main window not found".to_string())?;
     show_popover(&window, None, popover.inner());
+    Ok(())
+}
+
+fn position_progress_hud<R: Runtime>(window: &WebviewWindow<R>) -> bool {
+    let Ok(win_size) = window.outer_size() else {
+        return false;
+    };
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let (monitor_width, monitor_height) = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .map(|m| (m.size().width as f64, m.size().height as f64))
+        .unwrap_or((1920.0 * scale, 1080.0 * scale));
+
+    let margin = 16.0 * scale;
+    let x = (monitor_width - win_size.width as f64 - margin).max(8.0) as i32;
+    let y = (monitor_height - win_size.height as f64 - margin).max(24.0) as i32;
+    window
+        .set_position(PhysicalPosition::new(x, y))
+        .is_ok()
+}
+
+#[tauri::command]
+fn show_progress_hud(app: tauri::AppHandle) -> Result<(), String> {
+    let window = app
+        .get_webview_window("progress-hud")
+        .ok_or_else(|| "Progress HUD window not found".to_string())?;
+    macos_popover::ensure_hud_window_configured(&window);
+    let _ = window.set_always_on_top(true);
+    let _ = position_progress_hud(&window);
+    window.show().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn hide_progress_hud(app: tauri::AppHandle) -> Result<(), String> {
+    let window = app
+        .get_webview_window("progress-hud")
+        .ok_or_else(|| "Progress HUD window not found".to_string())?;
+    window.hide().map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -1086,6 +1164,22 @@ fn reset_token_stats() -> Result<token_stats::TokenStats, String> {
 }
 
 #[tauri::command]
+fn parse_clipboard_to_clipboard() -> Result<(), String> {
+    clipboard_convert::convert_clipboard_files_to_clipboard().map(|_| ())
+}
+
+#[tauri::command]
+fn set_auto_convert_on_copy(
+    state: State<'_, clipboard_convert::ClipboardWatchState>,
+    enabled: bool,
+) -> Result<(), String> {
+    state
+        .auto_convert_enabled
+        .store(enabled, std::sync::atomic::Ordering::SeqCst);
+    Ok(())
+}
+
+#[tauri::command]
 fn record_token_savings(
     file_type: String,
     tokens_saved: u64,
@@ -1151,7 +1245,11 @@ pub fn run() {
             get_token_stats,
             reset_token_stats,
             record_token_savings,
+            parse_clipboard_to_clipboard,
+            set_auto_convert_on_copy,
             show_main_window,
+            show_progress_hud,
+            hide_progress_hud,
             quit_app,
             global_hotkey::get_global_shortcut,
             global_hotkey::update_global_shortcut,
@@ -1167,18 +1265,26 @@ pub fn run() {
             let popover_state = PopoverState::new();
             app.manage(popover_state.clone());
             app.manage(global_hotkey::GlobalHotkeyState::default());
+            app.manage(clipboard_convert::ClipboardWatchState::default());
             let tray_click_debounce = TrayClickDebounce::new();
 
             // Tray menu labels (tray_id filled in after the icon is built).
             app.manage(TrayMenuState {
                 tray_id: Arc::new(Mutex::new(TrayIconId::new("pending"))),
                 open_label: Arc::new(Mutex::new("Open ParseKit".to_string())),
+                clipboard_label: Arc::new(Mutex::new(
+                    "Parse Clipboard File → Copy Markdown".to_string(),
+                )),
                 quit_label: Arc::new(Mutex::new("Quit ParseKit".to_string())),
             });
 
             let window = app.get_webview_window("main").expect("main window");
             let _ = window.hide();
             popover_state.set_open(false);
+
+            if let Some(hud) = app.get_webview_window("progress-hud") {
+                let _ = hud.hide();
+            }
             let w = window.clone();
             let popover_for_events = popover_state.clone();
             if let Ok(url) = window.url() {
@@ -1224,6 +1330,15 @@ pub fn run() {
                         } else {
                             popover_trace("Tray menu event: ABORT (missing window/state)");
                         }
+                    } else if event.id().as_ref() == "parse_clipboard" {
+                        popover_trace("Tray menu event: parse_clipboard");
+                        tauri::async_runtime::spawn_blocking(|| {
+                            clipboard_convert::run_clipboard_convert_with_notification(
+                                "ParseKit",
+                                "Markdown copied to clipboard",
+                                "Clipboard convert failed",
+                            );
+                        });
                     }
                 })
                 .on_tray_icon_event({
@@ -1314,6 +1429,7 @@ pub fn run() {
             {
                 maybe_show_menu_bar_hint();
                 macos_open_files::start_open_queue_watcher(app.handle().clone());
+                clipboard_convert::setup_clipboard_watcher(app.handle().clone());
             }
 
             #[cfg(desktop)]
