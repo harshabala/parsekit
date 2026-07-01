@@ -1,9 +1,11 @@
 //! Shared sidecar logic for ParseKit (used by the parsekit-sidecar binary).
 
+use crate::token_count::{self, TokenSavings};
 use liteparse::{LiteParseConfig, OutputFormat, ParseResult, ParsedPage, TextItem};
 use serde::Serialize;
-use serde_json::json;
+use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 /// Extensions that always export as JSON (spreadsheets / tabular).
 pub const SPREADSHEET_EXTENSIONS: &[&str] = &["xls", "xlsx", "xlsm", "ods", "csv", "tsv"];
@@ -121,6 +123,48 @@ fn to_json_result(result: &ParseResult) -> JsonParseResult {
         pages: result.pages.iter().map(map_page).collect(),
         text: result.text.clone(),
     }
+}
+
+/// Fast naive PDF baseline: `pdftotext` text layer only (no OCR, no layout engine).
+pub fn extract_pdf_baseline_text(path: &Path) -> String {
+    try_pdftotext(path).unwrap_or_default()
+}
+
+fn try_pdftotext(path: &Path) -> Option<String> {
+    let path_str = path.to_string_lossy();
+    let output = Command::new("pdftotext")
+        .args(["-layout", path_str.as_ref(), "-"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    String::from_utf8(output.stdout).ok()
+}
+
+/// Compute per-file token savings from parse output and emit-ready JSON fields.
+pub fn compute_token_savings(
+    source_path: &Path,
+    output_content: &str,
+    parse_result: &ParseResult,
+) -> TokenSavings {
+    let baseline_text = if token_count::file_type_from_path(source_path) == "pdf" {
+        extract_pdf_baseline_text(source_path)
+    } else {
+        String::new()
+    };
+    token_count::compute_token_savings(source_path, output_content, parse_result, &baseline_text)
+}
+
+pub fn token_savings_event(file_name: &str, savings: &TokenSavings) -> Value {
+    json!({
+        "type": "token_savings",
+        "file": file_name,
+        "tokens_saved": savings.tokens_saved,
+        "pages_unlocked": savings.pages_unlocked,
+        "documents_unlocked": savings.documents_unlocked,
+        "file_type": savings.file_type,
+    })
 }
 
 pub fn format_output(result: &ParseResult, base_name: &str, format: &str, is_spreadsheet: bool) -> String {

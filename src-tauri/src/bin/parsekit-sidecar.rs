@@ -3,7 +3,8 @@
 
 use liteparse::LiteParse;
 use parsekit_lib::sidecar_helpers::{
-    build_liteparse_config, format_output, output_paths, validate_output_format,
+    build_liteparse_config, compute_token_savings, format_output, output_paths,
+    token_savings_event, validate_output_format,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -88,7 +89,8 @@ async fn process_file(
     match tokio::time::timeout(FILE_PARSE_TIMEOUT, parse_fut).await {
         Ok(Ok(result)) => {
             let content = format_output(&result, &base_name, &format, is_spreadsheet);
-            if let Err(e) = tokio::fs::write(&out_path, content).await {
+            let savings = compute_token_savings(&path, &content, &result);
+            if let Err(e) = tokio::fs::write(&out_path, &content).await {
                 emit(json!({
                     "type": "progress",
                     "file": file_name,
@@ -105,6 +107,7 @@ async fn process_file(
                 "status": "completed",
                 "path": out_path.to_string_lossy(),
             }));
+            emit(token_savings_event(&file_name, &savings));
             "completed"
         }
         Ok(Err(e)) => {

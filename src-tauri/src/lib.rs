@@ -3,6 +3,7 @@ pub mod macos_popover;
 pub mod macos_open_files;
 pub mod popover_trace;
 pub mod sidecar_helpers;
+pub mod token_count;
 pub mod token_stats;
 
 use popover_trace::trace as popover_trace;

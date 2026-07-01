@@ -30,6 +30,7 @@ single-instance = "0.3"
 liteparse = { version = "2.2.1", features = ["tesseract"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs", "io-util"] }
 tauri-plugin-updater = "2"
+tiktoken-rs = "0.12"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
