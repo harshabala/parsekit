@@ -1,3 +1,4 @@
+pub mod global_hotkey;
 pub mod macos_popover;
 #[cfg(target_os = "macos")]
 pub mod macos_open_files;
@@ -822,12 +823,12 @@ fn trigger_haptic() -> Result<(), String> {
 // Canonical list of supported file extensions — single source of truth used for both
 // the preview file count (scan_directory) and the actual parse file set passed to the sidecar.
 // Aligned with LiteParse v2 multi-format support (LibreOffice / ImageMagick where noted).
-const SUPPORTED_EXTENSIONS: &[&str] = &[
+pub(crate) const SUPPORTED_EXTENSIONS: &[&str] = &[
     "pdf", "doc", "docx", "docm", "odt", "rtf", "ppt", "pptx", "pptm", "odp", "xls", "xlsx",
     "xlsm", "ods", "csv", "tsv", "png", "jpg", "jpeg", "gif", "bmp", "tiff", "tif", "webp", "svg",
 ];
 
-fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
+pub(crate) fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
     let path = normalize_user_path(path);
     let dir = Path::new(&path);
     if !dir.is_dir() {
@@ -1122,6 +1123,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             scan_directory,
             path_is_directory,
@@ -1151,6 +1153,8 @@ pub fn run() {
             record_token_savings,
             show_main_window,
             quit_app,
+            global_hotkey::get_global_shortcut,
+            global_hotkey::update_global_shortcut,
         ])
         .setup(|app| {
             startup_trace("setup() begin");
@@ -1162,6 +1166,7 @@ pub fn run() {
 
             let popover_state = PopoverState::new();
             app.manage(popover_state.clone());
+            app.manage(global_hotkey::GlobalHotkeyState::default());
             let tray_click_debounce = TrayClickDebounce::new();
 
             // Tray menu labels (tray_id filled in after the icon is built).
@@ -1309,6 +1314,13 @@ pub fn run() {
             {
                 maybe_show_menu_bar_hint();
                 macos_open_files::start_open_queue_watcher(app.handle().clone());
+            }
+
+            #[cfg(desktop)]
+            {
+                if let Err(e) = global_hotkey::setup_global_hotkey(app.handle()) {
+                    eprintln!("ParseKit: global hotkey registration failed: {e}");
+                }
             }
 
             // Test-only: same `install_update` path as the gold banner "Install & Restart" button.

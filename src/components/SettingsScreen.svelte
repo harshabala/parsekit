@@ -16,6 +16,12 @@
   import { invoke } from "@tauri-apps/api/core";
   import type { TokenStats } from "../lib/tokenStats";
   import type { TokenStatsPeriod } from "../lib/store";
+  import {
+    DEFAULT_GLOBAL_SHORTCUT,
+    formatShortcutDisplay,
+    keyboardEventToShortcut,
+  } from "../lib/globalShortcut";
+  import { setSetting } from "../lib/store";
 
   let {
     locale: localeValue,
@@ -24,11 +30,13 @@
     theme,
     workers,
     launchAtLogin,
+    globalShortcut = DEFAULT_GLOBAL_SHORTCUT,
     onLocaleChange,
     onOcrLanguageChange,
     onThemeChange,
     onWorkersChange,
     onLaunchAtLoginChange,
+    onGlobalShortcutChange,
     tokenStats = null,
     tokenStatsPeriod = "month",
     onTokenStatsPeriodChange,
@@ -52,11 +60,13 @@
     theme: ThemeMode;
     workers: number;
     launchAtLogin: boolean;
+    globalShortcut?: string;
     onLocaleChange: (code: AppLocale) => void;
     onOcrLanguageChange: (code: OcrLanguageCode) => void;
     onThemeChange: (mode: ThemeMode) => void;
     onWorkersChange: (value: number) => void;
     onLaunchAtLoginChange: (enabled: boolean) => void;
+    onGlobalShortcutChange?: (shortcut: string) => void | Promise<void>;
     tokenStats?: TokenStats | null;
     tokenStatsPeriod?: TokenStatsPeriod;
     onTokenStatsPeriodChange?: (period: TokenStatsPeriod) => void;
@@ -82,6 +92,9 @@
   let activeTab = $state<SettingsTab>("general");
   let gatekeeperCopied = $state(false);
   let gatekeeperCopyError = $state<string | null>(null);
+  let recordingHotkey = $state(false);
+  let hotkeyError = $state<string | null>(null);
+  const hotkeyDisplay = $derived(formatShortcutDisplay(globalShortcut));
 
   const tabs: { id: SettingsTab; labelKey: string }[] = [
     { id: "general", labelKey: "settings.tabGeneral" },
@@ -93,9 +106,50 @@
   });
 
   function handleKeydown(e: KeyboardEvent) {
+    if (recordingHotkey) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === "Escape") {
+        recordingHotkey = false;
+        hotkeyError = null;
+        return;
+      }
+      const shortcut = keyboardEventToShortcut(e);
+      if (!shortcut || !onGlobalShortcutChange) return;
+      recordingHotkey = false;
+      void applyHotkeyChange(shortcut);
+      return;
+    }
     if (e.key === "Escape") {
       onClose();
     }
+  }
+
+  async function applyHotkeyChange(shortcut: string) {
+    hotkeyError = null;
+    try {
+      await invoke("update_global_shortcut", { shortcut });
+      await setSetting("globalShortcut", shortcut);
+      await onGlobalShortcutChange?.(shortcut);
+      try {
+        await invoke("trigger_haptic");
+      } catch {
+        /* optional */
+      }
+    } catch (e) {
+      hotkeyError =
+        e instanceof Error ? e.message : String(e) || t("settings.hotkeyUpdateFailed");
+    }
+  }
+
+  function startHotkeyRecording() {
+    if (!onGlobalShortcutChange) return;
+    hotkeyError = null;
+    recordingHotkey = true;
+  }
+
+  function resetHotkey() {
+    void applyHotkeyChange(DEFAULT_GLOBAL_SHORTCUT);
   }
 
   async function copyGatekeeperCommand() {
@@ -189,6 +243,33 @@
         </div>
 
         <div class="settings-divider"></div>
+
+        {#if onGlobalShortcutChange}
+          <div class="settings-section">
+            <div class="settings-section-title">{t("settings.hotkeyTitle")}</div>
+            <p class="settings-hint">{t("settings.hotkeyHint")}</p>
+            <div class="hotkey-row">
+              <kbd class="hotkey-display" aria-label={hotkeyDisplay}>{hotkeyDisplay}</kbd>
+              <button
+                type="button"
+                class="secondary"
+                class:hotkey-recording={recordingHotkey}
+                onclick={startHotkeyRecording}
+              >
+                {recordingHotkey ? t("settings.hotkeyRecording") : t("settings.hotkeyChange")}
+              </button>
+              {#if globalShortcut !== DEFAULT_GLOBAL_SHORTCUT}
+                <button type="button" class="secondary" onclick={resetHotkey}>
+                  {t("settings.hotkeyReset")}
+                </button>
+              {/if}
+            </div>
+            {#if hotkeyError}
+              <p class="settings-hint deps-error">{hotkeyError}</p>
+            {/if}
+          </div>
+          <div class="settings-divider"></div>
+        {/if}
 
         {#if onTokenStatsPeriodChange && onTokenStatsChange}
           <TokenSavingsPanel

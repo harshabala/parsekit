@@ -59,6 +59,7 @@
   import { finderActionState } from "./lib/finderActionState.svelte";
   import { pickOutputFolder } from "./lib/picker";
   import { warmDependencies } from "./lib/depsCache";
+  import { DEFAULT_GLOBAL_SHORTCUT } from "./lib/globalShortcut";
   import { isConverterDependencyError, type SettingsTab } from "./lib/converterErrors";
   import {
     bannerFlyIn,
@@ -118,6 +119,7 @@
   let parseRun = $state<ParseRunHandle | null>(null);
   let isIngesting = $state(false);
   let launchAtLogin = $state(false);
+  let globalShortcut = $state(DEFAULT_GLOBAL_SHORTCUT);
   let showOnboarding = $state(false);
   let showInstallHint = $state(false);
   let configCollapsed = $state(false);
@@ -230,10 +232,21 @@
     openSettings("file-support");
   }
 
-  async function ingestExternalPaths(paths: string[]) {
+  async function ingestExternalPaths(
+    paths: string[],
+    options?: { openPopover?: boolean }
+  ) {
+    const openPopover = options?.openPopover ?? true;
     const supported = filterSupportedPaths(paths);
     if (supported.length === 0) {
-      errorMsg = t("errors.noSupported");
+      if (openPopover) {
+        errorMsg = t("errors.noSupported");
+      } else {
+        void invoke("show_completion_notification", {
+          title: t("app.name"),
+          body: t("errors.noSupported"),
+        }).catch(() => {});
+      }
       return;
     }
     selectedFiles = supported;
@@ -248,7 +261,35 @@
     try {
       await invoke("trigger_haptic");
     } catch {}
-    void openPopoverFromExternal();
+    if (openPopover) {
+      void openPopoverFromExternal();
+    }
+  }
+
+  async function handleBackgroundParse(paths: string[]) {
+    if (!outputDir) {
+      void invoke("show_completion_notification", {
+        title: t("app.name"),
+        body: t("config.outputFolder") + ": " + t("onboarding.stepOutput"),
+      }).catch(() => {});
+      return;
+    }
+    const supported = filterSupportedPaths(paths);
+    if (supported.length === 0) {
+      void invoke("show_completion_notification", {
+        title: t("app.name"),
+        body: t("errors.noSupported"),
+      }).catch(() => {});
+      return;
+    }
+    await ingestExternalPaths(supported, { openPopover: false });
+    if (!isParsing) {
+      void startParse();
+    }
+  }
+
+  async function handleGlobalShortcutChange(shortcut: string) {
+    globalShortcut = shortcut;
   }
 
   async function openPopoverFromExternal() {
@@ -299,6 +340,7 @@
 
   onMount(() => {
     let unlistenOpen: (() => void) | undefined;
+    let unlistenBackgroundParse: (() => void) | undefined;
 
     void (async () => {
     theme = normalizeThemeMode(await getSetting("theme", DEFAULT_THEME));
@@ -340,6 +382,7 @@
     }
     await resolveDefaultWorkers(await getSetting<number>("workers", 0));
     launchAtLogin = await getSetting<boolean>("launchAtLogin", false);
+    globalShortcut = await getSetting("globalShortcut", DEFAULT_GLOBAL_SHORTCUT);
     if (launchAtLogin) {
       try {
         await invoke("set_launch_at_login", { enabled: true });
@@ -380,10 +423,18 @@
         void ingestExternalPaths(paths);
       }
     });
+
+    unlistenBackgroundParse = await listen<string[]>("background-parse", (event) => {
+      const paths = event.payload;
+      if (paths?.length) {
+        void handleBackgroundParse(paths);
+      }
+    });
     })();
 
     return () => {
       unlistenOpen?.();
+      unlistenBackgroundParse?.();
     };
   });
 
@@ -1082,6 +1133,7 @@
         {theme}
         {workers}
         {launchAtLogin}
+        {globalShortcut}
         initialTab={settingsTab}
         tokenStats={tokenStats}
         tokenStatsPeriod={tokenStatsPeriod}
@@ -1090,6 +1142,7 @@
         onThemeChange={handleThemeChange}
         onWorkersChange={handleWorkersChange}
         onLaunchAtLoginChange={handleLaunchAtLoginChange}
+        onGlobalShortcutChange={handleGlobalShortcutChange}
         onTokenStatsPeriodChange={handleTokenStatsPeriodChange}
         onTokenStatsChange={handleTokenStatsChange}
         onOpenAbout={() => (showAbout = true)}

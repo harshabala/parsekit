@@ -2161,6 +2161,32 @@ button.config-collapse-btn:focus-visible {
   color: var(--status-success);
 }
 
+.hotkey-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.hotkey-display {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--secondary-bg);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+button.hotkey-recording {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
 .settings-finder-notice {
   word-break: break-word;
 }
