@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { fade, slide } from "svelte/transition";
+  import { fade } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import type { AppLocale } from "../lib/i18n.svelte";
   import { t } from "../lib/i18n.svelte";
-  import { collapseSlideIn, collapseSlideOut, hintFadeIn, hintFadeOut } from "../lib/motion";
+  import { hintFadeIn, hintFadeOut } from "../lib/motion";
   import type { OcrLanguageCode } from "../lib/ocrLanguages";
   import type { ThemeMode } from "../lib/types";
+  import type { SettingsTab } from "../lib/converterErrors";
   import LanguageSelector from "./LanguageSelector.svelte";
   import OcrLanguageSelector from "./OcrLanguageSelector.svelte";
   import ThemeSelector from "./ThemeSelector.svelte";
@@ -35,6 +36,7 @@
     updateStatusNote = null,
     updateStatusOk = false,
     onCheckForUpdates,
+    initialTab = "general",
     onClose,
   }: {
     locale: AppLocale;
@@ -58,27 +60,31 @@
     updateStatusNote?: string | null;
     updateStatusOk?: boolean;
     onCheckForUpdates?: () => void;
+    initialTab?: SettingsTab;
     onClose: () => void;
   } = $props();
 
   const reducedMotion = $derived(prefersReducedMotion.current);
   const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
   const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
-  const advancedSlideIn = $derived(collapseSlideIn(reducedMotion));
-  const advancedSlideOut = $derived(collapseSlideOut(reducedMotion));
 
-  let advancedCollapsed = $state(true);
+  let activeTab = $state<SettingsTab>("general");
   let gatekeeperCopied = $state(false);
   let gatekeeperCopyError = $state<string | null>(null);
+
+  const tabs: { id: SettingsTab; labelKey: string }[] = [
+    { id: "general", labelKey: "settings.tabGeneral" },
+    { id: "file-support", labelKey: "settings.tabFileSupport" },
+  ];
+
+  $effect(() => {
+    activeTab = initialTab;
+  });
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") {
       onClose();
     }
-  }
-
-  function toggleAdvanced() {
-    advancedCollapsed = !advancedCollapsed;
   }
 
   async function copyGatekeeperCommand() {
@@ -119,49 +125,46 @@
     <span class="settings-header-title" id="settings-title">{t("settings.title")}</span>
   </div>
 
+  <div
+    class="settings-tab-bar"
+    role="tablist"
+    aria-label={t("settings.title")}
+  >
+    <div class="segmented-control settings-tabs">
+      {#each tabs as tab}
+        <button
+          type="button"
+          role="tab"
+          class="segment"
+          class:active={activeTab === tab.id}
+          aria-selected={activeTab === tab.id}
+          onclick={() => (activeTab = tab.id)}
+        >
+          {t(tab.labelKey)}
+        </button>
+      {/each}
+    </div>
+  </div>
+
   <div class="settings-scroll selectable-content">
-    <div class="settings-section">
-      <div class="settings-section-title">{t("settings.appLanguageTitle")}</div>
-      <p class="settings-hint">{t("settings.appLanguageHint")}</p>
-      <LanguageSelector value={localeValue} onChange={onLocaleChange} />
-    </div>
+    {#if activeTab === "general"}
+      <div role="tabpanel" aria-label={t("settings.tabGeneral")}>
+        <div class="settings-section">
+          <div class="settings-section-title">{t("settings.appLanguageTitle")}</div>
+          <p class="settings-hint">{t("settings.appLanguageHint")}</p>
+          <LanguageSelector value={localeValue} onChange={onLocaleChange} />
+        </div>
 
-    <div class="settings-divider"></div>
+        <div class="settings-divider"></div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">{t("settings.appearanceTitle")}</div>
-      <p class="settings-hint">{t("settings.appearanceHint")}</p>
-      <ThemeSelector value={theme} onChange={onThemeChange} />
-    </div>
+        <div class="settings-section">
+          <div class="settings-section-title">{t("settings.appearanceTitle")}</div>
+          <p class="settings-hint">{t("settings.appearanceHint")}</p>
+          <ThemeSelector value={theme} onChange={onThemeChange} />
+        </div>
 
-    <div class="settings-divider"></div>
+        <div class="settings-divider"></div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">{t("settings.ocrLanguageTitle")}</div>
-      <p class="settings-hint settings-hint--multiline">{t("settings.ocrLanguageHint")}</p>
-      <OcrLanguageSelector
-        value={ocrLanguage}
-        disabled={!ocrEnabled}
-        onChange={onOcrLanguageChange}
-      />
-    </div>
-
-    <div class="settings-divider"></div>
-
-    <div class="settings-section settings-advanced-header">
-      <div class="settings-section-title">{t("settings.advancedTitle")}</div>
-      <button
-        type="button"
-        class="config-collapse-btn"
-        onclick={toggleAdvanced}
-        aria-expanded={!advancedCollapsed}
-      >
-        {advancedCollapsed ? t("settings.advancedExpand") : t("settings.advancedCollapse")}
-      </button>
-    </div>
-
-    {#if !advancedCollapsed}
-      <div class="settings-advanced-body" in:slide={advancedSlideIn} out:slide={advancedSlideOut}>
         <div class="settings-section settings-toggle-row">
           <label class="settings-launch-label">
             <input
@@ -172,24 +175,6 @@
             <span>{t("settings.launchAtLogin")}</span>
           </label>
           <p class="settings-hint">{t("settings.launchAtLoginHint")}</p>
-        </div>
-
-        <div class="settings-divider"></div>
-
-        <div class="settings-section">
-          <div class="settings-section-title">{t("settings.workersTitle")}</div>
-          <p class="settings-hint">{t("settings.workersHint")}</p>
-          <WorkersSlider
-            value={workers}
-            label={t("settings.workersTitle")}
-            onChange={onWorkersChange}
-          />
-        </div>
-
-        <div class="settings-divider"></div>
-
-        <div class="settings-section">
-          <DependencyPreflight />
         </div>
 
         <div class="settings-divider"></div>
@@ -284,6 +269,36 @@
               {updateStatusNote}
             </p>
           {/if}
+        </div>
+      </div>
+    {:else}
+      <div role="tabpanel" aria-label={t("settings.tabFileSupport")}>
+        <div class="settings-section">
+          <div class="settings-section-title">{t("settings.ocrLanguageTitle")}</div>
+          <p class="settings-hint settings-hint--multiline">{t("settings.ocrLanguageHint")}</p>
+          <OcrLanguageSelector
+            value={ocrLanguage}
+            disabled={!ocrEnabled}
+            onChange={onOcrLanguageChange}
+          />
+        </div>
+
+        <div class="settings-divider"></div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">{t("settings.workersTitle")}</div>
+          <p class="settings-hint">{t("settings.workersHint")}</p>
+          <WorkersSlider
+            value={workers}
+            label={t("settings.workersTitle")}
+            onChange={onWorkersChange}
+          />
+        </div>
+
+        <div class="settings-divider"></div>
+
+        <div class="settings-section">
+          <DependencyPreflight />
         </div>
       </div>
     {/if}

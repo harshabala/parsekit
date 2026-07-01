@@ -45,10 +45,10 @@ function friendlySidecarMessage(raw: string): string {
   const trimmed = raw.trim();
   const lower = trimmed.toLowerCase();
   if (lower.includes("imagemagick")) {
-    return "ImageMagick is required for images. Install with: brew install imagemagick";
+    return "ImageMagick is required for images. Open Settings → File Support to install.";
   }
   if (lower.includes("libreoffice")) {
-    return "LibreOffice is required for Office documents. Install with: brew install --cask libreoffice";
+    return "LibreOffice is required for Office documents. Open Settings → File Support to install.";
   }
   if (
     lower.includes("scoped command") && lower.includes("not found")

@@ -3,6 +3,7 @@
   import { fade, fly, slide } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
+  import { Command } from "@tauri-apps/plugin-shell";
   import { takeCachedDependencies, type DepStatus } from "../lib/depsCache";
   import { t } from "../lib/i18n.svelte";
   import { depRowAriaLabel } from "../lib/depsAria";
@@ -13,6 +14,8 @@
     MOTION_DEPS_ENTER_MS,
     rowFlyOut,
   } from "../lib/motion";
+
+  const BREW_URL = "https://brew.sh";
 
   const reducedMotion = $derived(prefersReducedMotion.current);
   const listSlide = $derived({
@@ -25,6 +28,8 @@
   let error = $state<string | null>(null);
   let listVisible = $state(false);
   let animGeneration = $state(0);
+  let copiedDepId = $state<string | null>(null);
+  let copyError = $state<string | null>(null);
 
   const missing = $derived(deps.filter((d) => !d.installed && d.optional));
 
@@ -76,6 +81,34 @@
       listVisible = deps.length > 0 || !!error;
     }
   }
+
+  async function copyBrewCommand(dep: DepStatus) {
+    if (!dep.brewHint) return;
+    copyError = null;
+    try {
+      await invoke("copy_text_to_clipboard", { text: dep.brewHint });
+      try {
+        await invoke("trigger_haptic");
+      } catch {
+        /* optional */
+      }
+      copiedDepId = dep.id;
+      setTimeout(() => {
+        if (copiedDepId === dep.id) copiedDepId = null;
+      }, 2500);
+    } catch (e) {
+      copiedDepId = null;
+      copyError = e instanceof Error ? e.message : String(e) || t("deps.copyFailed");
+    }
+  }
+
+  async function openBrewSite() {
+    try {
+      await Command.create("open", [BREW_URL]).spawn();
+    } catch {
+      window.open(BREW_URL, "_blank", "noopener,noreferrer");
+    }
+  }
 </script>
 
 <div class="deps-preflight">
@@ -97,8 +130,43 @@
     <p class="settings-hint deps-error" transition:fade={{ duration: reducedMotion ? 0 : 120 }}>{error}</p>
   {/if}
 
-  {#if listVisible && deps.length > 0}
+  {#if copyError}
+    <p class="settings-hint deps-error" transition:fade={{ duration: reducedMotion ? 0 : 120 }}>{copyError}</p>
+  {/if}
+
+  {#if listVisible || !loading}
     <ul class="deps-list" transition:slide={listSlide}>
+      <li
+        class="deps-item deps-item-installed"
+        aria-label={depRowAriaLabel(
+          t("deps.pdf"),
+          true,
+          t("deps.statusInstalled"),
+          t("deps.statusMissing")
+        )}
+        in:fly={itemFly(0)}
+        out:fly={rowFlyOut(reducedMotion)}
+      >
+        <div class="deps-item-row">
+          <span
+            class="deps-status-badge deps-status-installed"
+            aria-hidden="true"
+          >
+            <svg class="deps-check-icon" width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M2.5 6.2 4.8 8.5 9.5 3.5"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span class="deps-item-label">{t("deps.pdf")}</span>
+          <span class="deps-built-in-badge">{t("deps.builtIn")}</span>
+        </div>
+      </li>
+
       {#each deps as dep, index (dep.id)}
         <li
           class="deps-item"
@@ -110,7 +178,7 @@
             t("deps.statusInstalled"),
             t("deps.statusMissing")
           )}
-          in:fly={itemFly(index)}
+          in:fly={itemFly(index + 1)}
           out:fly={rowFlyOut(reducedMotion)}
         >
           <div class="deps-item-row">
@@ -119,7 +187,7 @@
               class:deps-status-installed={dep.installed}
               class:deps-status-missing={!dep.installed}
               class:deps-status-pop={dep.installed && animGeneration > 0}
-              style:--deps-pop-delay="{reducedMotion ? 0 : depsPopDelayMs(index)}ms"
+              style:--deps-pop-delay="{reducedMotion ? 0 : depsPopDelayMs(index + 1)}ms"
               aria-hidden="true"
             >
               {#if dep.installed}
@@ -144,11 +212,29 @@
               {/if}
             </span>
             <span class="deps-item-label">{t(dep.labelKey)}</span>
+            {#if dep.installed && !dep.optional}
+              <span class="deps-built-in-badge">{t("deps.builtIn")}</span>
+            {/if}
           </div>
           {#if !dep.installed && dep.brewHint}
-            <code class="deps-brew-hint" transition:fade={{ duration: reducedMotion ? 0 : 150 }}>
-              {dep.brewHint}
-            </code>
+            <div class="deps-install-block">
+              <code class="deps-brew-hint" transition:fade={{ duration: reducedMotion ? 0 : 150 }}>
+                {dep.brewHint}
+              </code>
+              <div class="deps-install-actions">
+                <button
+                  type="button"
+                  class="secondary deps-install-btn"
+                  class:deps-install-copied={copiedDepId === dep.id}
+                  onclick={() => copyBrewCommand(dep)}
+                >
+                  {copiedDepId === dep.id ? t("deps.copied") : t("deps.copyInstall")}
+                </button>
+                <button type="button" class="secondary deps-install-btn" onclick={openBrewSite}>
+                  {t("deps.getHomebrew")}
+                </button>
+              </div>
+            </div>
           {/if}
         </li>
       {/each}

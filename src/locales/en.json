@@ -15,7 +15,7 @@
     "format": "Format",
     "spreadsheetJsonHint": "Spreadsheets always export as JSON.",
     "ocr": "OCR (built-in)",
-    "ocrWorkersHint": "Scanned PDFs use more CPU. Adjust OCR threads in Settings → Advanced (try 1–2 for large batches).",
+    "ocrWorkersHint": "Scanned PDFs use more CPU. Adjust OCR threads in Settings → File Support (try 1–2 for large batches).",
     "expand": "Show configuration",
     "collapse": "Hide configuration"
   },
@@ -31,16 +31,22 @@
     "trayHint": "Tip: Click the ParseKit icon in the menu bar (top-right) anytime to reopen this panel."
   },
   "deps": {
-    "title": "Optional converters",
-    "hint": "PDF parsing works without these. Install only if you parse Office docs or images.",
+    "title": "File converters",
+    "hint": "PDF parsing works without extra tools. Install converters below only if you parse Office docs or images.",
     "checking": "Checking…",
     "recheck": "Recheck",
     "missingNote": "Missing tools only affect matching file types — other formats still parse.",
+    "pdf": "PDF",
+    "builtIn": "Built in",
     "libreoffice": "LibreOffice (Word, PowerPoint)",
     "imagemagick": "ImageMagick (PNG, JPG, SVG, …)",
     "tesseract": "Tesseract OCR (built into ParseKit)",
     "statusInstalled": "installed",
-    "statusMissing": "not detected"
+    "statusMissing": "not detected",
+    "copyInstall": "Copy install command",
+    "copied": "Copied to clipboard",
+    "copyFailed": "Could not copy to clipboard. Try again.",
+    "getHomebrew": "Get Homebrew"
   },
   "update": {
     "bannerAria": "Update available: version {version}",
@@ -163,11 +169,14 @@
     "batchInterrupted": "Batch stopped before this file finished.",
     "batchNotReached": "Batch ended before this file was processed.",
     "engineStalled": "Parse engine stopped responding. Try again with fewer parallel workers.",
-    "engineNoOutput": "Parse engine did not run. Reinstall from the latest DMG or run npm run build:sidecar, then quit and reopen ParseKit."
+    "engineNoOutput": "Parse engine did not run. Reinstall from the latest DMG or run npm run build:sidecar, then quit and reopen ParseKit.",
+    "openFileSupport": "Open File Support settings"
   },
   "settings": {
     "title": "Settings",
     "back": "Back",
+    "tabGeneral": "General",
+    "tabFileSupport": "File Support",
     "appLanguageTitle": "App Language",
     "appLanguageHint": "Language for buttons, labels, and menus in ParseKit. Does not change your exported files.",
     "ocrLanguageTitle": "OCR Language",
@@ -175,9 +184,6 @@
     "ocrLanguageLabel": "Document text language",
     "appearanceTitle": "Appearance",
     "appearanceHint": "Choose the appearance of ParseKit.",
-    "advancedTitle": "Advanced",
-    "advancedExpand": "Show Advanced",
-    "advancedCollapse": "Hide Advanced",
     "workersTitle": "OCR Threads",
     "workersHint": "OCR threads per file. Higher is faster on large scanned PDFs; lower uses less CPU.",
     "launchAtLogin": "Launch at Login",

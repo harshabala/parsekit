@@ -15,7 +15,7 @@
     "format": "Formato",
     "spreadsheetJsonHint": "Las hojas de cálculo siempre se exportan como JSON.",
     "ocr": "OCR (integrado)",
-    "ocrWorkersHint": "Los PDF escaneados usan más CPU. Ajusta los hilos OCR en Ajustes → Avanzado (prueba 1–2 en lotes grandes).",
+    "ocrWorkersHint": "Los PDF escaneados usan más CPU. Ajusta los hilos OCR en Ajustes → Soporte de archivos (prueba 1–2 en lotes grandes).",
     "expand": "Mostrar configuración",
     "collapse": "Ocultar configuración"
   },
@@ -31,16 +31,22 @@
     "trayHint": "Consejo: haz clic en el icono de ParseKit en la barra de menú (arriba a la derecha) para volver aquí."
   },
   "deps": {
-    "title": "Convertidores opcionales",
-    "hint": "El PDF funciona sin estos. Instálalos solo si analizas Office o imágenes.",
+    "title": "Convertidores de archivos",
+    "hint": "El PDF funciona sin herramientas extra. Instala los convertidores solo si analizas Office o imágenes.",
     "checking": "Comprobando…",
     "recheck": "Volver a comprobar",
     "missingNote": "Solo afectan a los tipos de archivo que requieren cada herramienta.",
+    "pdf": "PDF",
+    "builtIn": "Integrado",
     "libreoffice": "LibreOffice (Word, PowerPoint)",
     "imagemagick": "ImageMagick (PNG, JPG, SVG, …)",
     "tesseract": "Tesseract OCR (integrado en ParseKit)",
     "statusInstalled": "instalado",
-    "statusMissing": "no detectado"
+    "statusMissing": "no detectado",
+    "copyInstall": "Copiar comando de instalación",
+    "copied": "Copiado al portapapeles",
+    "copyFailed": "No se pudo copiar al portapapeles. Inténtalo de nuevo.",
+    "getHomebrew": "Obtener Homebrew"
   },
   "update": {
     "bannerAria": "Actualización disponible: versión {version}",
@@ -162,11 +168,14 @@
     "batchInterrupted": "El lote se detuvo antes de terminar este archivo.",
     "batchNotReached": "El lote terminó antes de procesar este archivo.",
     "engineStalled": "El motor de análisis dejó de responder. Vuelve a intentarlo con menos trabajos en paralelo.",
-    "engineNoOutput": "El motor de análisis no se ejecutó. Reinstala desde el DMG más reciente o ejecuta npm run build:sidecar, cierra y vuelve a abrir ParseKit."
+    "engineNoOutput": "El motor de análisis no se ejecutó. Reinstala desde el DMG más reciente o ejecuta npm run build:sidecar, cierra y vuelve a abrir ParseKit.",
+    "openFileSupport": "Abrir ajustes de soporte de archivos"
   },
   "settings": {
     "title": "Ajustes",
     "back": "Atrás",
+    "tabGeneral": "General",
+    "tabFileSupport": "Soporte de archivos",
     "appLanguageTitle": "Idioma de la app",
     "appLanguageHint": "Idioma de botones, etiquetas y menús de ParseKit. No cambia el contenido de los archivos exportados.",
     "ocrLanguageTitle": "Idioma OCR",
@@ -174,9 +183,6 @@
     "ocrLanguageLabel": "Idioma del texto del documento",
     "appearanceTitle": "Apariencia",
     "appearanceHint": "Elige la apariencia de ParseKit.",
-    "advancedTitle": "Avanzado",
-    "advancedExpand": "Mostrar avanzado",
-    "advancedCollapse": "Ocultar avanzado",
     "workersTitle": "Hilos OCR",
     "workersHint": "Hilos OCR por archivo. Más hilos aceleran PDF escaneados grandes; menos reduce el uso de CPU.",
     "launchAtLogin": "Iniciar al iniciar sesión",

@@ -13,6 +13,7 @@
     sectionFlyOut,
     MOTION_ROW_STAGGER_CAP,
   } from "../lib/motion";
+  import { isConverterDependencyError } from "../lib/converterErrors";
   import { resolvePrimaryParsingId } from "../lib/progress";
   import type { FileProgress } from "../lib/types";
 
@@ -32,11 +33,13 @@
     total,
     isParsing,
     lastParsingId = null,
+    onOpenFileSupport,
   }: {
     files: FileProgress[];
     total: number;
     isParsing: boolean;
     lastParsingId?: string | null;
+    onOpenFileSupport?: () => void;
   } = $props();
 
   let listEl = $state<HTMLDivElement | null>(null);
@@ -226,6 +229,15 @@
             <span class="file-name" title={file.name}>{file.name}</span>
             {#if file.status === "error" && file.error}
               <span class="file-error" title={file.error}>{file.error}</span>
+              {#if onOpenFileSupport && isConverterDependencyError(file.error)}
+                <button
+                  type="button"
+                  class="file-error-link"
+                  onclick={onOpenFileSupport}
+                >
+                  {t("errors.openFileSupport")}
+                </button>
+              {/if}
             {/if}
           </div>
           <div class="file-row-status" aria-label={statusLabel(file.status)}>

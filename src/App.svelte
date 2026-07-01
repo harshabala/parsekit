@@ -45,6 +45,7 @@
   import { finderActionState } from "./lib/finderActionState.svelte";
   import { pickOutputFolder } from "./lib/picker";
   import { warmDependencies } from "./lib/depsCache";
+  import { isConverterDependencyError, type SettingsTab } from "./lib/converterErrors";
   import {
     bannerFlyIn,
     bannerFlyOut,
@@ -93,6 +94,7 @@
   let totalFiles = $state(0);
   let recentBatches = $state<BatchResult[]>([]);
   let showSettings = $state(false);
+  let settingsTab = $state<SettingsTab>("general");
   let showAbout = $state(false);
   let showHistory = $state(false);
   let theme = $state<ThemeMode>(DEFAULT_THEME);
@@ -181,11 +183,16 @@
     await setSetting("ocrLanguage", code);
   }
 
-  function openSettings() {
+  function openSettings(tab: SettingsTab = "general") {
+    settingsTab = tab;
     showHistory = false;
     showAbout = false;
     showSettings = true;
     void finderActionState.refreshStatus();
+  }
+
+  function openFileSupportSettings() {
+    openSettings("file-support");
   }
 
   async function ingestExternalPaths(paths: string[]) {
@@ -740,7 +747,7 @@
     <div class="header-actions">
       <button
         class="icon-btn icon-btn-settings"
-        onclick={openSettings}
+        onclick={() => openSettings()}
         onmouseenter={warmDependencies}
         onfocusin={warmDependencies}
         title={t("header.settings")}
@@ -894,6 +901,7 @@
           total={totalFiles || files.length}
           {isParsing}
           {lastParsingId}
+          onOpenFileSupport={openFileSupportSettings}
         />
       </div>
     {/if}
@@ -934,7 +942,16 @@
           in:fly={bannerFlyInParams}
           out:fly={bannerFlyOutParams}
         >
-          {errorMsg}
+          <p class="error-banner-text">{errorMsg}</p>
+          {#if isConverterDependencyError(errorMsg)}
+            <button
+              type="button"
+              class="error-banner-link"
+              onclick={openFileSupportSettings}
+            >
+              {t("errors.openFileSupport")}
+            </button>
+          {/if}
         </div>
       {/if}
       {#if !isParsing && files.length > 0 && files.some((f) => f.status === "done")}
@@ -998,6 +1015,7 @@
         {theme}
         {workers}
         {launchAtLogin}
+        initialTab={settingsTab}
         onLocaleChange={handleLocaleChange}
         onOcrLanguageChange={handleOcrLanguageChange}
         onThemeChange={handleThemeChange}
