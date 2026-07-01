@@ -188,10 +188,10 @@
     "launchAtLogin": "登录时启动",
     "launchAtLoginHint": "登录 Mac 时自动启动 ParseKit。",
     "finderTitle": "Finder",
-    "finderHint": "在 Finder 中右键 → 快速操作 → Parse to Markdown with ParseKit。若已在 ParseKit 中设置输出文件夹，将静默解析到该处；否则打开 ParseKit 并载入文件。",
+    "finderHint": "在 Finder 中右键 → 快速操作。Parse to Markdown with ParseKit 保留原文件；Parse to Markdown with ParseKit (Replace Original) 在解析成功后将原文件移至废纸篓（可在 Finder 中恢复）。两者均需在设置中指定输出文件夹才能静默转换，否则将打开 ParseKit 并载入文件。",
     "finderInstall": "安装 Finder 快速操作",
     "finderInstalling": "正在安装…",
-    "finderInstalled": "已安装。如未显示，请在系统设置 → 键盘 → 键盘快捷键 → 服务 中启用。",
+    "finderInstalled": "两个快速操作均已安装。如未显示，请在系统设置 → 键盘 → 键盘快捷键 → 服务 中启用。",
     "finderInstallFailed": "无法安装 Finder 快速操作。",
     "aboutTitle": "关于 ParseKit"
   },

@@ -1,11 +1,13 @@
 #!/bin/bash
 # Finder Quick Action: headless parse when output folder is saved; otherwise queue files and open ParseKit.
+# Set PARSEKIT_REPLACE_ORIGINAL=1 to move originals to Trash after a successful parse (recoverable).
 set -euo pipefail
 
 APP_NAME="ParseKit"
 SUPPORT="$HOME/Library/Application Support/com.harshabala.parsekit"
 SETTINGS="$SUPPORT/settings.json"
 QUEUE="$SUPPORT/open-queue.json"
+REPLACE_ORIGINAL="${PARSEKIT_REPLACE_ORIGINAL:-0}"
 
 if [[ -d "/Applications/ParseKit.app" ]]; then
   APP_BUNDLE="/Applications/ParseKit.app"
@@ -17,14 +19,17 @@ else
 fi
 
 SIDECAR="$APP_BUNDLE/Contents/MacOS/parsekit-sidecar"
+CLI="$APP_BUNDLE/Contents/MacOS/parsekit-cli"
 
 mkdir -p "$SUPPORT"
 
 export PARSEKIT_APP="$APP_BUNDLE"
 export PARSEKIT_SIDECAR="$SIDECAR"
+export PARSEKIT_CLI="$CLI"
 export PARSEKIT_SETTINGS="$SETTINGS"
 export PARSEKIT_QUEUE="$QUEUE"
 export PARSEKIT_APP_NAME="$APP_NAME"
+export PARSEKIT_REPLACE_ORIGINAL="$REPLACE_ORIGINAL"
 
 exec python3 - "$@" << 'PY'
 import json
@@ -49,7 +54,9 @@ output_dir = (settings.get("outputDir") or "").strip()
 app_name = os.environ["PARSEKIT_APP_NAME"]
 app_bundle = os.environ["PARSEKIT_APP"]
 sidecar = os.environ["PARSEKIT_SIDECAR"]
+cli = os.environ.get("PARSEKIT_CLI", "")
 queue_path = os.environ["PARSEKIT_QUEUE"]
+replace_original = os.environ.get("PARSEKIT_REPLACE_ORIGINAL") == "1"
 stats_path = os.path.join(
     os.path.dirname(settings_path), "token-stats.json"
 )
@@ -112,6 +119,12 @@ def record_token_savings(file_type, tokens_saved, pages_unlocked, documents_unlo
     })
     save_token_stats(stats)
 
+def notify(message):
+    subprocess.run(
+        ["osascript", "-e", f'display notification "{message}" with title "ParseKit"'],
+        check=False,
+    )
+
 def open_app():
     subprocess.run(["open", "-ga", app_name], check=False)
     if subprocess.run(["pgrep", "-xq", app_name]).returncode != 0:
@@ -129,16 +142,34 @@ def queue_paths():
     with open(queue_path, "w") as f:
         json.dump(existing, f, indent=2)
 
+def trash_original(path):
+    if not replace_original or not path or not os.path.exists(path):
+        return False
+    if os.path.isfile(cli) and os.access(cli, os.X_OK):
+        result = subprocess.run([cli, "trash", path], capture_output=True, check=False)
+        return result.returncode == 0
+    escaped = path.replace("\\", "\\\\").replace('"', '\\"')
+    result = subprocess.run(
+        [
+            "osascript",
+            "-e",
+            f'tell application "Finder" to delete POSIX file "{escaped}"',
+        ],
+        check=False,
+    )
+    return result.returncode == 0
+
+if replace_original and not output_dir:
+    notify("Set an output folder in ParseKit Settings before using Replace Original.")
+    sys.exit(1)
+
 if not output_dir:
     queue_paths()
     open_app()
     sys.exit(0)
 
 if not os.path.isfile(sidecar) or not os.access(sidecar, os.X_OK):
-    subprocess.run([
-        "osascript", "-e",
-        'display notification "Parse engine missing. Reinstall ParseKit." with title "ParseKit"',
-    ], check=False)
+    notify("Parse engine missing. Reinstall ParseKit.")
     sys.exit(1)
 
 config = {
@@ -157,7 +188,8 @@ proc = subprocess.run(
     capture_output=True,
     check=False,
 )
-parsed = errors = 0
+parsed = errors = trashed = 0
+completed_sources = []
 for line in proc.stdout.decode(errors="replace").splitlines():
     line = line.strip()
     if not line:
@@ -170,6 +202,9 @@ for line in proc.stdout.decode(errors="replace").splitlines():
         st = ev.get("status")
         if st in ("completed", "done"):
             parsed += 1
+            source = ev.get("sourcePath") or ""
+            if source:
+                completed_sources.append(source)
         elif st == "error":
             errors += 1
     elif ev.get("type") == "token_savings":
@@ -180,9 +215,13 @@ for line in proc.stdout.decode(errors="replace").splitlines():
             ev.get("documents_unlocked"),
         )
 
-msg = f"Done: {parsed} parsed, {errors} errors."
-subprocess.run(
-    ["osascript", "-e", f'display notification "{msg}" with title "ParseKit"'],
-    check=False,
-)
+for source in completed_sources:
+    if trash_original(source):
+        trashed += 1
+
+if replace_original:
+    msg = f"Done: {parsed} parsed, {errors} errors, {trashed} moved to Trash."
+else:
+    msg = f"Done: {parsed} parsed, {errors} errors."
+notify(msg)
 PY

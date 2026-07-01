@@ -188,10 +188,10 @@
     "launchAtLogin": "Iniciar al iniciar sesión",
     "launchAtLoginHint": "Inicia ParseKit automáticamente al iniciar sesión en tu Mac.",
     "finderTitle": "Finder",
-    "finderHint": "Clic derecho en Finder → Acciones rápidas → Parse to Markdown with ParseKit. Si hay carpeta de salida en ParseKit, analiza en silencio; si no, abre ParseKit con los archivos.",
-    "finderInstall": "Instalar acción rápida de Finder",
+    "finderHint": "Clic derecho en Finder → Acciones rápidas. Parse to Markdown with ParseKit conserva los originales. Parse to Markdown with ParseKit (Replace Original) mueve el archivo fuente a la Papelera tras un análisis correcto (recuperable en Finder). Ambas requieren carpeta de salida en Ajustes para conversión silenciosa; si no, abre ParseKit con los archivos.",
+    "finderInstall": "Instalar acciones rápidas de Finder",
     "finderInstalling": "Instalando…",
-    "finderInstalled": "Acción instalada. Actívala en Ajustes del Sistema → Teclado → Atajos de teclado → Servicios si hace falta.",
+    "finderInstalled": "Ambas acciones instaladas. Actívalas en Ajustes del Sistema → Teclado → Atajos de teclado → Servicios si hace falta.",
     "finderInstallFailed": "No se pudo instalar la acción de Finder.",
     "aboutTitle": "Acerca de ParseKit"
   },

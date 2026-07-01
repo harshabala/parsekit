@@ -24,6 +24,7 @@ ParseKit — convert documents to Markdown/JSON locally
 Usage:
   parsekit convert <file> [--out <path>] [--format md|txt|json]
   parsekit convert <folder> --batch [--out <folder>]
+  parsekit trash <file>...          (macOS only — move files to Trash)
 
 Options:
   --out <path>     Output file or folder (default: same directory as input)
@@ -99,6 +100,11 @@ fn run() -> Result<(), String> {
         }
         let parsed = parse_convert_args(&args)?;
         return execute_convert(parsed);
+    }
+
+    if args[0] == "trash" {
+        args.remove(0);
+        return execute_trash(&args);
     }
 
     Err(format!(
@@ -524,6 +530,31 @@ fn resolve_sidecar() -> Result<PathBuf, String> {
         "parsekit-sidecar not found. Build with: npm run build:sidecar (or set PARSEKIT_SIDECAR)"
             .to_string(),
     )
+}
+
+fn execute_trash(args: &[String]) -> Result<(), String> {
+    if args.is_empty() || matches!(args[0].as_str(), "--help" | "-h") {
+        print!("{HELP}");
+        return Ok(());
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = args;
+        return Err("parsekit trash is only available on macOS.".into());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        for raw in args {
+            if raw.starts_with('-') {
+                return Err(format!("Unknown option for trash: {raw}"));
+            }
+            let path = PathBuf::from(raw);
+            parsekit_lib::macos_trash::move_to_trash(&path)?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]

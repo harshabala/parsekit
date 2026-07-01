@@ -1,6 +1,8 @@
 pub mod macos_popover;
 #[cfg(target_os = "macos")]
 pub mod macos_open_files;
+#[cfg(target_os = "macos")]
+pub mod macos_trash;
 pub mod popover_trace;
 pub mod sidecar_helpers;
 pub mod token_count;
@@ -1038,9 +1040,11 @@ fn finder_quick_action_installed() -> Result<bool, String> {
 #[tauri::command]
 fn finder_quick_action_installed() -> Result<bool, String> {
     let home = std::env::var("HOME").map_err(|e| e.to_string())?;
-    let workflow = Path::new(&home)
-        .join("Library/Services/Parse to Markdown with ParseKit.workflow");
-    Ok(workflow.is_dir())
+    let services = Path::new(&home).join("Library/Services");
+    let default_action = services.join("Parse to Markdown with ParseKit.workflow");
+    let replace_action =
+        services.join("Parse to Markdown with ParseKit (Replace Original).workflow");
+    Ok(default_action.is_dir() && replace_action.is_dir())
 }
 
 #[derive(serde::Serialize)]

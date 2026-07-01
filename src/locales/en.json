@@ -189,10 +189,10 @@
     "launchAtLogin": "Launch at Login",
     "launchAtLoginHint": "Start ParseKit automatically when you sign in to your Mac.",
     "finderTitle": "Finder",
-    "finderHint": "Right-click files in Finder → Quick Actions → Parse to Markdown with ParseKit. If an output folder is set in ParseKit, files parse there silently; otherwise ParseKit opens with the files loaded.",
-    "finderInstall": "Install Finder Quick Action",
+    "finderHint": "Right-click files in Finder → Quick Actions. Parse to Markdown with ParseKit keeps originals. Parse to Markdown with ParseKit (Replace Original) moves the source file to Trash after a successful parse (recoverable in Finder). Both require an output folder in Settings for silent conversion; otherwise ParseKit opens with the files loaded.",
+    "finderInstall": "Install Finder Quick Actions",
     "finderInstalling": "Installing…",
-    "finderInstalled": "Quick Action installed. Enable it in System Settings → Keyboard → Keyboard Shortcuts → Services if needed.",
+    "finderInstalled": "Both Quick Actions installed. Enable them in System Settings → Keyboard → Keyboard Shortcuts → Services if needed.",
     "finderInstallFailed": "Could not install Finder Quick Action.",
     "aboutTitle": "About ParseKit"
   },

@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
-# Install Finder Quick Action: "Parse to Markdown with ParseKit"
+# Install Finder Quick Actions for ParseKit (default + replace-original).
 set -euo pipefail
 
-SERVICE_NAME="Parse to Markdown with ParseKit"
 SERVICES_DIR="${HOME}/Library/Services"
-WORKFLOW_DIR="${SERVICES_DIR}/${SERVICE_NAME}.workflow"
 
 if [[ -d "/Applications/ParseKit.app" ]]; then
   APP_BUNDLE="/Applications/ParseKit.app"
 elif [[ -d "${HOME}/Applications/ParseKit.app" ]]; then
   APP_BUNDLE="${HOME}/Applications/ParseKit.app"
 else
-  ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-  if [[ -d "${ROOT}/src-tauri/target/release/bundle/macos/ParseKit.app" ]]; then
-    APP_BUNDLE="${ROOT}/src-tauri/target/release/bundle/macos/ParseKit.app"
+  ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+  if [[ -d "${ROOT}/target/release/bundle/macos/ParseKit.app" ]]; then
+    APP_BUNDLE="${ROOT}/target/release/bundle/macos/ParseKit.app"
   else
     echo "error: ParseKit.app not found in /Applications — install the app first" >&2
     exit 1
@@ -26,14 +24,38 @@ if [[ ! -x "${OPEN_SCRIPT}" ]]; then
   exit 1
 fi
 
-INPUT_UUID=$(uuidgen)
-OUTPUT_UUID=$(uuidgen)
-ACTION_UUID=$(uuidgen)
+ICON_CANDIDATES=(
+  "${APP_BUNDLE}/Contents/Resources/macos/finder-quick-action.icns"
+  "$(cd "$(dirname "$0")" && pwd)/finder-quick-action.icns"
+  "$(cd "$(dirname "$0")/../../.." && pwd)/assets/branding/finder-quick-action.icns"
+)
+WORKFLOW_ICON=""
+for candidate in "${ICON_CANDIDATES[@]}"; do
+  if [[ -f "${candidate}" ]]; then
+    WORKFLOW_ICON="${candidate}"
+    break
+  fi
+done
 
-rm -rf "${WORKFLOW_DIR}"
-mkdir -p "${WORKFLOW_DIR}/Contents"
+install_workflow() {
+  local service_name="$1"
+  local bundle_id="$2"
+  local command_string="$3"
+  local workflow_dir="${SERVICES_DIR}/${service_name}.workflow"
+  local input_uuid output_uuid action_uuid
 
-cat > "${WORKFLOW_DIR}/Contents/document.wflow" << WFLOW
+  input_uuid="$(uuidgen)"
+  output_uuid="$(uuidgen)"
+  action_uuid="$(uuidgen)"
+
+  rm -rf "${workflow_dir}"
+  mkdir -p "${workflow_dir}/Contents/Resources"
+
+  if [[ -n "${WORKFLOW_ICON}" ]]; then
+    cp "${WORKFLOW_ICON}" "${workflow_dir}/Contents/Resources/WorkflowIcon.icns"
+  fi
+
+  cat > "${workflow_dir}/Contents/document.wflow" << WFLOW
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -67,7 +89,7 @@ cat > "${WORKFLOW_DIR}/Contents/document.wflow" << WFLOW
         <key>ActionParameters</key>
         <dict>
           <key>COMMAND_STRING</key>
-          <string>"${OPEN_SCRIPT}" "\$@"</string>
+          <string>${command_string}</string>
           <key>CheckedForUserDefaultShell</key><true/>
           <key>inputMethod</key><integer>1</integer>
           <key>shell</key><string>/bin/bash</string>
@@ -75,9 +97,9 @@ cat > "${WORKFLOW_DIR}/Contents/document.wflow" << WFLOW
         </dict>
         <key>BundleIdentifier</key><string>com.apple.RunShellScript</string>
         <key>Class Name</key><string>RunShellScriptAction</string>
-        <key>InputUUID</key><string>${INPUT_UUID}</string>
-        <key>OutputUUID</key><string>${OUTPUT_UUID}</string>
-        <key>UUID</key><string>${ACTION_UUID}</string>
+        <key>InputUUID</key><string>${input_uuid}</string>
+        <key>OutputUUID</key><string>${output_uuid}</string>
+        <key>UUID</key><string>${action_uuid}</string>
       </dict>
     </dict>
   </array>
@@ -98,20 +120,25 @@ cat > "${WORKFLOW_DIR}/Contents/document.wflow" << WFLOW
 </plist>
 WFLOW
 
-cat > "${WORKFLOW_DIR}/Contents/Info.plist" << PLIST
+  local icon_plist=""
+  if [[ -n "${WORKFLOW_ICON}" ]]; then
+    icon_plist=$'  <key>CFBundleIconFile</key>\n  <string>WorkflowIcon</string>\n'
+  fi
+
+  cat > "${workflow_dir}/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
   <key>CFBundleName</key>
-  <string>${SERVICE_NAME}</string>
+  <string>${service_name}</string>
   <key>CFBundleIdentifier</key>
-  <string>com.harshabala.parsekit.finder-action</string>
-  <key>NSServices</key>
+  <string>${bundle_id}</string>
+${icon_plist}  <key>NSServices</key>
   <array>
     <dict>
       <key>NSMenuItem</key>
-      <dict><key>default</key><string>${SERVICE_NAME}</string></dict>
+      <dict><key>default</key><string>${service_name}</string></dict>
       <key>NSMessage</key><string>runWorkflowAsService</string>
       <key>NSSendFileTypes</key>
       <array>
@@ -129,7 +156,19 @@ cat > "${WORKFLOW_DIR}/Contents/Info.plist" << PLIST
 </plist>
 PLIST
 
+  echo "Installed Finder action: ${workflow_dir}"
+}
+
+install_workflow \
+  "Parse to Markdown with ParseKit" \
+  "com.harshabala.parsekit.finder-action" \
+  "\"${OPEN_SCRIPT}\" \"\$@\""
+
+install_workflow \
+  "Parse to Markdown with ParseKit (Replace Original)" \
+  "com.harshabala.parsekit.finder-action-replace" \
+  "PARSEKIT_REPLACE_ORIGINAL=1 \"${OPEN_SCRIPT}\" \"\$@\""
+
 /System/Library/CoreServices/pbs -update 2>/dev/null || true
 
-echo "Installed Finder action: ${WORKFLOW_DIR}"
-echo "Enable it in System Settings → Keyboard → Keyboard Shortcuts → Services (or Finder Quick Actions)."
+echo "Enable actions in System Settings → Keyboard → Keyboard Shortcuts → Services (or Finder Quick Actions)."
