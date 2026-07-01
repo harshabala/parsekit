@@ -26,6 +26,10 @@ jobs:
       - name: Svelte typecheck
         run: npm run check
 
+      # Tauri build.rs requires binaries/parsekit-sidecar-<triple> before cargo test compiles.
+      - name: Build parsekit sidecar
+        run: npm run build:sidecar
+
       - name: Rust unit tests
         run: cargo test
         working-directory: src-tauri
