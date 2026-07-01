@@ -12,6 +12,10 @@ crate-type = ["lib"]
 name = "parsekit-sidecar"
 path = "src/bin/parsekit-sidecar.rs"
 
+[[bin]]
+name = "parsekit-cli"
+path = "src/bin/parsekit-cli.rs"
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
