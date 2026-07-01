@@ -209,5 +209,44 @@
   "tray": {
     "open": "Abrir ParseKit",
     "quit": "Salir de ParseKit"
+  },
+  "tokenSavings": {
+    "bannerMonth": "{count} tokens ahorrados este mes",
+    "bannerLifetime": "{count} tokens ahorrados",
+    "bannerHint": "Abre Ajustes para ver el desglose completo",
+    "panelTitle": "Tokens ahorrados",
+    "panelHint": "Tokens estimados que evitaste enviar a la IA al analizar localmente. Las páginas escaneadas se cuentan por separado.",
+    "periodLabel": "Periodo del banner",
+    "periodMonth": "Este mes",
+    "periodLifetime": "Total",
+    "periodHint": "Controla el contador discreto en el panel principal.",
+    "lifetimeTotal": "Total de tokens ahorrados",
+    "filesConverted": "Archivos convertidos",
+    "pagesUnlocked": "Páginas desbloqueadas",
+    "documentsUnlocked": "Documentos escaneados desbloqueados",
+    "byTypeTitle": "Por tipo de archivo",
+    "byTypeRow": "{type}: {tokens} tokens · {files} archivos",
+    "privacy": "Contado localmente en tu Mac. Nunca se envía a ningún sitio.",
+    "chatGptApprox": "~{count} mensajes largos de ChatGPT",
+    "approximateLabel": "(aproximado)",
+    "reset": "Restablecer contador",
+    "resetConfirm": "¿Restablecer todos los contadores de tokens ahorrados? No se puede deshacer.",
+    "resetting": "Restableciendo…",
+    "empty": "Aún no hay tokens ahorrados. Ejecuta un análisis para empezar a contar.",
+    "fileType": {
+      "pdf": "PDF",
+      "docx": "Word",
+      "doc": "Word",
+      "pptx": "PowerPoint",
+      "ppt": "PowerPoint",
+      "xlsx": "Excel",
+      "xls": "Excel",
+      "csv": "CSV",
+      "png": "Imagen",
+      "jpg": "Imagen",
+      "jpeg": "Imagen",
+      "webp": "Imagen",
+      "svg": "Imagen"
+    }
   }
 }

@@ -6,6 +6,7 @@ import { Command, type Child } from "@tauri-apps/plugin-shell";
  * - `progress` — per-file updates (`status`: parsing | completed | error | skipped)
  * - `done` — batch finished successfully
  * - `error` — fatal batch failure (process also exits non-zero or closes); UI must stop parsing
+ * - `token_savings` — per-file token savings after successful parse (frontend records via IPC)
  *
  * Per-file failures use `progress` with `status: "error"`, not global `error`.
  */
@@ -22,7 +23,7 @@ export interface ParseConfig {
 }
 
 export interface ParseEvent {
-  type: "start" | "progress" | "done" | "error";
+  type: "start" | "progress" | "done" | "error" | "token_savings";
   file?: string;
   /** Full path of the input file being processed */
   sourcePath?: string;
@@ -34,6 +35,11 @@ export interface ParseEvent {
   skipped?: number;
   errors?: number;
   error?: string;
+  /** Present on `token_savings` events */
+  file_type?: string;
+  tokens_saved?: number;
+  pages_unlocked?: number;
+  documents_unlocked?: number;
 }
 
 export interface ParseRunHandle {
@@ -76,6 +82,16 @@ function friendlySidecarMessage(raw: string): string {
   return trimmed || "Parse engine failed to start (unknown error).";
 }
 
+/** Parse one JSON line from sidecar stdout; returns null for blank or invalid lines. */
+export function parseSidecarLine(line: string): ParseEvent | null {
+  if (!line.trim()) return null;
+  try {
+    return JSON.parse(line) as ParseEvent;
+  } catch {
+    return null;
+  }
+}
+
 function handleSidecarLine(
   line: string,
   onEvent: (event: ParseEvent) => void,
@@ -83,18 +99,23 @@ function handleSidecarLine(
   finish: (fn: () => void) => void,
   resolve: () => void
 ): void {
-  if (!line.trim()) return;
-  try {
-    const event: ParseEvent = JSON.parse(line);
-    onEvent(event);
-    if (event.type === "start" || event.type === "progress") {
-      onBatchActivity();
+  const event = parseSidecarLine(line);
+  if (!event) {
+    if (line.trim()) {
+      console.error("Failed to parse sidecar output:", line);
     }
-    if (event.type === "done") {
-      finish(() => resolve());
-    }
-  } catch (e) {
-    console.error("Failed to parse sidecar output:", line, e);
+    return;
+  }
+  onEvent(event);
+  if (
+    event.type === "start" ||
+    event.type === "progress" ||
+    event.type === "token_savings"
+  ) {
+    onBatchActivity();
+  }
+  if (event.type === "done") {
+    finish(() => resolve());
   }
 }
 

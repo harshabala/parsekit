@@ -10,6 +10,41 @@ export interface ParseProgressEvent {
   error?: string;
 }
 
+export interface TokenSavingsEvent {
+  type: "token_savings";
+  file?: string;
+  file_type?: string;
+  tokens_saved?: number;
+  pages_unlocked?: number;
+  documents_unlocked?: number;
+}
+
+/** Running totals for the current batch — used by the progress HUD (Task 14). */
+export interface BatchTokenSavings {
+  tokensSaved: number;
+  pagesUnlocked: number;
+  documentsUnlocked: number;
+}
+
+export function createBatchTokenSavings(): BatchTokenSavings {
+  return { tokensSaved: 0, pagesUnlocked: 0, documentsUnlocked: 0 };
+}
+
+export function applyTokenSavingsEvent(
+  batch: BatchTokenSavings,
+  event: TokenSavingsEvent,
+): BatchTokenSavings {
+  return {
+    tokensSaved:
+      batch.tokensSaved + Math.max(0, Math.floor(event.tokens_saved ?? 0)),
+    pagesUnlocked:
+      batch.pagesUnlocked + Math.max(0, Math.floor(event.pages_unlocked ?? 0)),
+    documentsUnlocked:
+      batch.documentsUnlocked +
+      Math.max(0, Math.floor(event.documents_unlocked ?? 0)),
+  };
+}
+
 export interface ParseProgressApplyResult {
   files: FileProgress[];
   /** Most recently started parse (by source path), for the “now parsing” banner. */

@@ -2358,3 +2358,117 @@ button.about-author-link:focus-visible {
   color: var(--text-secondary);
   line-height: 1.4;
 }
+
+.token-savings-banner {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  min-height: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: oklch(from var(--text-secondary) l c h / 0.45);
+}
+
+.token-savings-banner:hover {
+  color: var(--text-primary);
+  background: transparent;
+  transform: none;
+}
+
+.token-savings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.token-savings-period-toggle {
+  width: 100%;
+}
+
+.token-savings-period-hint {
+  margin: 0;
+}
+
+.token-savings-empty {
+  margin: 0;
+}
+
+.token-savings-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.token-savings-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.token-savings-stat dt {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.token-savings-stat dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.token-savings-stat--pages dd {
+  font-size: 14px;
+}
+
+.token-savings-approx {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.token-savings-approx-label {
+  color: var(--text-secondary);
+}
+
+.token-savings-by-type-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.token-savings-by-type-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.token-savings-privacy {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.token-savings-reset-btn {
+  align-self: flex-start;
+}

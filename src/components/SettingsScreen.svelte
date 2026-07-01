@@ -12,7 +12,10 @@
   import ThemeSelector from "./ThemeSelector.svelte";
   import WorkersSlider from "./WorkersSlider.svelte";
   import DependencyPreflight from "./DependencyPreflight.svelte";
+  import TokenSavingsPanel from "./TokenSavingsPanel.svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import type { TokenStats } from "../lib/tokenStats";
+  import type { TokenStatsPeriod } from "../lib/store";
 
   let {
     locale: localeValue,
@@ -26,6 +29,10 @@
     onThemeChange,
     onWorkersChange,
     onLaunchAtLoginChange,
+    tokenStats = null,
+    tokenStatsPeriod = "month",
+    onTokenStatsPeriodChange,
+    onTokenStatsChange,
     onOpenAbout,
     finderActionInstalled = false,
     finderActionBusy = false,
@@ -50,6 +57,10 @@
     onThemeChange: (mode: ThemeMode) => void;
     onWorkersChange: (value: number) => void;
     onLaunchAtLoginChange: (enabled: boolean) => void;
+    tokenStats?: TokenStats | null;
+    tokenStatsPeriod?: TokenStatsPeriod;
+    onTokenStatsPeriodChange?: (period: TokenStatsPeriod) => void;
+    onTokenStatsChange?: (stats: TokenStats) => void;
     onOpenAbout: () => void;
     finderActionInstalled?: boolean;
     finderActionBusy?: boolean;
@@ -178,6 +189,16 @@
         </div>
 
         <div class="settings-divider"></div>
+
+        {#if onTokenStatsPeriodChange && onTokenStatsChange}
+          <TokenSavingsPanel
+            stats={tokenStats}
+            period={tokenStatsPeriod}
+            onPeriodChange={onTokenStatsPeriodChange}
+            onStatsChange={onTokenStatsChange}
+          />
+          <div class="settings-divider"></div>
+        {/if}
 
         <div class="settings-section">
           <div class="settings-section-title">{t("gatekeeper.title")}</div>

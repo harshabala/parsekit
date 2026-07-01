@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   applyParseProgressEvent,
+  applyTokenSavingsEvent,
+  createBatchTokenSavings,
   resolvePrimaryParsingId,
   pathsMatchForProgress,
   settleBatchOnStop,
@@ -120,6 +122,31 @@ describe("settleInFlightOnAbort", () => {
     const files = [row("/a/wait.pdf", "pending"), row("/a/active.pdf", "parsing")];
     const next = settleInFlightOnAbort(files, "Stopped");
     expect(next.every((f) => f.status === "error")).toBe(true);
+  });
+});
+
+describe("applyTokenSavingsEvent", () => {
+  it("accumulates batch totals and floors negatives", () => {
+    let batch = createBatchTokenSavings();
+    batch = applyTokenSavingsEvent(batch, {
+      type: "token_savings",
+      file_type: "pdf",
+      tokens_saved: 120,
+      pages_unlocked: 2,
+      documents_unlocked: 1,
+    });
+    batch = applyTokenSavingsEvent(batch, {
+      type: "token_savings",
+      file_type: "docx",
+      tokens_saved: -5,
+      pages_unlocked: 0,
+      documents_unlocked: 0,
+    });
+    expect(batch).toEqual({
+      tokensSaved: 120,
+      pagesUnlocked: 2,
+      documentsUnlocked: 1,
+    });
   });
 });
 

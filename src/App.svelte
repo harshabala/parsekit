@@ -6,7 +6,12 @@
   import { listen } from "@tauri-apps/api/event";
   import { downloadDir } from "@tauri-apps/api/path";
 
-  import { getSetting, setSetting } from "./lib/store";
+  import {
+    DEFAULT_TOKEN_STATS_PERIOD,
+    getSetting,
+    setSetting,
+    type TokenStatsPeriod,
+  } from "./lib/store";
   import { runParse, type ParseEvent, type ParseRunHandle } from "./lib/sidecar";
   import type { OutputFormat, FileProgress, BatchResult, ThemeMode } from "./lib/types";
   import { MAX_RECENT_BATCHES } from "./lib/types";
@@ -27,9 +32,17 @@
   import { truncatePath } from "./lib/pathDisplay";
   import {
     applyParseProgressEvent,
+    applyTokenSavingsEvent,
+    createBatchTokenSavings,
     settleBatchOnStop,
     settleRemainingOnDone,
+    type BatchTokenSavings,
   } from "./lib/progress";
+  import {
+    getTokenStats,
+    recordTokenSavingsFromSidecarEvent,
+    type TokenStats,
+  } from "./lib/tokenStats";
   import { applyTheme, DEFAULT_THEME, normalizeThemeMode } from "./lib/theme";
   import DropZone from "./components/DropZone.svelte";
   import OutputFolderPicker from "./components/OutputFolderPicker.svelte";
@@ -41,6 +54,7 @@
   import AboutScreen from "./components/AboutScreen.svelte";
   import OnboardingChecklist from "./components/OnboardingChecklist.svelte";
   import UpdateBanner from "./components/UpdateBanner.svelte";
+  import TokenSavingsBanner from "./components/TokenSavingsBanner.svelte";
   import { updateState } from "./lib/updateState.svelte";
   import { finderActionState } from "./lib/finderActionState.svelte";
   import { pickOutputFolder } from "./lib/picker";
@@ -109,6 +123,9 @@
   let configCollapsed = $state(false);
   let hasSuccessfulParse = $state(false);
   let appVersion = $state("0.2.0");
+  let tokenStats = $state<TokenStats | null>(null);
+  let tokenStatsPeriod = $state<TokenStatsPeriod>(DEFAULT_TOKEN_STATS_PERIOD);
+  let batchTokenSavings = $state<BatchTokenSavings>(createBatchTokenSavings());
 
   $effect(() => {
     if (updateState.available) {
@@ -189,6 +206,24 @@
     showAbout = false;
     showSettings = true;
     void finderActionState.refreshStatus();
+    void refreshTokenStats();
+  }
+
+  async function refreshTokenStats() {
+    try {
+      tokenStats = await getTokenStats();
+    } catch (e) {
+      console.warn("[tokenStats] refresh failed", e);
+    }
+  }
+
+  async function handleTokenStatsPeriodChange(period: TokenStatsPeriod) {
+    tokenStatsPeriod = period;
+    await setSetting("tokenStatsPeriod", period);
+  }
+
+  function handleTokenStatsChange(stats: TokenStats) {
+    tokenStats = stats;
   }
 
   function openFileSupportSettings() {
@@ -314,6 +349,16 @@
       }
     }
     await syncTrayMenu();
+
+    tokenStatsPeriod = await getSetting<TokenStatsPeriod>(
+      "tokenStatsPeriod",
+      DEFAULT_TOKEN_STATS_PERIOD,
+    );
+    if (tokenStatsPeriod !== "month" && tokenStatsPeriod !== "lifetime") {
+      tokenStatsPeriod = DEFAULT_TOKEN_STATS_PERIOD;
+      await setSetting("tokenStatsPeriod", tokenStatsPeriod);
+    }
+    await refreshTokenStats();
 
     try {
       const info = await invoke<{ version?: string }>("get_system_info");
@@ -528,6 +573,7 @@
     parseStallLimitMs = parseStallTimeoutMs(filesToParse.length);
     startParseStallWatchdog();
     lastParsingId = null;
+    batchTokenSavings = createBatchTokenSavings();
     totalFiles = filesToParse.length;
     files = filesToParse.map((path) => ({
       id: path,
@@ -549,6 +595,21 @@
           touchParseActivity();
           if (event.type === "start") {
             totalFiles = event.total || 0;
+          } else if (event.type === "token_savings") {
+            const savingsEvent = {
+              type: "token_savings" as const,
+              file: event.file,
+              file_type: event.file_type,
+              tokens_saved: event.tokens_saved,
+              pages_unlocked: event.pages_unlocked,
+              documents_unlocked: event.documents_unlocked,
+            };
+            batchTokenSavings = applyTokenSavingsEvent(batchTokenSavings, savingsEvent);
+            void recordTokenSavingsFromSidecarEvent(savingsEvent)
+              .then((next) => {
+                if (next) tokenStats = next;
+              })
+              .catch((e) => console.warn("[tokenStats] record failed", e));
           } else if (event.type === "progress") {
             const applied = applyParseProgressEvent(
               files,
@@ -600,6 +661,7 @@
               title: t("app.name"),
               body: t("run.notifyDone", { parsed, errors: notifyErrors }),
             }).catch(() => {});
+            void refreshTokenStats();
           } else if (event.type === "error") {
             // Fatal sidecar error (see sidecar.ts protocol) — not per-file progress errors.
             console.error("[parse batch]", event.message);
@@ -969,6 +1031,11 @@
 
     {#if !isParsing}
       <div in:fade={mainFadeIn} out:fade={mainFadeOut}>
+        <TokenSavingsBanner
+          stats={tokenStats}
+          period={tokenStatsPeriod}
+          onOpenDetails={() => openSettings("general")}
+        />
         <RecentBatches
           {latestBatch}
           showHistoryButton={recentBatches.length > 0}
@@ -1016,11 +1083,15 @@
         {workers}
         {launchAtLogin}
         initialTab={settingsTab}
+        tokenStats={tokenStats}
+        tokenStatsPeriod={tokenStatsPeriod}
         onLocaleChange={handleLocaleChange}
         onOcrLanguageChange={handleOcrLanguageChange}
         onThemeChange={handleThemeChange}
         onWorkersChange={handleWorkersChange}
         onLaunchAtLoginChange={handleLaunchAtLoginChange}
+        onTokenStatsPeriodChange={handleTokenStatsPeriodChange}
+        onTokenStatsChange={handleTokenStatsChange}
         onOpenAbout={() => (showAbout = true)}
         finderActionInstalled={finderActionState.installed}
         finderActionBusy={finderActionState.busy}

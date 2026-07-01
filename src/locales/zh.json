@@ -209,5 +209,44 @@
   "tray": {
     "open": "打开 ParseKit",
     "quit": "退出 ParseKit"
+  },
+  "tokenSavings": {
+    "bannerMonth": "本月已节省 {count} 个 token",
+    "bannerLifetime": "已节省 {count} 个 token",
+    "bannerHint": "打开设置查看完整统计",
+    "panelTitle": "Token 节省",
+    "panelHint": "本地解析后估算避免的 token 数量。扫描页数单独统计。",
+    "periodLabel": "横幅统计周期",
+    "periodMonth": "本月",
+    "periodLifetime": "累计",
+    "periodHint": "控制主面板上的简洁计数显示。",
+    "lifetimeTotal": "累计节省 token",
+    "filesConverted": "已转换文件",
+    "pagesUnlocked": "已解锁页数",
+    "documentsUnlocked": "已解锁扫描文档",
+    "byTypeTitle": "按文件类型",
+    "byTypeRow": "{type}：{tokens} token · {files} 个文件",
+    "privacy": "仅在您的 Mac 上本地统计，不会发送到任何地方。",
+    "chatGptApprox": "约 {count} 条长 ChatGPT 消息",
+    "approximateLabel": "（估算）",
+    "reset": "重置计数",
+    "resetConfirm": "重置所有 token 节省计数？此操作无法撤销。",
+    "resetting": "正在重置…",
+    "empty": "尚无 token 节省记录。运行解析后开始统计。",
+    "fileType": {
+      "pdf": "PDF",
+      "docx": "Word",
+      "doc": "Word",
+      "pptx": "PowerPoint",
+      "ppt": "PowerPoint",
+      "xlsx": "Excel",
+      "xls": "Excel",
+      "csv": "CSV",
+      "png": "图片",
+      "jpg": "图片",
+      "jpeg": "图片",
+      "webp": "图片",
+      "svg": "图片"
+    }
   }
 }

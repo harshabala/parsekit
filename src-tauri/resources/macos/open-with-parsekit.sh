@@ -50,6 +50,67 @@ app_name = os.environ["PARSEKIT_APP_NAME"]
 app_bundle = os.environ["PARSEKIT_APP"]
 sidecar = os.environ["PARSEKIT_SIDECAR"]
 queue_path = os.environ["PARSEKIT_QUEUE"]
+stats_path = os.path.join(
+    os.path.dirname(settings_path), "token-stats.json"
+)
+
+def default_token_stats():
+    return {
+        "total_files_converted": 0,
+        "total_tokens_saved": 0,
+        "total_pages_unlocked": 0,
+        "total_documents_unlocked": 0,
+        "by_file_type": {},
+        "events": [],
+    }
+
+def load_token_stats():
+    if not os.path.isfile(stats_path):
+        return default_token_stats()
+    try:
+        with open(stats_path) as f:
+            data = json.load(f)
+    except Exception:
+        return default_token_stats()
+    base = default_token_stats()
+    base.update({k: data.get(k, v) for k, v in base.items()})
+    base["by_file_type"] = data.get("by_file_type") or {}
+    base["events"] = data.get("events") or []
+    return base
+
+def save_token_stats(stats):
+    os.makedirs(os.path.dirname(stats_path), exist_ok=True)
+    with open(stats_path, "w") as f:
+        json.dump(stats, f, indent=2)
+
+def record_token_savings(file_type, tokens_saved, pages_unlocked, documents_unlocked):
+    """Mirror src-tauri/src/token_stats.rs — CLI will call the same path in Task 8."""
+    normalized = (file_type or "").strip().lstrip(".").lower()
+    if not normalized:
+        return
+    stats = load_token_stats()
+    tokens_saved = max(0, int(tokens_saved or 0))
+    pages_unlocked = max(0, int(pages_unlocked or 0))
+    documents_unlocked = max(0, int(documents_unlocked or 0))
+    stats["total_files_converted"] = int(stats.get("total_files_converted", 0)) + 1
+    stats["total_tokens_saved"] = int(stats.get("total_tokens_saved", 0)) + tokens_saved
+    stats["total_pages_unlocked"] = int(stats.get("total_pages_unlocked", 0)) + pages_unlocked
+    stats["total_documents_unlocked"] = int(
+        stats.get("total_documents_unlocked", 0)
+    ) + documents_unlocked
+    by_type = stats.setdefault("by_file_type", {})
+    entry = by_type.setdefault(normalized, {"files": 0, "tokens_saved": 0})
+    entry["files"] = int(entry.get("files", 0)) + 1
+    entry["tokens_saved"] = int(entry.get("tokens_saved", 0)) + tokens_saved
+    stats.setdefault("events", []).append({
+        "ts": __import__("datetime").datetime.now(
+            __import__("datetime").timezone.utc
+        ).strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+        "file_type": normalized,
+        "tokens_saved": tokens_saved,
+        "pages_unlocked": pages_unlocked,
+    })
+    save_token_stats(stats)
 
 def open_app():
     subprocess.run(["open", "-ga", app_name], check=False)
@@ -111,6 +172,13 @@ for line in proc.stdout.decode(errors="replace").splitlines():
             parsed += 1
         elif st == "error":
             errors += 1
+    elif ev.get("type") == "token_savings":
+        record_token_savings(
+            ev.get("file_type"),
+            ev.get("tokens_saved"),
+            ev.get("pages_unlocked"),
+            ev.get("documents_unlocked"),
+        )
 
 msg = f"Done: {parsed} parsed, {errors} errors."
 subprocess.run(

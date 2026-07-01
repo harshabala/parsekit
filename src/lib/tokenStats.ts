@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { TokenStatsPeriod } from "./store";
 
 export interface FileTypeStats {
   files: number;
@@ -130,4 +131,48 @@ export function pagesUnlockedThisMonth(
     startOfMonth(now),
     endOfMonth(now),
   );
+}
+
+/** Rough tokens per long ChatGPT message — relatable comparison only. */
+export const LONG_CHATGPT_MESSAGE_TOKENS = 800;
+
+export function approximateChatGptMessages(tokens: number): number {
+  if (tokens <= 0) return 0;
+  return Math.max(1, Math.round(tokens / LONG_CHATGPT_MESSAGE_TOKENS));
+}
+
+export function formatTokenCount(value: number): string {
+  return Math.max(0, Math.floor(value)).toLocaleString();
+}
+
+export function tokensForPeriod(
+  stats: TokenStats,
+  period: TokenStatsPeriod,
+  now: Date = new Date(),
+): number {
+  if (period === "lifetime") {
+    return stats.total_tokens_saved;
+  }
+  return tokensSavedThisMonth(stats, now);
+}
+
+export interface SidecarTokenSavingsEvent {
+  file_type?: string;
+  tokens_saved?: number;
+  pages_unlocked?: number;
+  documents_unlocked?: number;
+}
+
+/** Record savings from a sidecar `token_savings` line; no-op when file type is missing. */
+export async function recordTokenSavingsFromSidecarEvent(
+  event: SidecarTokenSavingsEvent,
+): Promise<TokenStats | null> {
+  const fileType = event.file_type?.trim();
+  if (!fileType) return null;
+  return recordTokenSavings({
+    fileType,
+    tokensSaved: event.tokens_saved ?? 0,
+    pagesUnlocked: event.pages_unlocked ?? 0,
+    documentsUnlocked: event.documents_unlocked ?? 0,
+  });
 }

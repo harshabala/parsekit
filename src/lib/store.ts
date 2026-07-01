@@ -2,6 +2,11 @@ import { LazyStore } from "@tauri-apps/plugin-store";
 
 const store = new LazyStore("settings.json");
 
+/** Controls whether the popover banner shows this month or lifetime token savings. */
+export type TokenStatsPeriod = "month" | "lifetime";
+
+export const DEFAULT_TOKEN_STATS_PERIOD: TokenStatsPeriod = "month";
+
 /** Avoid hanging the UI if the store IPC never responds (e.g. early webview init). */
 const STORE_READ_TIMEOUT_MS = 3000;
 

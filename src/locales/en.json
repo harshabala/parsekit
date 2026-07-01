@@ -210,5 +210,44 @@
   "tray": {
     "open": "Open ParseKit",
     "quit": "Quit ParseKit"
+  },
+  "tokenSavings": {
+    "bannerMonth": "{count} tokens saved this month",
+    "bannerLifetime": "{count} tokens saved",
+    "bannerHint": "Open Settings for the full breakdown",
+    "panelTitle": "Tokens saved",
+    "panelHint": "Estimated tokens you avoided sending to AI by parsing locally. Scanned pages are tracked separately.",
+    "periodLabel": "Banner period",
+    "periodMonth": "This month",
+    "periodLifetime": "Lifetime",
+    "periodHint": "Controls the quiet counter on the main panel.",
+    "lifetimeTotal": "Total tokens saved",
+    "filesConverted": "Files converted",
+    "pagesUnlocked": "Pages unlocked",
+    "documentsUnlocked": "Scanned documents unlocked",
+    "byTypeTitle": "By file type",
+    "byTypeRow": "{type}: {tokens} tokens · {files} files",
+    "privacy": "Counted locally on your Mac. Never sent anywhere.",
+    "chatGptApprox": "~{count} long ChatGPT messages",
+    "approximateLabel": "(approximate)",
+    "reset": "Reset counter",
+    "resetConfirm": "Reset all token savings counters? This cannot be undone.",
+    "resetting": "Resetting…",
+    "empty": "No token savings recorded yet. Run a parse to start counting.",
+    "fileType": {
+      "pdf": "PDF",
+      "docx": "Word",
+      "doc": "Word",
+      "pptx": "PowerPoint",
+      "ppt": "PowerPoint",
+      "xlsx": "Excel",
+      "xls": "Excel",
+      "csv": "CSV",
+      "png": "Image",
+      "jpg": "Image",
+      "jpeg": "Image",
+      "webp": "Image",
+      "svg": "Image"
+    }
   }
 }

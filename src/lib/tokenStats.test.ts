@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  approximateChatGptMessages,
   endOfMonth,
   endOfWeek,
   filterEventsInRange,
+  formatTokenCount,
   pagesUnlockedThisMonth,
   startOfMonth,
   startOfWeek,
   sumPagesUnlockedInRange,
   sumTokensInRange,
+  tokensForPeriod,
   tokensSavedThisMonth,
   tokensSavedThisWeek,
   type TokenEvent,
@@ -92,5 +95,22 @@ describe("tokenStats aggregation", () => {
     expect(startOfMonth(now).getDate()).toBe(1);
     expect(endOfMonth(now).getMonth()).toBe(7);
     expect(endOfMonth(now).getDate()).toBe(1);
+  });
+
+  it("selects lifetime or month totals for the banner", () => {
+    const now = new Date("2026-07-20T15:00:00Z");
+    const fixture = stats([
+      event("2026-07-05T10:00:00Z", 400),
+      event("2026-06-28T10:00:00Z", 900),
+    ]);
+    expect(tokensForPeriod(fixture, "lifetime", now)).toBe(1300);
+    expect(tokensForPeriod(fixture, "month", now)).toBe(400);
+  });
+
+  it("formats token counts and approximate ChatGPT messages", () => {
+    expect(formatTokenCount(18400)).toBe("18,400");
+    expect(approximateChatGptMessages(0)).toBe(0);
+    expect(approximateChatGptMessages(400)).toBe(1);
+    expect(approximateChatGptMessages(18400)).toBe(23);
   });
 });
