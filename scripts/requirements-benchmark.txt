@@ -1,0 +1,9 @@
+# Benchmark script dependencies (local token counting + synthetic fixtures).
+# Install: python3 -m venv .venv-benchmark && .venv-benchmark/bin/pip install -r scripts/requirements-benchmark.txt
+tiktoken>=0.7.0
+pypdf>=4.0.0
+python-docx>=1.1.0
+python-pptx>=1.0.0
+openpyxl>=3.1.0
+reportlab>=4.0.0
+pillow>=10.0.0

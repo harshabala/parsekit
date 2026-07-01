@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-07-01 09:01 UTC",
+  "source": "scripts/benchmark_tokens.py",
+  "tokenizer_primary": "cl100k_base",
+  "note": "avg_reduction_ratio uses cl100k_base counts; scanned PDFs with zero baseline tokens contribute 0.0. Used by Task 5 token tracker for estimation fallback.",
+  "by_file_type": {
+    "docx": {
+      "files": 1,
+      "avg_reduction_ratio": 0.0
+    },
+    "pdf": {
+      "files": 2,
+      "avg_reduction_ratio": 0.0
+    },
+    "pptx": {
+      "files": 1,
+      "avg_reduction_ratio": 0.0
+    },
+    "xlsx": {
+      "files": 1,
+      "avg_reduction_ratio": 0.0
+    }
+  }
+}

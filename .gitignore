@@ -1,3 +1,5 @@
+.venv-benchmark/
+__pycache__/
 node_modules/
 dist/
 target/
