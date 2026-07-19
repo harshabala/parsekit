@@ -18,6 +18,19 @@
 
 ParseKit is a small app that lives in your Mac menu bar. You give it PDFs, Word files, spreadsheets, slides, or images — it turns them into clean Markdown (or plain text / JSON) **on your computer**.
 
+## See it in action
+
+<table>
+  <tr>
+    <td width="50%"><img src="assets/screenshots/convert-files.png" alt="ParseKit conversion screen with local output settings, format selection, and file drop area"><br><sub>Convert files locally</sub></td>
+    <td width="50%"><img src="assets/screenshots/completed-batch.png" alt="ParseKit completed batch screen showing successful conversions"><br><sub>See completed batches</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="assets/screenshots/preferences.png" alt="ParseKit preferences for language, appearance, and automation"><br><sub>Make ParseKit yours</sub></td>
+    <td width="50%"><img src="assets/screenshots/file-support.png" alt="ParseKit file support settings showing PDF, LibreOffice, ImageMagick, and Tesseract OCR availability"><br><sub>Check file support</sub></td>
+  </tr>
+</table>
+
 ### What problem it solves
 
 Raw documents are messy for AI tools. They include headers, footers, and layout noise that waste tokens, and scans aren’t readable as text without OCR. ParseKit cleans that up **locally**, so you paste more useful content into ChatGPT, Claude, Gemini, or your notes — and private files never get uploaded for conversion.
