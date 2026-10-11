@@ -1,6 +1,6 @@
 # Installing ParseKit
 
-**Fast path:** [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.12_aarch64.dmg) → open it → drag to Applications → open from Applications.
+**Fast path:** [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.13_aarch64.dmg) → open it → drag to Applications → open from Applications.
 
 You do **not** need `git clone` or Terminal for a normal install.
 
@@ -13,7 +13,7 @@ You do **not** need `git clone` or Terminal for a normal install.
 ## 1. Download
 
 1. Open [Releases → Latest](https://github.com/harshabala/parsekit/releases/latest)
-2. Download **`ParseKit_0.2.12_aarch64.dmg`**
+2. Download **`ParseKit_0.2.13_aarch64.dmg`**
 3. Find it in **Downloads**
 
 ## 2. Install
