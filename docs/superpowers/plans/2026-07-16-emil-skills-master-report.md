@@ -1,7 +1,7 @@
 # ParseKit — Master Report: Emil Kowalski Skills Suite
 
 **Date:** 2026-07-16  
-**Project:** `/Users/harshabalakrishnan/Projects/ParseKit`  
+**Project:** `<local-path>`  
 **Stack:** Tauri 2 + Svelte 5 menu-bar app (document → AI-ready Markdown)  
 **Skills run (6, via isolated subagents):**
 
@@ -284,7 +284,7 @@ Implement **P0 items 1–5** in one focused PR (extends prior motion-audit work)
 
 ## Artifacts
 
-- This report (Desktop): `~/Desktop/ParseKit-Emil-Skills-Master-Report.md`  
+- This report (Desktop): `<local-path>`  
 - Prior motion plan: `docs/superpowers/plans/2026-07-16-motion-audit-findings.md`  
 - Prior motion fixes already on `master` (keyboard convert, config fade, settings about, light batch motion, etc.)
 
