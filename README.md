@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.11_aarch64.dmg"><strong>↓ Download for Mac (Apple Silicon)</strong></a>
+  <a href="https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.12_aarch64.dmg"><strong>↓ Download for Mac (Apple Silicon)</strong></a>
   &nbsp;·&nbsp;
   <a href="docs/INSTALL.md">Install guide</a>
   &nbsp;·&nbsp;
@@ -51,7 +51,7 @@ PDF works out of the box. Word/PowerPoint need [LibreOffice](https://www.libreof
 
 ## Install (1 minute)
 
-1. [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.11_aarch64.dmg)
+1. [Download the DMG](https://github.com/harshabala/parsekit/releases/latest/download/ParseKit_0.2.12_aarch64.dmg)
 2. Open it → drag **ParseKit** to **Applications**
 3. Open from Applications → look for the icon in the **menu bar** (top right)
 
