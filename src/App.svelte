@@ -51,6 +51,19 @@
     recordTokenSavingsFromSidecarEvent,
     type TokenStats,
   } from "./lib/tokenStats";
+  import {
+    ACTIVATION_AT_KEY,
+    CONVERT_DESTINATION_KEY,
+    DESTINATION_PROMPT_KEY,
+    qualifiesForActivation,
+    type ConvertDestination,
+  } from "./lib/activation";
+  import {
+    loadJobOutcomes,
+    persistJobOutcome,
+    successRate,
+    type JobOutcomesState,
+  } from "./lib/jobOutcomes";
   import { applyTheme, DEFAULT_THEME, normalizeThemeMode } from "./lib/theme";
   import DropZone from "./components/DropZone.svelte";
   import OutputFolderPicker from "./components/OutputFolderPicker.svelte";
@@ -63,6 +76,7 @@
 
   import UpdateBanner from "./components/UpdateBanner.svelte";
   import TokenSavingsBanner from "./components/TokenSavingsBanner.svelte";
+  import BatchScoreboard from "./components/BatchScoreboard.svelte";
   import { updateState } from "./lib/updateState.svelte";
   import { finderActionState } from "./lib/finderActionState.svelte";
   import { pickOutputFolder } from "./lib/picker";
@@ -140,6 +154,10 @@
   let showFloatingHud = $state(true);
   let isBackgroundBatch = $state(false);
   let hudActive = $state(false);
+  let activatedAt = $state<string | null>(null);
+  let jobOutcomes = $state<JobOutcomesState>({ jobs: [] });
+  let showDestinationPrompt = $state(false);
+  let showBatchScoreboard = $state(false);
   /** Instant chrome for keyboard convert (Emil: keyboard-initiated = no animation). */
   let parseChromeInstant = $state(false);
   /**
@@ -501,6 +519,8 @@
     recentBatches = await getSetting<BatchResult[]>("recentBatches", []);
     hasSuccessfulParse = await getSetting("hasSuccessfulParse", false);
     configCollapsed = hasSuccessfulParse;
+    activatedAt = await getSetting<string | null>(ACTIVATION_AT_KEY, null);
+    jobOutcomes = await loadJobOutcomes();
     // Popover opens from tray click after onboarding — not auto-shown on launch.
     await resolveDefaultWorkers(await getSetting<number>("workers", 0));
     launchAtLogin = await getSetting<boolean>("launchAtLogin", false);
@@ -526,7 +546,11 @@
       "tokenStatsPeriod",
       DEFAULT_TOKEN_STATS_PERIOD,
     );
-    if (tokenStatsPeriod !== "month" && tokenStatsPeriod !== "lifetime") {
+    if (
+      tokenStatsPeriod !== "today" &&
+      tokenStatsPeriod !== "month" &&
+      tokenStatsPeriod !== "lifetime"
+    ) {
       tokenStatsPeriod = DEFAULT_TOKEN_STATS_PERIOD;
       await setSetting("tokenStatsPeriod", tokenStatsPeriod);
     }
@@ -759,6 +783,8 @@
     startParseStallWatchdog();
     lastParsingId = null;
     batchTokenSavings = createBatchTokenSavings();
+    showBatchScoreboard = false;
+    showDestinationPrompt = false;
     totalFiles = filesToParse.length;
     files = filesToParse.map((path) => ({
       id: path,
@@ -839,13 +865,38 @@
               errorMsg = null;
             }
             void addToHistory();
-            if (!hasSuccessfulParse) {
+            const parsed = files.filter((f) => f.status === "done").length;
+            const notifyErrors = files.filter((f) => f.status === "error").length;
+            if (!hasSuccessfulParse && parsed > 0) {
               hasSuccessfulParse = true;
               configCollapsed = true;
               void setSetting("hasSuccessfulParse", true);
             }
-            const parsed = files.filter((f) => f.status === "done").length;
-            const notifyErrors = files.filter((f) => f.status === "error").length;
+            // PK-2/3: local job outcomes + activation (no paths stored)
+            const tokensInBatch = batchTokenSavings.tokensSaved;
+            void persistJobOutcome({
+              success: parsed,
+              failed: notifyErrors,
+              tokensSaved: tokensInBatch,
+            }).then((next) => {
+              jobOutcomes = next;
+            });
+            if (
+              qualifiesForActivation({
+                alreadyActivated: !!activatedAt,
+                successCount: parsed,
+                tokensSavedInBatch: tokensInBatch,
+              })
+            ) {
+              const at = new Date().toISOString();
+              activatedAt = at;
+              void setSetting(ACTIVATION_AT_KEY, at);
+            }
+            // PK-4: soft destination prompt once after first success
+            void getSetting(DESTINATION_PROMPT_KEY, false).then((seen) => {
+              showDestinationPrompt = !seen && parsed > 0;
+            });
+            showBatchScoreboard = parsed > 0 || notifyErrors > 0;
             void refreshTokenStats();
             void syncHudIfActive();
             void invoke("show_completion_notification", {
@@ -932,6 +983,32 @@
   async function openFolder(path: string) {
     await invoke("open_in_finder", { path });
   }
+
+  function handleConvertMore() {
+    showBatchScoreboard = false;
+    files = [];
+    lastParsingId = null;
+    batchTokenSavings = createBatchTokenSavings();
+    selectedFiles = [];
+    inputDir = "";
+    inputFileCount = null;
+    errorMsg = null;
+    noticeMsg = null;
+  }
+
+  async function handleDestination(value: ConvertDestination) {
+    showDestinationPrompt = false;
+    await setSetting(DESTINATION_PROMPT_KEY, true);
+    await setSetting(CONVERT_DESTINATION_KEY, value);
+  }
+
+  const lastBatchSuccessCount = $derived(
+    files.filter((f) => f.status === "done").length,
+  );
+  const lastBatchFailedCount = $derived(
+    files.filter((f) => f.status === "error").length,
+  );
+  const jobSuccessRateLabel = $derived(successRate(jobOutcomes).label);
 
   function handleKeydown(e: KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === "r") {
@@ -1143,7 +1220,19 @@
           {/if}
         </div>
       {/if}
-      {#if !isParsing && files.length > 0 && files.some((f) => f.status === "done")}
+      {#if !isParsing && showBatchScoreboard && files.length > 0}
+        <BatchScoreboard
+          batch={batchTokenSavings}
+          stats={tokenStats}
+          successCount={lastBatchSuccessCount}
+          failedCount={lastBatchFailedCount}
+          successRateLabel={jobSuccessRateLabel}
+          showDestinationPrompt={showDestinationPrompt}
+          onOpenOutput={() => openFolder(outputDir)}
+          onConvertMore={handleConvertMore}
+          onDestination={handleDestination}
+        />
+      {:else if !isParsing && files.length > 0 && files.some((f) => f.status === "done")}
         <div class="post-parse-actions" in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
           <button
             type="button"
@@ -1152,6 +1241,14 @@
           >
             {t("run.openOutput")}
           </button>
+        </div>
+      {/if}
+
+      {#if !isParsing && !hasSuccessfulParse && !showBatchScoreboard}
+        <div class="first-run-hero" in:fly={sectionFlyInParams}>
+          <p class="first-run-hero-title">{t("firstRun.title")}</p>
+          <p class="first-run-hero-body">{t("firstRun.body")}</p>
+          <p class="first-run-hero-privacy">{t("scoreboard.privacy")}</p>
         </div>
       {/if}
     </div>

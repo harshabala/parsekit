@@ -48,7 +48,9 @@
     "stepOutput": "Elige dónde se guardan los Markdown",
     "stepFiles": "Suelta archivos o una carpeta en el panel de la barra de menú",
     "stepRun": "Pulsa Convertir archivos",
-    "trayHint": "El icono de ParseKit en la barra de menú (arriba a la derecha) vuelve a abrir el panel."
+    "trayHint": "El icono de ParseKit en la barra de menú (arriba a la derecha) vuelve a abrir el panel.",
+    "firstConvertTitle": "Siguiente: convierte un archivo",
+    "firstConvertBody": "Al continuar, suelta un PDF u Office en ParseKit. Verás una estimación de tokens ahorrados — solo en este Mac."
   },
   "deps": {
     "title": "Convertidores de archivos",
@@ -272,13 +274,42 @@
     "parseClipboard": "Analizar archivo del portapapeles → Copiar Markdown",
     "quit": "Salir de ParseKit"
   },
+  "firstRun": {
+    "title": "Convierte un archivo para ver el ahorro de tokens",
+    "body": "Suelta un PDF u Office arriba. ParseKit lo limpia en tu Mac y muestra cuántos tokens de IA evitaste. Sin cuenta. Nada se sube."
+  },
+  "scoreboard": {
+    "aria": "Resultados de conversión y ahorro de tokens",
+    "kicker": "Resultado",
+    "titleSuccess": "Conversión completa",
+    "titlePartial": "Terminó con algunos errores",
+    "titleFailed": "No se pudieron convertir",
+    "thisBatch": "Tokens ahorrados en este lote",
+    "chatApprox": "~{count} mensajes largos de ChatGPT de ruido eliminado",
+    "today": "Hoy",
+    "allTime": "Total",
+    "filesAllTime": "Archivos convertidos",
+    "successRate": "Tasa de éxito",
+    "successRateHint": "Archivos correctos frente a fallidos en tus últimos 20 trabajos en este Mac",
+    "failHint": "{ok} correctos · {fail} fallidos. Revisa la lista — reintenta o prueba otro formato.",
+    "aboutEstimate": "Sobre esta estimación",
+    "method": "Compara un extracto crudo con Markdown limpio (~4 caracteres por token). Es una guía, no una factura.",
+    "privacy": "Solo en este dispositivo. Nunca se sube.",
+    "convertMore": "Convertir más",
+    "destAria": "¿Dónde lo usarás?",
+    "destTitle": "¿Dónde lo usarás?",
+    "destOther": "Otro",
+    "destSkip": "Ahora no"
+  },
   "tokenSavings": {
+    "bannerToday": "{count} tokens ahorrados hoy",
     "bannerMonth": "{count} tokens ahorrados este mes",
     "bannerLifetime": "{count} tokens ahorrados",
     "bannerHint": "Abre Ajustes para ver el desglose completo",
     "panelTitle": "Tokens ahorrados",
     "panelHint": "Tokens estimados que evitaste enviar a la IA al analizar localmente. Las páginas escaneadas se cuentan por separado.",
     "periodLabel": "Periodo del banner",
+    "periodToday": "Hoy",
     "periodMonth": "Este mes",
     "periodLifetime": "Total",
     "periodHint": "Controla el contador discreto en el panel principal.",
@@ -288,7 +319,7 @@
     "documentsUnlocked": "Documentos escaneados desbloqueados",
     "byTypeTitle": "Por tipo de archivo",
     "byTypeRow": "{type}: {tokens} tokens · {files} archivos",
-    "privacy": "Contado localmente en tu Mac. Nunca se envía a ningún sitio.",
+    "privacy": "Solo en este dispositivo. Nunca se sube.",
     "chatGptApprox": "~{count} mensajes largos de ChatGPT",
     "approximateLabel": "(aproximado)",
     "reset": "Restablecer contador",

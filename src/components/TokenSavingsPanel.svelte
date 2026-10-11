@@ -78,6 +78,15 @@
       <button
         type="button"
         class="segment"
+        class:active={period === "today"}
+        aria-pressed={period === "today"}
+        onclick={() => onPeriodChange("today")}
+      >
+        {t("tokenSavings.periodToday")}
+      </button>
+      <button
+        type="button"
+        class="segment"
         class:active={period === "month"}
         aria-pressed={period === "month"}
         onclick={() => onPeriodChange("month")}

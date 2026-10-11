@@ -29,13 +29,17 @@
   );
   const show = $derived(displayTokens > 0);
   const label = $derived(
-    period === "month"
-      ? t("tokenSavings.bannerMonth", {
+    period === "today"
+      ? t("tokenSavings.bannerToday", {
           count: formatTokenCount(displayTokens),
         })
-      : t("tokenSavings.bannerLifetime", {
-          count: formatTokenCount(displayTokens),
-        }),
+      : period === "month"
+        ? t("tokenSavings.bannerMonth", {
+            count: formatTokenCount(displayTokens),
+          })
+        : t("tokenSavings.bannerLifetime", {
+            count: formatTokenCount(displayTokens),
+          }),
   );
 </script>
 

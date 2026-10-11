@@ -48,7 +48,9 @@
     "stepOutput": "选择 Markdown 保存位置",
     "stepFiles": "在菜单栏面板中拖放文件或文件夹",
     "stepRun": "点击「转换文件」",
-    "trayHint": "随时点击菜单栏（右上角）的 ParseKit 图标可重新打开面板。"
+    "trayHint": "随时点击菜单栏（右上角）的 ParseKit 图标可重新打开面板。",
+    "firstConvertTitle": "下一步：转换一个文件",
+    "firstConvertBody": "继续后，将 PDF 或 Office 文件拖入 ParseKit。你会看到节省的 token 估算——仅保存在本机。"
   },
   "deps": {
     "title": "文件转换工具",
@@ -272,13 +274,42 @@
     "parseClipboard": "解析剪贴板文件 → 复制 Markdown",
     "quit": "退出 ParseKit"
   },
+  "firstRun": {
+    "title": "转换一个文件即可看到 token 节省",
+    "body": "将 PDF 或 Office 文件拖到上方。ParseKit 在你的 Mac 上清理内容，并显示你避免消耗的 AI token。无需账号，不会上传。"
+  },
+  "scoreboard": {
+    "aria": "转换结果与 token 节省",
+    "kicker": "结果",
+    "titleSuccess": "转换完成",
+    "titlePartial": "已完成，部分失败",
+    "titleFailed": "无法转换这些文件",
+    "thisBatch": "本批节省 token",
+    "chatApprox": "约 {count} 条长 ChatGPT 消息的噪声被去掉",
+    "today": "今天",
+    "allTime": "累计",
+    "filesAllTime": "已转换文件",
+    "successRate": "成功率",
+    "successRateHint": "本机最近 20 次任务中成功与失败的文件数",
+    "failHint": "{ok} 成功 · {fail} 失败。查看上方列表，重试或换格式。",
+    "aboutEstimate": "关于此估算",
+    "method": "比较原始提取与清理后 Markdown（约每 4 字符 1 token）。仅为参考，不是账单。",
+    "privacy": "仅保存在本机，不会上传。",
+    "convertMore": "继续转换",
+    "destAria": "你将用在哪里？",
+    "destTitle": "你将用在哪里？",
+    "destOther": "其他",
+    "destSkip": "暂时跳过"
+  },
   "tokenSavings": {
+    "bannerToday": "今日已节省 {count} 个 token",
     "bannerMonth": "本月已节省 {count} 个 token",
     "bannerLifetime": "已节省 {count} 个 token",
     "bannerHint": "打开设置查看完整统计",
     "panelTitle": "Token 节省",
     "panelHint": "本地解析后估算避免的 token 数量。扫描页数单独统计。",
     "periodLabel": "横幅统计周期",
+    "periodToday": "今天",
     "periodMonth": "本月",
     "periodLifetime": "累计",
     "periodHint": "控制主面板上的简洁计数显示。",
@@ -288,7 +319,7 @@
     "documentsUnlocked": "已解锁扫描文档",
     "byTypeTitle": "按文件类型",
     "byTypeRow": "{type}：{tokens} token · {files} 个文件",
-    "privacy": "仅在您的 Mac 上本地统计，不会发送到任何地方。",
+    "privacy": "仅保存在本机，不会上传。",
     "chatGptApprox": "约 {count} 条长 ChatGPT 消息",
     "approximateLabel": "（估算）",
     "reset": "重置计数",

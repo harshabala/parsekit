@@ -1,0 +1,35 @@
+{
+  "target": "src/components/BatchScoreboard.svelte",
+  "date": "2026-07-10",
+  "mode": "degraded-single-context",
+  "reason": "User requested sequential full pipeline; synthesis after detect+source review",
+  "score": 32,
+  "max": 40,
+  "p0": 0,
+  "p1": 2,
+  "p2": 3,
+  "strengths": [
+    "Clear primary action (Open output)",
+    "Progressive disclosure for estimate method",
+    "Local privacy posture explicit"
+  ],
+  "priorityIssues": [
+    {"sev": "P1", "id": "hero-metric-risk", "text": "Large number + label pattern can read as SaaS hero-metric if over-decorated; keep restrained"},
+    {"sev": "P1", "id": "dest-option-count", "text": "Six destination choices is high decision load; optional should stay quiet"},
+    {"sev": "P2", "id": "secondary-contrast", "text": "Watch text-secondary contrast on tinted surfaces in light mode"},
+    {"sev": "P2", "id": "popover-density", "text": "Scoreboard + progress list + recent batches can stack tall in tray popover"},
+    {"sev": "P2", "id": "chip-touch", "text": "Chip min-height 32 below 44px guideline for touch; acceptable for dense tray pointer UI"}
+  ],
+  "heuristics": {
+    "visibility_of_status": 3,
+    "match_system_world": 4,
+    "user_control": 4,
+    "consistency": 3,
+    "error_prevention": 3,
+    "recognition": 3,
+    "flexibility": 3,
+    "aesthetic_minimal": 3,
+    "error_recovery": 3,
+    "help": 3
+  }
+}

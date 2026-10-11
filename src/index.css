@@ -433,6 +433,37 @@ main,
   opacity: 1;
 }
 
+/* First-run coach mark: calm, purpose-first, no confetti */
+.first-run-hero {
+  margin-top: 12px;
+  padding: 14px 14px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--secondary-bg);
+}
+.first-run-hero-title {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+.first-run-hero-body {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  max-width: 42ch;
+}
+.first-run-hero-privacy {
+  margin: 10px 0 0;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  opacity: 0.9;
+}
+
 .post-parse-actions {
   margin-top: 8px;
   width: 100%;
@@ -796,7 +827,8 @@ label {
   padding: 8px 10px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--accent-color) 8%, var(--secondary-bg));
-  border-left: 3px solid var(--accent-color);
+  /* Full hairline only — no side-stripe accent (impeccable ban) */
+  border: 1px solid color-mix(in srgb, var(--accent-color) 22%, var(--border-color));
   min-width: 0;
 }
 

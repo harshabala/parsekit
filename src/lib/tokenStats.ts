@@ -128,6 +128,41 @@ export function tokensSavedThisWeek(
   return sumTokensInRange(stats.events, startOfWeek(now), endOfWeek(now));
 }
 
+/** Local calendar day 00:00 → next day 00:00. */
+export function startOfDay(date: Date): Date {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
+
+export function endOfDay(date: Date): Date {
+  const end = startOfDay(date);
+  end.setDate(end.getDate() + 1);
+  return end;
+}
+
+export function tokensSavedToday(
+  stats: TokenStats,
+  now: Date = new Date(),
+): number {
+  return sumTokensInRange(stats.events, startOfDay(now), endOfDay(now));
+}
+
+export function filesConvertedInRange(
+  events: TokenEvent[],
+  start: Date,
+  end: Date,
+): number {
+  return filterEventsInRange(events, start, end).length;
+}
+
+export function filesConvertedToday(
+  stats: TokenStats,
+  now: Date = new Date(),
+): number {
+  return filesConvertedInRange(stats.events, startOfDay(now), endOfDay(now));
+}
+
 export function pagesUnlockedThisMonth(
   stats: TokenStats,
   now: Date = new Date(),
@@ -158,6 +193,9 @@ export function tokensForPeriod(
 ): number {
   if (period === "lifetime") {
     return stats.total_tokens_saved;
+  }
+  if (period === "today") {
+    return tokensSavedToday(stats, now);
   }
   return tokensSavedThisMonth(stats, now);
 }

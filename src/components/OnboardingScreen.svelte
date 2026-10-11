@@ -201,6 +201,13 @@
           </li>
         </ol>
 
+        <div class="onboarding-info-card" style="margin-top: 12px">
+          <div>
+            <p class="onboarding-info-title">{t("onboarding.firstConvertTitle")}</p>
+            <p class="onboarding-info-body">{t("onboarding.firstConvertBody")}</p>
+          </div>
+        </div>
+
         <div class="onboarding-info-card">
           <span class="onboarding-info-icon" aria-hidden="true">
             <InfoIcon size={20} weight="duotone" />

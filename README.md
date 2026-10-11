@@ -75,6 +75,17 @@ More: [skills/parsekit/SKILL.md](skills/parsekit/SKILL.md) · [AGENTS.md](AGENTS
 
 Files, OCR, and conversion never leave your Mac. No telemetry. Network only for optional app updates and first-time OCR language packs.
 
+## Product metrics (local-first)
+
+| Metric | Definition | Storage |
+|--------|------------|---------|
+| **Activation** | First batch with at least one successful file | `activatedAt` in the Tauri settings store |
+| **Tokens saved** | Estimate: raw extract vs cleaned Markdown (~4 chars/token) | On-disk token stats |
+| **Today / all-time** | Calendar-day and lifetime sums of token events | Same |
+| **Success rate** | Successful vs failed files across the last 20 jobs | `jobOutcomesV1` in the settings store (counts only) |
+
+Stored only on this device. Never uploaded. See [`docs/TASKS.md`](docs/TASKS.md).
+
 ## Develop
 
 ```bash

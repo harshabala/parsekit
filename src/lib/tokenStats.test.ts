@@ -13,6 +13,7 @@ import {
   tokensForPeriod,
   tokensSavedThisMonth,
   tokensSavedThisWeek,
+  tokensSavedToday,
   type TokenEvent,
   type TokenStats,
 } from "./tokenStats";
@@ -97,14 +98,17 @@ describe("tokenStats aggregation", () => {
     expect(endOfMonth(now).getDate()).toBe(1);
   });
 
-  it("selects lifetime or month totals for the banner", () => {
-    const now = new Date("2026-07-20T15:00:00Z");
+  it("selects lifetime, month, or today totals for the banner", () => {
+    const now = new Date("2026-07-20T15:00:00");
     const fixture = stats([
-      event("2026-07-05T10:00:00Z", 400),
-      event("2026-06-28T10:00:00Z", 900),
+      event("2026-07-20T10:00:00", 50),
+      event("2026-07-05T10:00:00", 400),
+      event("2026-06-28T10:00:00", 900),
     ]);
-    expect(tokensForPeriod(fixture, "lifetime", now)).toBe(1300);
-    expect(tokensForPeriod(fixture, "month", now)).toBe(400);
+    expect(tokensForPeriod(fixture, "lifetime", now)).toBe(1350);
+    expect(tokensForPeriod(fixture, "month", now)).toBe(450);
+    expect(tokensForPeriod(fixture, "today", now)).toBe(50);
+    expect(tokensSavedToday(fixture, now)).toBe(50);
   });
 
   it("formats token counts and approximate ChatGPT messages", () => {
