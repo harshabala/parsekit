@@ -85,6 +85,8 @@ npm run build:sidecar
 npm run tauri dev
 ```
 
+Checks: `npm test` (Vitest), `npm run check` (svelte-check), `npm run build` (frontend bundle). Requires Node, Rust, and Tauri prerequisites.
+
 Release process: [docs/RELEASING.md](docs/RELEASING.md) · Benchmarks: [docs/benchmark-results.md](docs/benchmark-results.md)
 
 ## Credits
