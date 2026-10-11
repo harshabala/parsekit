@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Manager, Runtime};
 
 use crate::clipboard_paths::get_clipboard_file_paths;
-use crate::sidecar_helpers::validate_output_format;
+use crate::sidecar_helpers::{resolve_sidecar, validate_output_format};
 
 pub const AUTO_CONVERT_SETTINGS_KEY: &str = "autoConvertOnCopy";
 
@@ -49,158 +49,36 @@ fn default_ocr_language() -> String {
     "eng".to_string()
 }
 
-fn settings_path() -> Result<PathBuf, String> {
-    let home = std::env::var("HOME").map_err(|e| e.to_string())?;
-    Ok(PathBuf::from(home)
-        .join("Library/Application Support/com.harshabala.parsekit/settings.json"))
+impl Default for AppSidecarSettings {
+    fn default() -> Self {
+        Self {
+            format: default_format(),
+            ocr_enabled: true,
+            ocr_language: default_ocr_language(),
+            workers: 4,
+        }
+    }
 }
 
 pub fn read_auto_convert_from_settings() -> bool {
-    let path = match settings_path() {
-        Ok(path) => path,
-        Err(_) => return false,
-    };
-    let raw = match std::fs::read_to_string(path) {
-        Ok(raw) => raw,
-        Err(_) => return false,
-    };
-    let value: Value = match serde_json::from_str(&raw) {
-        Ok(value) => value,
-        Err(_) => return false,
-    };
-    value
-        .get(AUTO_CONVERT_SETTINGS_KEY)
-        .and_then(Value::as_bool)
+    crate::read_settings_json()
+        .and_then(|value| {
+            value
+                .get(AUTO_CONVERT_SETTINGS_KEY)
+                .and_then(Value::as_bool)
+        })
         .unwrap_or(false)
 }
 
 fn load_app_settings() -> AppSidecarSettings {
-    let path = match settings_path() {
-        Ok(path) => path,
-        Err(_) => return AppSidecarSettings {
-            format: default_format(),
-            ocr_enabled: true,
-            ocr_language: default_ocr_language(),
-            workers: 4,
-        },
-    };
-    let raw = match std::fs::read_to_string(path) {
-        Ok(raw) => raw,
-        Err(_) => return AppSidecarSettings {
-            format: default_format(),
-            ocr_enabled: true,
-            ocr_language: default_ocr_language(),
-            workers: 4,
-        },
-    };
-    serde_json::from_str(&raw).unwrap_or(AppSidecarSettings {
-        format: default_format(),
-        ocr_enabled: true,
-        ocr_language: default_ocr_language(),
-        workers: 4,
-    })
-}
-
-fn normalize_user_path(path: String) -> String {
-    let trimmed = path.trim();
-    if trimmed.starts_with("file://") {
-        if let Ok(url) = url::Url::parse(trimmed) {
-            if let Ok(p) = url.to_file_path() {
-                return p.to_string_lossy().into_owned();
-            }
-        }
-    }
-    trimmed.to_string()
-}
-
-fn is_supported_extension(path: &str) -> bool {
-    Path::new(path)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|ext| crate::SUPPORTED_EXTENSIONS.contains(&ext.to_lowercase().as_str()))
-        .unwrap_or(false)
-}
-
-fn expand_path_to_supported_files(path: &str) -> Vec<String> {
-    let normalized = normalize_user_path(path.to_string());
-    if normalized.is_empty() {
-        return Vec::new();
-    }
-    let p = Path::new(&normalized);
-    if p.is_file() {
-        return if is_supported_extension(&normalized) {
-            vec![normalized]
-        } else {
-            Vec::new()
-        };
-    }
-    if p.is_dir() {
-        return crate::scan_directory_sync(normalized).unwrap_or_default();
-    }
-    Vec::new()
+    crate::read_settings_json()
+        .and_then(|value| serde_json::from_value(value).ok())
+        .unwrap_or_default()
 }
 
 /// Supported files referenced by the current clipboard contents.
 pub fn resolve_clipboard_supported_files() -> Vec<String> {
-    let mut files = Vec::new();
-    for path in get_clipboard_file_paths() {
-        files.extend(expand_path_to_supported_files(&path));
-    }
-    files.sort();
-    files.dedup();
-    files
-}
-
-fn host_triple() -> String {
-    match std::env::consts::OS {
-        "macos" => format!("{}-apple-darwin", std::env::consts::ARCH),
-        "linux" => format!("{}-unknown-linux-gnu", std::env::consts::ARCH),
-        "windows" => format!("{}-pc-windows-msvc", std::env::consts::ARCH),
-        other => format!("{}-{other}", std::env::consts::ARCH),
-    }
-}
-
-fn resolve_sidecar() -> Result<PathBuf, String> {
-    if let Ok(path) = std::env::var("PARSEKIT_SIDECAR") {
-        let candidate = PathBuf::from(&path);
-        if candidate.is_file() {
-            return Ok(candidate);
-        }
-        return Err(format!("PARSEKIT_SIDECAR not found: {path}"));
-    }
-
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(dir) = exe.parent() {
-            let sibling = dir.join("parsekit-sidecar");
-            if sibling.is_file() {
-                return Ok(sibling);
-            }
-        }
-    }
-
-    if let Ok(exe) = std::env::current_exe() {
-        let mut dir = exe.parent().map(Path::to_path_buf);
-        for _ in 0..8 {
-            let Some(current) = dir else { break };
-            let triple = host_triple();
-            let bundled = current
-                .join("src-tauri/binaries")
-                .join(format!("parsekit-sidecar-{triple}"));
-            if bundled.is_file() {
-                return Ok(bundled);
-            }
-            let plain = current.join("src-tauri/binaries/parsekit-sidecar");
-            if plain.is_file() {
-                return Ok(plain);
-            }
-            dir = current.parent().map(Path::to_path_buf);
-        }
-    }
-
-    Err(
-        "parsekit-sidecar not found. Build with: npm run build:sidecar (or set PARSEKIT_SIDECAR)"
-            .to_string(),
-    )
+    crate::collect_supported_files(get_clipboard_file_paths())
 }
 
 fn run_sidecar_for_files(
@@ -317,34 +195,6 @@ fn run_sidecar_for_files(
     Ok(output_paths)
 }
 
-fn copy_text_to_system_clipboard(text: &str) -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    {
-        let mut child = Command::new("/usr/bin/pbcopy")
-            .stdin(Stdio::piped())
-            .spawn()
-            .map_err(|e| format!("Could not run pbcopy: {e}"))?;
-        if let Some(mut stdin) = child.stdin.take() {
-            stdin
-                .write_all(text.as_bytes())
-                .map_err(|e| format!("Could not write to pbcopy: {e}"))?;
-        }
-        let status = child
-            .wait()
-            .map_err(|e| format!("pbcopy wait failed: {e}"))?;
-        if status.success() {
-            Ok(())
-        } else {
-            Err("pbcopy failed to copy to clipboard".into())
-        }
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        let _ = text;
-        Err("Clipboard copy is only supported on macOS".into())
-    }
-}
-
 fn temp_output_dir() -> Result<PathBuf, String> {
     let stamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -376,7 +226,7 @@ pub fn convert_clipboard_files_to_clipboard() -> Result<usize, String> {
         combined.push_str(&content);
     }
 
-    copy_text_to_system_clipboard(&combined)?;
+    crate::copy_text_to_system_clipboard(&combined)?;
     let _ = std::fs::remove_dir_all(&temp_dir);
     Ok(files.len())
 }
@@ -464,19 +314,23 @@ impl Clone for ClipboardWatchState {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::path::Path;
 
     #[test]
     fn normalize_file_url_path() {
         assert_eq!(
-            normalize_user_path("file:///tmp/report.pdf".to_string()),
+            crate::normalize_user_path("file:///tmp/report.pdf"),
             "/tmp/report.pdf"
         );
     }
 
     #[test]
     fn unsupported_extension_filtered() {
-        assert!(!is_supported_extension("/tmp/readme.txt"));
-        assert!(is_supported_extension("/tmp/report.PDF"));
+        assert!(!crate::path_has_supported_extension(Path::new(
+            "/tmp/readme.txt"
+        )));
+        assert!(crate::path_has_supported_extension(Path::new(
+            "/tmp/report.PDF"
+        )));
     }
 }

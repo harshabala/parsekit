@@ -33,35 +33,9 @@ pub fn trace(step: &str) {
 pub fn trace(_step: &str) {}
 
 #[cfg(debug_assertions)]
-pub fn trace_fmt(args: std::fmt::Arguments<'_>) {
-    write_trace(&format!("[PopoverManager] {args}"));
-}
-
-#[cfg(not(debug_assertions))]
-pub fn trace_fmt(_args: std::fmt::Arguments<'_>) {}
-
-#[cfg(debug_assertions)]
-pub fn tray_guard_trace(step: &str) {
-    write_trace(&format!("[TrayGuard] {step}"));
-}
-
-#[cfg(not(debug_assertions))]
-pub fn tray_guard_trace(_step: &str) {}
-
-#[cfg(debug_assertions)]
 pub fn startup_trace(step: &str) {
     write_trace(&format!("[ParseKit] {step}"));
 }
 
 #[cfg(not(debug_assertions))]
 pub fn startup_trace(_step: &str) {}
-
-#[macro_export]
-macro_rules! popover_trace {
-    ($msg:expr) => {
-        $crate::popover_trace::trace($msg);
-    };
-    ($fmt:expr, $($arg:tt)*) => {
-        $crate::popover_trace::trace_fmt(format_args!($fmt, $($arg)*));
-    };
-}

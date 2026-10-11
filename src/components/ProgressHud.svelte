@@ -82,13 +82,15 @@
 
 <div class="progress-hud" role="status" aria-live="polite">
   <div class="progress-hud-header">
-    <span class="progress-hud-title">
-      {#if isComplete}
-        {t("progressHud.complete")}
-      {:else}
-        {t("progressHud.parsing")}
-      {/if}
-    </span>
+    {#key isComplete}
+      <span
+        class="progress-hud-title"
+        in:fade={fadeInParams}
+        out:fade={fadeOutParams}
+      >
+        {isComplete ? t("progressHud.complete") : t("progressHud.parsing")}
+      </span>
+    {/key}
     <span class="progress-hud-fraction">
       {t("progress.ofTotal", { done: finished, total })}
     </span>

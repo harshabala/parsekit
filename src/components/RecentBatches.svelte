@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
+  import ClockCounterClockwiseIcon from "phosphor-svelte/lib/ClockCounterClockwiseIcon";
   import { hintFadeIn, hintFadeOut, sectionFlyIn, sectionFlyOut } from "../lib/motion";
   import { t } from "../lib/i18n.svelte";
   import type { BatchResult } from "../lib/types";
@@ -41,22 +42,7 @@
           title={t("recent.viewHistory")}
           aria-label={t("recent.viewHistory")}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M3 3v5h5M12 7v5l4 2"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <ClockCounterClockwiseIcon size={16} weight="regular" aria-hidden="true" />
         </button>
       {/if}
     </div>

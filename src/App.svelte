@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { fade, fly, slide } from "svelte/transition";
+  import { fade, fly } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
+  import GearSixIcon from "phosphor-svelte/lib/GearSixIcon";
+  import XIcon from "phosphor-svelte/lib/XIcon";
   import {
     hideProgressHudWindow,
     showProgressHudWindow,
@@ -81,13 +83,16 @@
   import { warmDependencies } from "./lib/depsCache";
   import { DEFAULT_GLOBAL_SHORTCUT } from "./lib/globalShortcut";
   import { isConverterDependencyError, type SettingsTab } from "./lib/converterErrors";
+  import LinkIcon from "phosphor-svelte/lib/LinkIcon";
+  import FileTextIcon from "phosphor-svelte/lib/FileTextIcon";
+  import SparkleIcon from "phosphor-svelte/lib/SparkleIcon";
   import {
     bannerFlyIn,
     bannerFlyOut,
-    buttonFadeIn,
-    buttonFadeOut,
-    collapseSlideIn,
-    collapseSlideOut,
+    buttonFadeInMaybeInstant,
+    buttonFadeOutMaybeInstant,
+    collapseFadeIn,
+    collapseFadeOut,
     hintFadeIn,
     hintFadeOut,
     panelBlurFlyIn,
@@ -96,28 +101,23 @@
     panelBlurFlyOutParams,
     panelFadeIn,
     panelFadeOut,
-    sectionFlyIn,
-    sectionFlyOut,
+    sectionFlyInMaybeLight,
+    sectionFlyOutMaybeLight,
     subviewFadeOut,
   } from "./lib/motion";
   import "./index.css";
 
   const reducedMotion = $derived(prefersReducedMotion.current);
-  const mainPanelIn = $derived(panelBlurFlyInParams(reducedMotion));
-  const mainPanelOut = $derived(panelBlurFlyOutParams(reducedMotion));
   const mainFadeIn = $derived(panelFadeIn(reducedMotion));
   const mainFadeOut = $derived(panelFadeOut(reducedMotion));
   const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
   const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
-  const configSlideIn = $derived(collapseSlideIn(reducedMotion));
-  const configSlideOut = $derived(collapseSlideOut(reducedMotion));
+  const configFadeIn = $derived(collapseFadeIn(reducedMotion));
+  const configFadeOut = $derived(collapseFadeOut(reducedMotion));
   const subviewFadeOutParams = $derived(subviewFadeOut(reducedMotion));
+  const subviewFadeInParams = $derived(panelFadeIn(reducedMotion));
   const bannerFlyInParams = $derived(bannerFlyIn(reducedMotion));
   const bannerFlyOutParams = $derived(bannerFlyOut(reducedMotion));
-  const sectionFlyInParams = $derived(sectionFlyIn(reducedMotion));
-  const sectionFlyOutParams = $derived(sectionFlyOut(reducedMotion));
-  const buttonFadeInParams = $derived(buttonFadeIn(reducedMotion));
-  const buttonFadeOutParams = $derived(buttonFadeOut(reducedMotion));
 
   let inputDir = $state("");
   let selectedFiles = $state<string[]>([]);
@@ -158,6 +158,58 @@
   let jobOutcomes = $state<JobOutcomesState>({ jobs: [] });
   let showDestinationPrompt = $state(false);
   let showBatchScoreboard = $state(false);
+  /** Instant chrome for keyboard convert (Emil: keyboard-initiated = no animation). */
+  let parseChromeInstant = $state(false);
+  /**
+   * Instant panel out when Escape closes settings/history/about.
+   * Set only via closeSettings/closeHistory (and open*) from the call site:
+   * pass `{ instant: true }` for Escape; omit/false for Back so panel out still animates.
+   * Do not clear this flag in children after App Escape sets it — use the close helpers.
+   */
+  let viewChromeInstant = $state(false);
+  /** Focus restore target when Settings/History close. */
+  let dialogReturnFocus: HTMLElement | null = null;
+
+  function captureDialogReturnFocus() {
+    const el = document.activeElement;
+    dialogReturnFocus = el instanceof HTMLElement ? el : null;
+  }
+
+  function restoreDialogReturnFocus() {
+    const el = dialogReturnFocus;
+    dialogReturnFocus = null;
+    if (el && document.contains(el) && typeof el.focus === "function") {
+      requestAnimationFrame(() => el.focus({ preventScroll: true }));
+    }
+  }
+  const lightParseMotion = $derived(parseChromeInstant || isBackgroundBatch);
+  const mainPanelIn = $derived(
+    panelBlurFlyInParams(reducedMotion, { instant: false }),
+  );
+  const mainPanelOut = $derived(
+    panelBlurFlyOutParams(reducedMotion, { instant: viewChromeInstant }),
+  );
+  const settingsPanelIn = $derived(
+    panelBlurFlyInParams(reducedMotion, {
+      instant: viewChromeInstant,
+      originScale: true,
+    }),
+  );
+  const settingsPanelOut = $derived(
+    panelBlurFlyOutParams(reducedMotion, { instant: viewChromeInstant }),
+  );
+  const sectionFlyInParams = $derived(
+    sectionFlyInMaybeLight(reducedMotion, lightParseMotion),
+  );
+  const sectionFlyOutParams = $derived(
+    sectionFlyOutMaybeLight(reducedMotion, lightParseMotion),
+  );
+  const buttonFadeInParams = $derived(
+    buttonFadeInMaybeInstant(reducedMotion, parseChromeInstant),
+  );
+  const buttonFadeOutParams = $derived(
+    buttonFadeOutMaybeInstant(reducedMotion, parseChromeInstant),
+  );
 
   $effect(() => {
     if (updateState.available) {
@@ -188,6 +240,14 @@
       inputFileCount !== null &&
       inputFileCount > 0
   );
+  /** Why Convert is disabled — shown under the CTA (Emil: disabled must explain itself). */
+  let canRunParseBlockedReason = $derived.by(() => {
+    if (isParsing) return null;
+    if (isIngesting) return t("dropzone.scanning");
+    if (!outputDir) return t("errors.needOutputFolder");
+    if (inputFileCount === null || inputFileCount <= 0) return t("errors.addFiles");
+    return null;
+  });
 
 
   async function resolveDefaultWorkers(savedWorkers: number) {
@@ -233,6 +293,8 @@
   }
 
   function openSettings(tab: SettingsTab = "general") {
+    viewChromeInstant = false;
+    if (!showSettings) captureDialogReturnFocus();
     settingsTab = tab;
     showHistory = false;
     showAbout = false;
@@ -369,8 +431,24 @@
   }
 
   function openHistory() {
+    viewChromeInstant = false;
+    if (!showHistory) captureDialogReturnFocus();
     showSettings = false;
+    showAbout = false;
     showHistory = true;
+  }
+
+  function closeHistory(options?: { instant?: boolean }) {
+    viewChromeInstant = options?.instant === true;
+    showHistory = false;
+    restoreDialogReturnFocus();
+  }
+
+  function closeSettings(options?: { instant?: boolean }) {
+    viewChromeInstant = options?.instant === true;
+    showAbout = false;
+    showSettings = false;
+    restoreDialogReturnFocus();
   }
 
   async function rerunBatch(batch: BatchResult) {
@@ -429,7 +507,9 @@
     }
 
     format = await getSetting<OutputFormat>("format", "md");
-    ocrEnabled = await getSetting("ocrEnabled", true);
+    // OCR is automatic for scans (main panel no longer exposes a toggle).
+    ocrEnabled = true;
+    await setSetting("ocrEnabled", true);
     const rawOcr = String(await getSetting("ocrLanguage", "eng"));
     if (!isKnownOcrLanguage(rawOcr)) {
       noticeMsg = t("settings.ocrMigrated");
@@ -592,9 +672,7 @@
     await setSetting("format", format);
   }
 
-  async function handleOcrEnabledChange() {
-    await setSetting("ocrEnabled", ocrEnabled);
-  }
+
 
   async function handleWorkersChange(value: number) {
     workers = value;
@@ -652,6 +730,7 @@
     noticeMsg = notice;
     void syncHudIfActive();
     isBackgroundBatch = false;
+    parseChromeInstant = false;
   }
 
   function cancelParse() {
@@ -660,9 +739,10 @@
     stopParseUi(t("errors.parseCancelled"));
   }
 
-  async function startParse() {
+  async function startParse(options?: { instantChrome?: boolean }) {
     if (!outputDir || inputFileCount === 0) return;
 
+    parseChromeInstant = options?.instantChrome === true;
     errorMsg = null;
 
     let filesToParse: string[];
@@ -934,13 +1014,19 @@
     if ((e.metaKey || e.ctrlKey) && e.key === "r") {
       e.preventDefault();
       if (canRunParse) {
-        startParse();
+        void startParse({ instantChrome: true });
       }
     }
     if (e.key === "Escape") {
-      if (showAbout) showAbout = false;
-      else if (showSettings) showSettings = false;
-      else if (showHistory) showHistory = false;
+      // Keyboard-initiated dismiss: no panel fly (Emil frequency rule).
+      // Use close*({ instant: true }) so child Escape handlers cannot clear the flag.
+      if (showAbout) {
+        showAbout = false;
+      } else if (showSettings) {
+        closeSettings({ instant: true });
+      } else if (showHistory) {
+        closeHistory({ instant: true });
+      }
     }
   }
 </script>
@@ -952,9 +1038,11 @@
     {#key "main"}
       <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
         <div class="motion-panel-content">
-  <header>
-    <span>{t("app.name")}</span>
-    {#if appVersion}<span class="header-ver">{appVersion}</span>{/if}
+  <header class="main-header">
+    <div class="main-header-brand">
+      <span class="main-header-title">{t("app.name")}</span>
+      {#if appVersion}<span class="header-ver">{appVersion}</span>{/if}
+    </div>
     <div class="header-actions">
       <button
         type="button"
@@ -965,20 +1053,7 @@
         title={t("header.settings")}
         aria-label={t("header.settings")}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
-            stroke="currentColor"
-            stroke-width="2"
-          />
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <GearSixIcon size={16} weight="regular" aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -987,15 +1062,7 @@
         title={t("header.quit")}
         aria-label={t("header.quit")}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
-          <path
-            d="M15 9 9 15M9 9l6 6"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          />
-        </svg>
+        <XIcon size={16} weight="bold" aria-hidden="true" />
       </button>
     </div>
   </header>
@@ -1012,11 +1079,14 @@
     </div>
   {/if}
 
-  <main>
-    <div class="section">
-      <div class="section-title config-section-header">
-        <span>{t("config.title")}</span>
-        {#if hasSuccessfulParse}
+  <main class="main-panel">
+    <section class="section output-settings-section">
+      {#if hasSuccessfulParse}
+        <div class="config-section-header output-settings-toolbar">
+          <div class="output-settings-heading">
+            <LinkIcon size={16} weight="regular" aria-hidden="true" />
+            <span class="output-settings-title">{t("config.title")}</span>
+          </div>
           <button
             type="button"
             class="config-collapse-btn"
@@ -1027,54 +1097,43 @@
           >
             {configCollapsed ? t("config.expand") : t("config.collapse")}
           </button>
-        {/if}
-      </div>
+        </div>
+      {/if}
+
       {#if !configCollapsed}
-        <div class="card" in:slide={configSlideIn} out:slide={configSlideOut}>
+        <div class="card output-settings-card" in:fade={configFadeIn} out:fade={configFadeOut}>
+          {#if !hasSuccessfulParse}
+            <div class="output-settings-heading">
+              <LinkIcon size={16} weight="regular" aria-hidden="true" />
+              <span class="output-settings-title">{t("config.title")}</span>
+            </div>
+          {/if}
+
           <OutputFolderPicker value={outputDir} onSelect={handleOutputSelect} />
 
-          <div class="row">
-            <span>{t("config.format")}</span>
-            <FormatSelector value={format} onChange={handleFormatChange} />
-          </div>
-          {#if format !== "json"}
-            <div
-              class="file-count-preview caption-hint"
-              in:fade={hintFadeInParams}
-              out:fade={hintFadeOutParams}
-            >
-              {t("config.spreadsheetJsonHint")}
+          <div class="config-control-row">
+            <div class="config-control-label">
+              <FileTextIcon size={16} weight="regular" aria-hidden="true" />
+              <span>{t("config.format")}</span>
             </div>
-          {/if}
+            <div class="config-control-fields config-control-fields--format">
+              <FormatSelector value={format} onChange={handleFormatChange} />
+              <span class="ocr-auto-chip" title={t("config.ocrAutoHint")}>
+                <SparkleIcon size={12} weight="fill" aria-hidden="true" />
+                {t("config.ocrAuto")}
+              </span>
+            </div>
+          </div>
 
-          <div class="row ocr-row">
-            <div class="ocr-toggle">
-              <input
-                type="checkbox"
-                bind:checked={ocrEnabled}
-                id="ocr-toggle"
-                onchange={handleOcrEnabledChange}
-              />
-              <label for="ocr-toggle">{t("config.ocr")}</label>
-            </div>
-          </div>
-          {#if ocrEnabled}
-            <p
-              class="caption-hint ocr-workers-hint"
-              in:fade={hintFadeInParams}
-              out:fade={hintFadeOutParams}
-            >
-              {t("config.ocrWorkersHint")}
-            </p>
-          {/if}
+          <p class="caption-hint output-settings-hint">{t("config.formatHint")}</p>
         </div>
       {:else}
         <button
           type="button"
           class="config-collapsed-summary"
           title={outputDir || t("config.downloads")}
-          in:slide={configSlideIn}
-          out:slide={configSlideOut}
+          in:fade={configFadeIn}
+          out:fade={configFadeOut}
           onclick={toggleConfigCollapsed}
         >
           <span class="config-summary-path"
@@ -1082,11 +1141,11 @@
           >
           <span class="config-summary-chips">
             <span class="config-summary-chip">{format.toUpperCase()}</span>
-            {#if ocrEnabled}<span class="config-summary-chip">OCR</span>{/if}
+            <span class="config-summary-chip">OCR</span>
           </span>
         </button>
       {/if}
-    </div>
+    </section>
 
     <DropZone
       fileCount={inputFileCount}
@@ -1104,6 +1163,7 @@
           total={totalFiles || files.length}
           {isParsing}
           {lastParsingId}
+          lightMotion={lightParseMotion}
           onOpenFileSupport={openFileSupportSettings}
         />
       </div>
@@ -1121,13 +1181,16 @@
               type="button"
               class="run-parse-btn"
               disabled={!canRunParse}
-              onclick={startParse}
+              onclick={() => void startParse()}
             >
               {t("run.runParse")}
             </button>
           {/if}
         </div>
       {/key}
+      {#if canRunParseBlockedReason}
+        <p class="run-blocked-hint" role="status">{canRunParseBlockedReason}</p>
+      {/if}
       {#if noticeMsg}
         <div
           class="notice-banner"
@@ -1221,7 +1284,7 @@
             onOpenFolder={openFolder}
             onRerun={rerunBatch}
             {appVersion}
-            onClose={() => (showHistory = false)}
+            onClose={closeHistory}
           />
         </div>
       </div>
@@ -1230,53 +1293,67 @@
 
   {#if showSettings}
     {#key "settings"}
-      <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
+      <div
+        class="motion-panel motion-panel--settings"
+        in:panelBlurFlyIn={settingsPanelIn}
+        out:panelBlurFlyOut={settingsPanelOut}
+      >
         <div class="motion-panel-content">
-    {#key showAbout}
-      <div class="subview-fill" out:fade={subviewFadeOutParams}>
-    {#if showAbout}
-      <div in:fade={mainFadeIn} out:fade={mainFadeOut}>
-      <AboutScreen onClose={() => (showAbout = false)} />
-      </div>
-    {:else}
-      <SettingsScreen
-        locale={getLocale()}
-        {ocrLanguage}
-        {ocrEnabled}
-        {theme}
-        {workers}
-        {launchAtLogin}
-        {autoConvertOnCopy}
-        {globalShortcut}
-        {showFloatingHud}
-        initialTab={settingsTab}
-        tokenStats={tokenStats}
-        tokenStatsPeriod={tokenStatsPeriod}
-        onLocaleChange={handleLocaleChange}
-        onOcrLanguageChange={handleOcrLanguageChange}
-        onThemeChange={handleThemeChange}
-        onWorkersChange={handleWorkersChange}
-        onLaunchAtLoginChange={handleLaunchAtLoginChange}
-        onAutoConvertOnCopyChange={handleAutoConvertOnCopyChange}
-        onGlobalShortcutChange={handleGlobalShortcutChange}
-        onShowFloatingHudChange={handleShowFloatingHudChange}
-        onTokenStatsPeriodChange={handleTokenStatsPeriodChange}
-        onTokenStatsChange={handleTokenStatsChange}
-        onOpenAbout={() => (showAbout = true)}
-        finderActionInstalled={finderActionState.installed}
-        finderActionBusy={finderActionState.busy}
-        finderActionNotice={finderActionState.notice}
-        onInstallFinderAction={() => finderActionState.install()}
-        {appVersion}
-        updateCheckBusy={updateState.checkBusy}
-        updateStatusNote={updateState.statusNote}
-        updateStatusOk={updateState.statusOk}
-        onCheckForUpdates={() => updateState.checkForUpdates(appVersion)}
-        onClose={() => (showSettings = false)}
-      />
-    {/if}
-      </div>
-    {/key}
+          {#key showAbout}
+            <div class="subview-fill">
+              {#if showAbout}
+                <div
+                  class="subview-pane"
+                  in:fade={subviewFadeInParams}
+                  out:fade={subviewFadeOutParams}
+                >
+                  <AboutScreen onClose={() => (showAbout = false)} />
+                </div>
+              {:else}
+                <div
+                  class="subview-pane"
+                  in:fade={subviewFadeInParams}
+                  out:fade={subviewFadeOutParams}
+                >
+                  <SettingsScreen
+                    locale={getLocale()}
+                    {ocrLanguage}
+                    {ocrEnabled}
+                    {theme}
+                    {workers}
+                    {launchAtLogin}
+                    {autoConvertOnCopy}
+                    {globalShortcut}
+                    {showFloatingHud}
+                    initialTab={settingsTab}
+                    tokenStats={tokenStats}
+                    tokenStatsPeriod={tokenStatsPeriod}
+                    onLocaleChange={handleLocaleChange}
+                    onOcrLanguageChange={handleOcrLanguageChange}
+                    onThemeChange={handleThemeChange}
+                    onWorkersChange={handleWorkersChange}
+                    onLaunchAtLoginChange={handleLaunchAtLoginChange}
+                    onAutoConvertOnCopyChange={handleAutoConvertOnCopyChange}
+                    onGlobalShortcutChange={handleGlobalShortcutChange}
+                    onShowFloatingHudChange={handleShowFloatingHudChange}
+                    onTokenStatsPeriodChange={handleTokenStatsPeriodChange}
+                    onTokenStatsChange={handleTokenStatsChange}
+                    onOpenAbout={() => (showAbout = true)}
+                    finderActionInstalled={finderActionState.installed}
+                    finderActionBusy={finderActionState.busy}
+                    finderActionNotice={finderActionState.notice}
+                    onInstallFinderAction={() => finderActionState.install()}
+                    {appVersion}
+                    updateCheckBusy={updateState.checkBusy}
+                    updateStatusNote={updateState.statusNote}
+                    updateStatusOk={updateState.statusOk}
+                    onCheckForUpdates={() => updateState.checkForUpdates(appVersion)}
+                    onClose={closeSettings}
+                  />
+                </div>
+              {/if}
+            </div>
+          {/key}
         </div>
       </div>
     {/key}

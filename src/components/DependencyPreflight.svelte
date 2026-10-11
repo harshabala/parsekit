@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
-  import { fade, fly, slide } from "svelte/transition";
+  import { onMount } from "svelte";
+  import { fade, fly } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { invoke } from "@tauri-apps/api/core";
   import { Command } from "@tauri-apps/plugin-shell";
+  import CheckIcon from "phosphor-svelte/lib/CheckIcon";
+  import XIcon from "phosphor-svelte/lib/XIcon";
   import { takeCachedDependencies, type DepStatus } from "../lib/depsCache";
   import { t } from "../lib/i18n.svelte";
   import { depRowAriaLabel } from "../lib/depsAria";
@@ -17,11 +19,15 @@
 
   const BREW_URL = "https://brew.sh";
 
+  /** Primary name + optional subtitle for converter rows (mockup layout). */
+  const DEP_COPY: Record<string, { nameKey: string; detailKey?: string }> = {
+    pdf: { nameKey: "deps.pdf" },
+    libreoffice: { nameKey: "deps.libreofficeName", detailKey: "deps.libreofficeDetail" },
+    imagemagick: { nameKey: "deps.imagemagickName", detailKey: "deps.imagemagickDetail" },
+    tesseract: { nameKey: "deps.tesseractName", detailKey: "deps.tesseractDetail" },
+  };
+
   const reducedMotion = $derived(prefersReducedMotion.current);
-  const listSlide = $derived({
-    duration: reducedMotion ? 0 : 200,
-    easing: easingDecelerate,
-  });
 
   let deps = $state<DepStatus[]>([]);
   let loading = $state(true);
@@ -40,6 +46,15 @@
       delay: reducedMotion ? 0 : depsStaggerDelayMs(index),
       easing: easingDecelerate,
     };
+  }
+
+  function depName(id: string, fallbackKey: string): string {
+    return t(DEP_COPY[id]?.nameKey ?? fallbackKey);
+  }
+
+  function depDetail(id: string): string | null {
+    const key = DEP_COPY[id]?.detailKey;
+    return key ? t(key) : null;
   }
 
   onMount(() => {
@@ -61,14 +76,7 @@
       }
     }
 
-    if (!initial && deps.length > 0) {
-      listVisible = false;
-      await tick();
-      if (!reducedMotion) {
-        await new Promise((r) => setTimeout(r, 180));
-      }
-    }
-
+    // Recheck immediately — do not wait for exit animation (Emil: no delay for cosmetics).
     loading = true;
     try {
       const result = await invoke<DepStatus[]>("check_dependencies");
@@ -111,9 +119,9 @@
   }
 </script>
 
-<div class="deps-preflight">
+<div class="deps-preflight settings-card">
   <div class="settings-section-header deps-preflight-header">
-    <span class="settings-section-title">{t("deps.title")}</span>
+    <span class="settings-section-title settings-section-title--caps">{t("deps.title")}</span>
     <button
       type="button"
       class="secondary deps-refresh-btn"
@@ -124,7 +132,7 @@
       {loading ? t("deps.checking") : t("deps.recheck")}
     </button>
   </div>
-  <p class="settings-hint">{t("deps.hint")}</p>
+  <p class="settings-hint deps-card-hint">{t("deps.hint")}</p>
 
   {#if loading && deps.length === 0}
     <p class="settings-hint deps-checking-line" transition:fade={{ duration: reducedMotion ? 0 : 120 }}>
@@ -145,7 +153,11 @@
   {/if}
 
   {#if listVisible || !loading}
-    <ul class="deps-list" transition:slide={listSlide}>
+    <ul
+      class="deps-list"
+      in:fade={{ duration: reducedMotion ? 80 : 120 }}
+      out:fade={{ duration: reducedMotion ? 60 : 120 }}
+    >
       <li
         class="deps-item deps-item-installed"
         aria-label={depRowAriaLabel(
@@ -162,17 +174,11 @@
             class="deps-status-badge deps-status-installed"
             aria-hidden="true"
           >
-            <svg class="deps-check-icon" width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M2.5 6.2 4.8 8.5 9.5 3.5"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+            <CheckIcon class="deps-check-icon" size={12} weight="bold" />
           </span>
-          <span class="deps-item-label">{t("deps.pdf")}</span>
+          <div class="deps-item-copy">
+            <span class="deps-item-label">{t("deps.pdf")}</span>
+          </div>
           <span class="deps-built-in-badge">{t("deps.builtIn")}</span>
         </div>
       </li>
@@ -183,7 +189,7 @@
           class:deps-item-installed={dep.installed}
           class:deps-item-missing={!dep.installed}
           aria-label={depRowAriaLabel(
-            t(dep.labelKey),
+            depName(dep.id, dep.labelKey),
             dep.installed,
             t("deps.statusInstalled"),
             t("deps.statusMissing")
@@ -201,34 +207,30 @@
               aria-hidden="true"
             >
               {#if dep.installed}
-                <svg class="deps-check-icon" width="11" height="11" viewBox="0 0 12 12" fill="none">
-                  <path
-                    d="M2.5 6.2 4.8 8.5 9.5 3.5"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
+                <CheckIcon class="deps-check-icon" size={12} weight="bold" />
               {:else}
-                <svg class="deps-missing-icon" width="11" height="11" viewBox="0 0 12 12" fill="none">
-                  <path
-                    d="M3.2 3.2 8.8 8.8M8.8 3.2 3.2 8.8"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                  />
-                </svg>
+                <XIcon class="deps-missing-icon" size={12} weight="bold" />
               {/if}
             </span>
-            <span class="deps-item-label">{t(dep.labelKey)}</span>
+            <div class="deps-item-copy">
+              <span class="deps-item-label">{depName(dep.id, dep.labelKey)}</span>
+              {#if depDetail(dep.id)}
+                <span class="deps-item-detail">{depDetail(dep.id)}</span>
+              {/if}
+            </div>
             {#if dep.installed && !dep.optional}
               <span class="deps-built-in-badge">{t("deps.builtIn")}</span>
+            {:else if dep.installed && dep.optional}
+              <span class="deps-available-badge">{t("deps.available")}</span>
             {/if}
           </div>
           {#if !dep.installed && dep.brewHint}
-            <div class="deps-install-block">
-              <code class="deps-brew-hint" transition:fade={{ duration: reducedMotion ? 0 : 150 }}>
+            <div
+              class="deps-install-block"
+              in:fade={{ duration: reducedMotion ? 0 : 150 }}
+              out:fade={{ duration: reducedMotion ? 0 : 120 }}
+            >
+              <code class="deps-brew-hint">
                 {dep.brewHint}
               </code>
               <div class="deps-install-actions">

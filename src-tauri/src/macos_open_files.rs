@@ -15,10 +15,7 @@ struct OpenQueueFile {
 }
 
 fn queue_path() -> Result<PathBuf, String> {
-    let home = std::env::var("HOME").map_err(|e| e.to_string())?;
-    Ok(PathBuf::from(home)
-        .join("Library/Application Support/com.harshabala.parsekit")
-        .join("open-queue.json"))
+    Ok(crate::app_support_dir()?.join("open-queue.json"))
 }
 
 fn ensure_support_dir() -> Result<PathBuf, String> {

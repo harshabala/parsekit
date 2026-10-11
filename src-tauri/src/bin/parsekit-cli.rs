@@ -1,8 +1,9 @@
 //! ParseKit CLI: script-friendly wrapper around the parsekit-sidecar binary.
 //! Same JSON-lines protocol and parse logic as the GUI — no fork of the engine.
 
-use parsekit_lib::sidecar_helpers::validate_output_format;
+use parsekit_lib::sidecar_helpers::{resolve_sidecar, validate_output_format};
 use parsekit_lib::token_stats::{self, RecordInput};
+use parsekit_lib::{path_has_supported_extension, read_settings_json};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::env;
@@ -11,12 +12,6 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use walkdir::WalkDir;
-
-const SUPPORTED_EXTENSIONS: &[&str] = &[
-    "pdf", "doc", "docx", "docm", "odt", "rtf", "ppt", "pptx", "pptm", "odp", "xls", "xlsx",
-    "xlsm", "ods", "csv", "tsv", "png", "jpg", "jpeg", "gif", "bmp", "tiff", "tif", "webp",
-    "svg",
-];
 
 const HELP: &str = "\
 ParseKit — convert documents to Markdown/JSON locally
@@ -192,7 +187,7 @@ fn execute_convert(args: ConvertArgs) -> Result<(), String> {
             input.display()
         ));
     } else {
-        if !is_supported_file(&input) {
+        if !path_has_supported_extension(&input) {
             return Err(format!(
                 "Unsupported file type: {}",
                 input.display()
@@ -446,21 +441,11 @@ fn apply_rename_target(
     Ok(target)
 }
 
-fn is_supported_file(path: &Path) -> bool {
-    path.extension()
-        .and_then(|ext| ext.to_str())
-        .map(|ext| {
-            let lower = ext.to_ascii_lowercase();
-            SUPPORTED_EXTENSIONS.contains(&lower.as_str())
-        })
-        .unwrap_or(false)
-}
-
 fn scan_supported_files(dir: &Path) -> Result<Vec<PathBuf>, String> {
     let mut files = Vec::new();
     for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
-        if path.is_file() && is_supported_file(path) {
+        if path.is_file() && path_has_supported_extension(path) {
             files.push(path.to_path_buf());
         }
     }
@@ -468,74 +453,10 @@ fn scan_supported_files(dir: &Path) -> Result<Vec<PathBuf>, String> {
     Ok(files)
 }
 
-fn settings_path() -> Result<PathBuf, String> {
-    let home = env::var("HOME").map_err(|e| e.to_string())?;
-    Ok(PathBuf::from(home)
-        .join("Library/Application Support/com.harshabala.parsekit/settings.json"))
-}
-
 fn load_sidecar_settings() -> SidecarSettings {
-    let path = match settings_path() {
-        Ok(path) => path,
-        Err(_) => return default_sidecar_settings(),
-    };
-    let raw = match fs::read_to_string(path) {
-        Ok(raw) => raw,
-        Err(_) => return default_sidecar_settings(),
-    };
-    serde_json::from_str(&raw).unwrap_or_else(|_| default_sidecar_settings())
-}
-
-fn host_triple() -> String {
-    match env::consts::OS {
-        "macos" => format!("{}-apple-darwin", env::consts::ARCH),
-        "linux" => format!("{}-unknown-linux-gnu", env::consts::ARCH),
-        "windows" => format!("{}-pc-windows-msvc", env::consts::ARCH),
-        other => format!("{}-{other}", env::consts::ARCH),
-    }
-}
-
-fn resolve_sidecar() -> Result<PathBuf, String> {
-    if let Ok(path) = env::var("PARSEKIT_SIDECAR") {
-        let candidate = PathBuf::from(&path);
-        if candidate.is_file() {
-            return Ok(candidate);
-        }
-        return Err(format!("PARSEKIT_SIDECAR not found: {path}"));
-    }
-
-    if let Ok(exe) = env::current_exe() {
-        if let Some(dir) = exe.parent() {
-            let sibling = dir.join("parsekit-sidecar");
-            if sibling.is_file() {
-                return Ok(sibling);
-            }
-        }
-    }
-
-    if let Ok(exe) = env::current_exe() {
-        let mut dir = exe.parent().map(Path::to_path_buf);
-        for _ in 0..8 {
-            let Some(current) = dir else { break };
-            let triple = host_triple();
-            let bundled = current
-                .join("src-tauri/binaries")
-                .join(format!("parsekit-sidecar-{triple}"));
-            if bundled.is_file() {
-                return Ok(bundled);
-            }
-            let plain = current.join("src-tauri/binaries/parsekit-sidecar");
-            if plain.is_file() {
-                return Ok(plain);
-            }
-            dir = current.parent().map(Path::to_path_buf);
-        }
-    }
-
-    Err(
-        "parsekit-sidecar not found. Build with: npm run build:sidecar (or set PARSEKIT_SIDECAR)"
-            .to_string(),
-    )
+    read_settings_json()
+        .and_then(|value| serde_json::from_value(value).ok())
+        .unwrap_or_else(default_sidecar_settings)
 }
 
 fn execute_notify(args: &[String]) -> Result<(), String> {

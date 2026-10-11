@@ -1,7 +1,7 @@
 //! Read file paths from the macOS pasteboard (Finder copy → file URL).
 
 #[cfg(target_os = "macos")]
-fn run_osascript(script: &str) -> Option<String> {
+pub(crate) fn run_osascript(script: &str) -> Option<String> {
     let output = std::process::Command::new("osascript")
         .arg("-e")
         .arg(script)

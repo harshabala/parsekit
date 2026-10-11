@@ -62,15 +62,24 @@ export function filterEventsInRange(
   });
 }
 
+function sumFieldInRange(
+  events: TokenEvent[],
+  start: Date,
+  end: Date,
+  field: "tokens_saved" | "pages_unlocked",
+): number {
+  return filterEventsInRange(events, start, end).reduce(
+    (sum, event) => sum + event[field],
+    0,
+  );
+}
+
 export function sumTokensInRange(
   events: TokenEvent[],
   start: Date,
   end: Date,
 ): number {
-  return filterEventsInRange(events, start, end).reduce(
-    (sum, event) => sum + event.tokens_saved,
-    0,
-  );
+  return sumFieldInRange(events, start, end, "tokens_saved");
 }
 
 export function sumPagesUnlockedInRange(
@@ -78,10 +87,7 @@ export function sumPagesUnlockedInRange(
   start: Date,
   end: Date,
 ): number {
-  return filterEventsInRange(events, start, end).reduce(
-    (sum, event) => sum + event.pages_unlocked,
-    0,
-  );
+  return sumFieldInRange(events, start, end, "pages_unlocked");
 }
 
 export function startOfMonth(date: Date): Date {

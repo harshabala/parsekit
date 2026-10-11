@@ -3,10 +3,15 @@
   import { invoke } from "@tauri-apps/api/core";
   import { Command } from "@tauri-apps/plugin-shell";
   import { t } from "../lib/i18n.svelte";
+  import { focusTrap } from "../lib/focusTrap";
 
   const AUTHOR_URL = "https://github.com/harshabala";
 
-  let { onClose }: { onClose: () => void } = $props();
+  let {
+    onClose,
+  }: {
+    onClose: (options?: { instant?: boolean }) => void;
+  } = $props();
 
   let version = $state("0.2.0");
 
@@ -21,7 +26,8 @@
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") {
-      onClose();
+      // Nested About subview: Escape steps back to Settings without animating the outer panel.
+      onClose({ instant: true });
     }
   }
 
@@ -36,9 +42,15 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="settings-screen" role="dialog" aria-modal="true" aria-labelledby="about-title">
+<div
+  class="settings-screen"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="about-title"
+  use:focusTrap={{ restoreFocus: false }}
+>
   <div class="settings-header">
-    <button type="button" class="settings-back-btn" onclick={onClose}>{t("about.back")}</button>
+    <button type="button" class="settings-back-btn" onclick={() => onClose()}>{t("about.back")}</button>
     <span class="settings-header-title" id="about-title">{t("about.title")}</span>
   </div>
 

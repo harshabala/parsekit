@@ -13,6 +13,7 @@
   import WorkersSlider from "./WorkersSlider.svelte";
   import DependencyPreflight from "./DependencyPreflight.svelte";
   import TokenSavingsPanel from "./TokenSavingsPanel.svelte";
+  import SettingsSectionIcon from "./SettingsSectionIcon.svelte";
   import { invoke } from "@tauri-apps/api/core";
   import type { TokenStats } from "../lib/tokenStats";
   import type { TokenStatsPeriod } from "../lib/store";
@@ -22,6 +23,7 @@
     keyboardEventToShortcut,
   } from "../lib/globalShortcut";
   import { setSetting } from "../lib/store";
+  import { focusTrap } from "../lib/focusTrap";
 
   let {
     locale: localeValue,
@@ -90,7 +92,7 @@
     updateStatusOk?: boolean;
     onCheckForUpdates?: () => void;
     initialTab?: SettingsTab;
-    onClose: () => void;
+    onClose: (options?: { instant?: boolean }) => void;
   } = $props();
 
   const reducedMotion = $derived(prefersReducedMotion.current);
@@ -100,6 +102,8 @@
   const tabFadeOutParams = $derived(panelFadeOut(reducedMotion));
 
   let activeTab = $state<SettingsTab>("general");
+  /** 0 = primary General, 1 = secondary General (install / advanced). */
+  let generalPage = $state<0 | 1>(0);
   let gatekeeperCopied = $state(false);
   let gatekeeperCopyError = $state<string | null>(null);
   let recordingHotkey = $state(false);
@@ -113,7 +117,22 @@
 
   $effect(() => {
     activeTab = initialTab;
+    generalPage = 0;
   });
+
+  function selectTab(id: SettingsTab) {
+    activeTab = id;
+    if (id === "general") generalPage = 0;
+  }
+
+  function handleBack() {
+    if (activeTab === "general" && generalPage === 1) {
+      generalPage = 0;
+      return;
+    }
+    // Back button: keep panel exit animation.
+    onClose();
+  }
 
   function handleKeydown(e: KeyboardEvent) {
     if (recordingHotkey) {
@@ -131,7 +150,13 @@
       return;
     }
     if (e.key === "Escape") {
-      onClose();
+      // Nested general page: step back without closing (non-instant).
+      if (activeTab === "general" && generalPage === 1) {
+        generalPage = 0;
+        return;
+      }
+      // Panel dismiss via Escape: instant chrome (matches App Escape path).
+      onClose({ instant: true });
     }
   }
 
@@ -194,9 +219,15 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="settings-screen" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+<div
+  class="settings-screen"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="settings-title"
+  use:focusTrap={{ restoreFocus: false }}
+>
   <div class="settings-header">
-    <button type="button" class="settings-back-btn" onclick={onClose}>{t("settings.back")}</button>
+    <button type="button" class="settings-back-btn" onclick={handleBack}>{t("settings.back")}</button>
     <span class="settings-header-title" id="settings-title">{t("settings.title")}</span>
   </div>
 
@@ -215,7 +246,7 @@
           class:active={activeTab === tab.id}
           aria-selected={activeTab === tab.id}
           aria-controls="settings-panel-{tab.id}"
-          onclick={() => (activeTab = tab.id)}
+          onclick={() => selectTab(tab.id)}
         >
           {t(tab.labelKey)}
         </button>
@@ -224,267 +255,358 @@
   </div>
 
   <div class="settings-scroll selectable-content">
-    {#key activeTab}
-      {#if activeTab === "general"}
-      <div
-        id="settings-panel-general"
-        role="tabpanel"
-        aria-labelledby="settings-tab-general"
-        in:fade={tabFadeInParams}
-        out:fade={tabFadeOutParams}
-      >
-        <div class="settings-section">
-          <div class="settings-section-title">{t("settings.appLanguageTitle")}</div>
-          <p class="settings-hint">{t("settings.appLanguageHint")}</p>
-          <LanguageSelector value={localeValue} onChange={onLocaleChange} />
-        </div>
-
-        <div class="settings-divider"></div>
-
-        <div class="settings-section">
-          <div class="settings-section-title">{t("settings.appearanceTitle")}</div>
-          <p class="settings-hint">{t("settings.appearanceHint")}</p>
-          <ThemeSelector value={theme} onChange={onThemeChange} />
-        </div>
-
-        <div class="settings-divider"></div>
-
-        <div class="settings-section settings-toggle-row">
-          <label class="settings-launch-label">
-            <input
-              type="checkbox"
-              checked={launchAtLogin}
-              onchange={(e) => onLaunchAtLoginChange((e.currentTarget as HTMLInputElement).checked)}
-            />
-            <span>{t("settings.launchAtLogin")}</span>
-          </label>
-          <p class="settings-hint">{t("settings.launchAtLoginHint")}</p>
-        </div>
-
-        <div class="settings-divider"></div>
-
-        {#if onAutoConvertOnCopyChange}
-          <div class="settings-section settings-toggle-row">
-            <label class="settings-launch-label">
-              <input
-                type="checkbox"
-                checked={autoConvertOnCopy}
-                onchange={(e) =>
-                  onAutoConvertOnCopyChange(
-                    (e.currentTarget as HTMLInputElement).checked,
-                  )}
-              />
-              <span>{t("settings.autoConvertOnCopy")}</span>
-            </label>
-            <p class="settings-hint">{t("settings.autoConvertOnCopyHint")}</p>
-          </div>
-          <div class="settings-divider"></div>
-        {/if}
-
-        {#if onShowFloatingHudChange}
-          <div class="settings-section settings-toggle-row">
-            <label class="settings-launch-label">
-              <input
-                type="checkbox"
-                checked={showFloatingHud}
-                onchange={(e) =>
-                  onShowFloatingHudChange((e.currentTarget as HTMLInputElement).checked)}
-              />
-              <span>{t("settings.floatingHudTitle")}</span>
-            </label>
-            <p class="settings-hint">{t("settings.floatingHudHint")}</p>
-          </div>
-          <div class="settings-divider"></div>
-        {/if}
-
-        {#if onGlobalShortcutChange}
+    {#key `${activeTab}-${generalPage}`}
+      {#if activeTab === "general" && generalPage === 0}
+        <div
+          id="settings-panel-general"
+          role="tabpanel"
+          aria-labelledby="settings-tab-general"
+          in:fade={tabFadeInParams}
+          out:fade={tabFadeOutParams}
+        >
           <div class="settings-section">
-            <div class="settings-section-title">{t("settings.hotkeyTitle")}</div>
-            <p class="settings-hint">{t("settings.hotkeyHint")}</p>
-            <p class="settings-hint">{t("settings.clipboardConvertHint")}</p>
-            <div class="hotkey-row">
-              <kbd class="hotkey-display" aria-label={hotkeyDisplay}>{hotkeyDisplay}</kbd>
-              <button
-                type="button"
-                class="secondary"
-                class:hotkey-recording={recordingHotkey}
-                onclick={startHotkeyRecording}
-              >
-                {recordingHotkey ? t("settings.hotkeyRecording") : t("settings.hotkeyChange")}
-              </button>
-              {#if globalShortcut !== DEFAULT_GLOBAL_SHORTCUT}
+            <div class="settings-section-heading">
+              <SettingsSectionIcon name="globe" />
+              <div class="settings-section-title">{t("settings.appLanguageTitle")}</div>
+            </div>
+            <p class="settings-hint">{t("settings.appLanguageHint")}</p>
+            <LanguageSelector value={localeValue} onChange={onLocaleChange} />
+          </div>
+
+          <div class="settings-divider"></div>
+
+          <div class="settings-section">
+            <div class="settings-section-heading">
+              <SettingsSectionIcon name="palette" />
+              <div class="settings-section-title">{t("settings.appearanceTitle")}</div>
+            </div>
+            <p class="settings-hint">{t("settings.appearanceHint")}</p>
+            <ThemeSelector value={theme} onChange={onThemeChange} />
+          </div>
+
+          <div class="settings-divider"></div>
+
+          <div class="settings-section settings-group">
+            <div class="settings-section-heading">
+              <SettingsSectionIcon name="power" />
+              <div class="settings-section-title">{t("settings.startupTitle")}</div>
+            </div>
+
+            <div class="settings-toggle-stack">
+              <label class="settings-launch-label">
+                <input
+                  type="checkbox"
+                  checked={launchAtLogin}
+                  onchange={(e) =>
+                    onLaunchAtLoginChange((e.currentTarget as HTMLInputElement).checked)}
+                />
+                <span class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{t("settings.launchAtLogin")}</span>
+                  <span class="settings-hint settings-hint--inline"
+                    >{t("settings.launchAtLoginHint")}</span
+                  >
+                </span>
+              </label>
+
+              {#if onAutoConvertOnCopyChange}
+                <label class="settings-launch-label">
+                  <input
+                    type="checkbox"
+                    checked={autoConvertOnCopy}
+                    onchange={(e) =>
+                      onAutoConvertOnCopyChange(
+                        (e.currentTarget as HTMLInputElement).checked,
+                      )}
+                  />
+                  <span class="settings-toggle-copy">
+                    <span class="settings-toggle-title">{t("settings.autoConvertOnCopy")}</span>
+                    <span class="settings-hint settings-hint--inline"
+                      >{t("settings.autoConvertOnCopyHint")}</span
+                    >
+                  </span>
+                </label>
+              {/if}
+
+              {#if onShowFloatingHudChange}
+                <label class="settings-launch-label">
+                  <input
+                    type="checkbox"
+                    checked={showFloatingHud}
+                    onchange={(e) =>
+                      onShowFloatingHudChange(
+                        (e.currentTarget as HTMLInputElement).checked,
+                      )}
+                  />
+                  <span class="settings-toggle-copy">
+                    <span class="settings-toggle-title">{t("settings.floatingHudTitle")}</span>
+                    <span class="settings-hint settings-hint--inline"
+                      >{t("settings.floatingHudHint")}</span
+                    >
+                  </span>
+                </label>
+              {/if}
+            </div>
+          </div>
+
+          {#if onGlobalShortcutChange}
+            <div class="settings-divider"></div>
+
+            <div class="settings-section">
+              <div class="settings-section-heading">
+                <SettingsSectionIcon name="keyboard" />
+                <div class="settings-section-title">{t("settings.hotkeyTitle")}</div>
+              </div>
+              <p class="settings-hint">{t("settings.hotkeyHint")}</p>
+              <div class="hotkey-row">
+                <kbd class="hotkey-display" aria-label={hotkeyDisplay}>{hotkeyDisplay}</kbd>
                 <button
                   type="button"
                   class="secondary"
+                  class:hotkey-recording={recordingHotkey}
+                  onclick={startHotkeyRecording}
+                >
+                  {recordingHotkey ? t("settings.hotkeyRecording") : t("settings.hotkeyChange")}
+                </button>
+                {#if globalShortcut !== DEFAULT_GLOBAL_SHORTCUT}
+                  <button
+                    type="button"
+                    class="secondary"
+                    in:fade={hintFadeInParams}
+                    out:fade={hintFadeOutParams}
+                    onclick={resetHotkey}
+                  >
+                    {t("settings.hotkeyReset")}
+                  </button>
+                {/if}
+              </div>
+              {#if hotkeyError}
+                <p
+                  class="settings-hint deps-error"
                   in:fade={hintFadeInParams}
                   out:fade={hintFadeOutParams}
-                  onclick={resetHotkey}
                 >
-                  {t("settings.hotkeyReset")}
-                </button>
+                  {hotkeyError}
+                </p>
               {/if}
             </div>
-            {#if hotkeyError}
+          {/if}
+
+          {#if onTokenStatsPeriodChange && onTokenStatsChange}
+            <div class="settings-divider"></div>
+            <div class="settings-section">
+              <div class="settings-section-heading">
+                <SettingsSectionIcon name="chart" />
+                <div class="settings-section-title">{t("tokenSavings.panelTitle")}</div>
+              </div>
+              <TokenSavingsPanel
+                stats={tokenStats}
+                period={tokenStatsPeriod}
+                onPeriodChange={onTokenStatsPeriodChange}
+                onStatsChange={onTokenStatsChange}
+                compact
+              />
+            </div>
+          {/if}
+
+          <div class="settings-divider"></div>
+
+          <div class="settings-section">
+            <button
+              type="button"
+              class="settings-link-card"
+              onclick={() => (generalPage = 1)}
+            >
+              <span class="settings-link-text">{t("settings.moreSettings")}</span>
+              <span class="settings-link-chevron" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
+      {:else if activeTab === "general" && generalPage === 1}
+        <div
+          id="settings-panel-general-more"
+          role="tabpanel"
+          aria-labelledby="settings-tab-general"
+          in:fade={tabFadeInParams}
+          out:fade={tabFadeOutParams}
+        >
+          <div class="settings-section">
+            <div class="settings-section-heading">
+              <SettingsSectionIcon name="shield" />
+              <div class="settings-section-title">{t("gatekeeper.title")}</div>
+            </div>
+            <p class="settings-hint">{t("gatekeeper.hint")}</p>
+            <div class="gatekeeper-actions">
+              <button
+                type="button"
+                class="secondary gatekeeper-copy-btn"
+                class:gatekeeper-copy-success={gatekeeperCopied}
+                onclick={copyGatekeeperCommand}
+              >
+                {#key gatekeeperCopied}
+                  <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+                    {gatekeeperCopied ? t("gatekeeper.copied") : t("gatekeeper.copyCommand")}
+                  </span>
+                {/key}
+              </button>
+              {#if gatekeeperCopyError}
+                <p
+                  class="settings-hint deps-error"
+                  in:fade={hintFadeInParams}
+                  out:fade={hintFadeOutParams}
+                >
+                  {gatekeeperCopyError}
+                </p>
+              {/if}
+              <button type="button" class="secondary" onclick={openPrivacySettings}>
+                {t("gatekeeper.openSettings")}
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-divider"></div>
+
+          <div class="settings-section">
+            <div class="settings-section-heading">
+              <SettingsSectionIcon name="folder" />
+              <div class="settings-section-title">{t("settings.finderTitle")}</div>
+            </div>
+            <p class="settings-hint">{t("settings.finderHint")}</p>
+            <ul class="settings-bullet-list">
+              <li>{t("settings.finderBulletKeep")}</li>
+              <li>{t("settings.finderBulletReplace")}</li>
+              <li>{t("settings.finderBulletServices")}</li>
+            </ul>
+            {#if finderActionInstalled}
               <p
-                class="settings-hint deps-error"
+                class="settings-hint settings-finder-status"
                 in:fade={hintFadeInParams}
                 out:fade={hintFadeOutParams}
               >
-                {hotkeyError}
+                {t("settings.finderInstalled")}
+              </p>
+            {:else if onInstallFinderAction}
+              <button
+                type="button"
+                class="secondary settings-finder-install-btn"
+                disabled={finderActionBusy}
+                onclick={onInstallFinderAction}
+              >
+                {#key finderActionBusy}
+                  <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
+                    {finderActionBusy
+                      ? t("settings.finderInstalling")
+                      : t("settings.finderInstall")}
+                  </span>
+                {/key}
+              </button>
+            {/if}
+            {#if finderActionNotice}
+              <p
+                class="settings-hint settings-finder-notice"
+                in:fade={hintFadeInParams}
+                out:fade={hintFadeOutParams}
+              >
+                {finderActionNotice}
               </p>
             {/if}
           </div>
-          <div class="settings-divider"></div>
-        {/if}
 
-        {#if onTokenStatsPeriodChange && onTokenStatsChange}
-          <TokenSavingsPanel
-            stats={tokenStats}
-            period={tokenStatsPeriod}
-            onPeriodChange={onTokenStatsPeriodChange}
-            onStatsChange={onTokenStatsChange}
-          />
           <div class="settings-divider"></div>
-        {/if}
 
-        <div class="settings-section">
-          <div class="settings-section-title">{t("gatekeeper.title")}</div>
-          <p class="settings-hint">{t("gatekeeper.hint")}</p>
-          <div class="gatekeeper-actions">
-            <button
-              type="button"
-              class="secondary gatekeeper-copy-btn"
-              class:gatekeeper-copy-success={gatekeeperCopied}
-              onclick={copyGatekeeperCommand}
-            >
-              {#key gatekeeperCopied}
-                <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
-                  {gatekeeperCopied ? t("gatekeeper.copied") : t("gatekeeper.copyCommand")}
-                </span>
-              {/key}
-            </button>
-            {#if gatekeeperCopyError}
-              <p class="settings-hint deps-error" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
-                {gatekeeperCopyError}
+          <div class="settings-section">
+            <div class="settings-section-heading">
+              <SettingsSectionIcon name="download" />
+              <div class="settings-section-title">{t("update.settingsTitle")}</div>
+            </div>
+            <p class="settings-hint">{t("update.settingsHint")}</p>
+            {#if onCheckForUpdates}
+              <button
+                type="button"
+                class="secondary"
+                disabled={updateCheckBusy}
+                onclick={onCheckForUpdates}
+              >
+                {updateCheckBusy ? t("update.checking") : t("update.checkButton")}
+              </button>
+            {/if}
+            {#if updateStatusNote}
+              <p
+                class="settings-update-status"
+                class:settings-update-status-ok={updateStatusOk}
+                in:fade={hintFadeInParams}
+                out:fade={hintFadeOutParams}
+              >
+                {updateStatusNote}
               </p>
             {/if}
-            <button type="button" class="secondary" onclick={openPrivacySettings}>
-              {t("gatekeeper.openSettings")}
+          </div>
+
+          <div class="settings-divider"></div>
+
+          <div class="settings-section">
+            <button type="button" class="settings-link-card" onclick={onOpenAbout}>
+              <span class="settings-link-text">
+                <span class="settings-link-with-icon">
+                  <SettingsSectionIcon name="info" />
+                  {t("settings.aboutTitle")}
+                </span>
+                <span class="settings-about-meta-inline">{t("settings.aboutSubtitle")}</span>
+              </span>
+              <span class="settings-link-chevron" aria-hidden="true">›</span>
             </button>
           </div>
         </div>
+      {:else}
+        <div
+          id="settings-panel-file-support"
+          role="tabpanel"
+          aria-labelledby="settings-tab-file-support"
+          class="settings-file-support"
+          in:fade={tabFadeInParams}
+          out:fade={tabFadeOutParams}
+        >
+          <div class="settings-card settings-ocr-card">
+            <div class="settings-section-title">{t("settings.ocrTitle")}</div>
+            <p class="settings-hint">{t("settings.ocrHint")}</p>
 
-        <div class="settings-divider"></div>
+            <div class="settings-inline-row">
+              <span class="settings-inline-label" id="ocr-lang-label"
+                >{t("settings.ocrLanguageLabel")}</span
+              >
+              <div class="settings-inline-control">
+                <OcrLanguageSelector
+                  value={ocrLanguage}
+                  disabled={!ocrEnabled}
+                  onChange={onOcrLanguageChange}
+                  compact
+                />
+              </div>
+            </div>
 
-        <div class="settings-section">
-          <div class="settings-section-title">{t("settings.finderTitle")}</div>
-          <p class="settings-hint">{t("settings.finderHint")}</p>
-          {#if finderActionInstalled}
-            <p
-              class="settings-hint settings-finder-status"
-              in:fade={hintFadeInParams}
-              out:fade={hintFadeOutParams}
-            >
-              {t("settings.finderInstalled")}
-            </p>
-          {:else if onInstallFinderAction}
-            <button
-              type="button"
-              class="secondary settings-finder-install-btn"
-              disabled={finderActionBusy}
-              onclick={onInstallFinderAction}
-            >
-              {#key finderActionBusy}
-                <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
-                  {finderActionBusy ? t("settings.finderInstalling") : t("settings.finderInstall")}
-                </span>
-              {/key}
-            </button>
-          {/if}
-          {#if finderActionNotice}
-            <p
-              class="settings-hint settings-finder-notice"
-              in:fade={hintFadeInParams}
-              out:fade={hintFadeOutParams}
-            >
-              {finderActionNotice}
-            </p>
-          {/if}
-        </div>
+            <div class="settings-card-divider" aria-hidden="true"></div>
 
-        <div class="settings-divider"></div>
+            <div class="settings-inline-row settings-inline-row--slider">
+              <span class="settings-inline-label" id="ocr-threads-label"
+                >{t("settings.workersLabel")}</span
+              >
+              <div class="settings-inline-control settings-inline-control--slider">
+                <WorkersSlider
+                  value={workers}
+                  label={t("settings.workersLabel")}
+                  onChange={onWorkersChange}
+                />
+              </div>
+            </div>
+          </div>
 
-        <div class="settings-section">
-          <div class="settings-section-title">{t("update.settingsTitle")}</div>
-          <p class="settings-hint">{t("update.settingsHint")}</p>
-          {#if onCheckForUpdates}
-            <button
-              type="button"
-              class="secondary"
-              disabled={updateCheckBusy}
-              onclick={onCheckForUpdates}
-            >
-              {updateCheckBusy ? t("update.checking") : t("update.checkButton")}
-            </button>
-          {/if}
-          {#if updateStatusNote}
-            <p
-              class="settings-update-status"
-              class:settings-update-status-ok={updateStatusOk}
-              in:fade={hintFadeInParams}
-              out:fade={hintFadeOutParams}
-            >
-              {updateStatusNote}
-            </p>
-          {/if}
-        </div>
-      </div>
-    {:else}
-      <div
-        id="settings-panel-file-support"
-        role="tabpanel"
-        aria-labelledby="settings-tab-file-support"
-        in:fade={tabFadeInParams}
-        out:fade={tabFadeOutParams}
-      >
-        <div class="settings-section">
-          <div class="settings-section-title">{t("settings.ocrLanguageTitle")}</div>
-          <p class="settings-hint settings-hint--multiline">{t("settings.ocrLanguageHint")}</p>
-          <OcrLanguageSelector
-            value={ocrLanguage}
-            disabled={!ocrEnabled}
-            onChange={onOcrLanguageChange}
-          />
-        </div>
-
-        <div class="settings-divider"></div>
-
-        <div class="settings-section">
-          <div class="settings-section-title">{t("settings.workersTitle")}</div>
-          <p class="settings-hint">{t("settings.workersHint")}</p>
-          <WorkersSlider
-            value={workers}
-            label={t("settings.workersTitle")}
-            onChange={onWorkersChange}
-          />
-        </div>
-
-        <div class="settings-divider"></div>
-
-        <div class="settings-section">
           <DependencyPreflight />
+
+          <button type="button" class="settings-link-card" onclick={onOpenAbout}>
+            <span class="settings-link-text">{t("settings.aboutTitle")}</span>
+            <span class="settings-link-chevron" aria-hidden="true">›</span>
+          </button>
         </div>
-      </div>
-    {/if}
+      {/if}
     {/key}
-
-    <div class="settings-divider"></div>
-
-    <div class="settings-section">
-      <button type="button" class="settings-link-card" onclick={onOpenAbout}>
-        <span class="settings-link-text">{t("settings.aboutTitle")}</span>
-        <span class="settings-link-chevron" aria-hidden="true">›</span>
-      </button>
-    </div>
   </div>
 </div>

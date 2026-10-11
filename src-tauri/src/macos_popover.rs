@@ -65,17 +65,14 @@ pub(crate) fn activate_app_for_popover<R: tauri::Runtime>(
     popover_trace("Activation: complete");
 }
 
-/// Configure the webview window as a floating popover (above menu bar, all spaces).
 #[cfg(target_os = "macos")]
-pub fn configure_popover_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
+fn apply_floating_clear_style<R: tauri::Runtime>(window: &WebviewWindow<R>) -> bool {
     let Ok(ns_ptr) = window.ns_window() else {
-        popover_trace("Activation: configure FAILED (ns_window unavailable)");
-        return;
+        return false;
     };
     unsafe {
         let ns_window: &NSWindow = &*ns_ptr.cast();
         ns_window.setLevel(NSFloatingWindowLevel);
-        popover_trace("Activation: NSFloatingWindowLevel + clear background");
         let behavior = NSWindowCollectionBehavior::CanJoinAllSpaces
             | NSWindowCollectionBehavior::FullScreenAuxiliary;
         ns_window.setCollectionBehavior(behavior);
@@ -83,6 +80,17 @@ pub fn configure_popover_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
         ns_window.setOpaque(false);
         ns_window.setBackgroundColor(Some(&NSColor::clearColor()));
     }
+    true
+}
+
+/// Configure the webview window as a floating popover (above menu bar, all spaces).
+#[cfg(target_os = "macos")]
+pub fn configure_popover_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
+    if !apply_floating_clear_style(window) {
+        popover_trace("Activation: configure FAILED (ns_window unavailable)");
+        return;
+    }
+    popover_trace("Activation: NSFloatingWindowLevel + clear background");
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -137,19 +145,7 @@ pub fn present_hud_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
 
 #[cfg(target_os = "macos")]
 pub fn configure_hud_window<R: tauri::Runtime>(window: &WebviewWindow<R>) {
-    let Ok(ns_ptr) = window.ns_window() else {
-        return;
-    };
-    unsafe {
-        let ns_window: &NSWindow = &*ns_ptr.cast();
-        ns_window.setLevel(NSFloatingWindowLevel);
-        let behavior = NSWindowCollectionBehavior::CanJoinAllSpaces
-            | NSWindowCollectionBehavior::FullScreenAuxiliary;
-        ns_window.setCollectionBehavior(behavior);
-        ns_window.setHasShadow(true);
-        ns_window.setOpaque(false);
-        ns_window.setBackgroundColor(Some(&NSColor::clearColor()));
-    }
+    let _ = apply_floating_clear_style(window);
 }
 
 #[cfg(not(target_os = "macos"))]

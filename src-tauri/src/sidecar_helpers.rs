@@ -11,7 +11,9 @@ use std::process::Command;
 pub const SPREADSHEET_EXTENSIONS: &[&str] = &["xls", "xlsx", "xlsm", "ods", "csv", "tsv"];
 
 pub fn is_spreadsheet_ext(ext: &str) -> bool {
-    SPREADSHEET_EXTENSIONS.contains(&ext.to_lowercase().as_str())
+    SPREADSHEET_EXTENSIONS
+        .iter()
+        .any(|candidate| candidate.eq_ignore_ascii_case(ext))
 }
 
 pub fn validate_output_format(format: &str) -> Result<(), String> {
@@ -51,9 +53,7 @@ pub fn output_paths(file_path: &Path, out_dir: &Path, format: &str) -> (PathBuf,
         .unwrap_or("document")
         .to_string();
     let is_spreadsheet = is_spreadsheet_ext(ext);
-    let out_ext = if is_spreadsheet {
-        "json"
-    } else if format == "json" {
+    let out_ext = if is_spreadsheet || format == "json" {
         "json"
     } else if format == "txt" {
         "txt"
@@ -167,6 +167,59 @@ pub fn token_savings_event(file_name: &str, savings: &TokenSavings) -> Value {
     })
 }
 
+pub fn host_triple() -> String {
+    match std::env::consts::OS {
+        "macos" => format!("{}-apple-darwin", std::env::consts::ARCH),
+        "linux" => format!("{}-unknown-linux-gnu", std::env::consts::ARCH),
+        "windows" => format!("{}-pc-windows-msvc", std::env::consts::ARCH),
+        other => format!("{}-{other}", std::env::consts::ARCH),
+    }
+}
+
+/// Locate the `parsekit-sidecar` binary (env override, sibling of the exe, then repo binaries).
+pub fn resolve_sidecar() -> Result<PathBuf, String> {
+    if let Ok(path) = std::env::var("PARSEKIT_SIDECAR") {
+        let candidate = PathBuf::from(&path);
+        if candidate.is_file() {
+            return Ok(candidate);
+        }
+        return Err(format!("PARSEKIT_SIDECAR not found: {path}"));
+    }
+
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            let sibling = dir.join("parsekit-sidecar");
+            if sibling.is_file() {
+                return Ok(sibling);
+            }
+        }
+    }
+
+    if let Ok(exe) = std::env::current_exe() {
+        let mut dir = exe.parent().map(Path::to_path_buf);
+        let triple = host_triple();
+        for _ in 0..8 {
+            let Some(current) = dir else { break };
+            let bundled = current
+                .join("src-tauri/binaries")
+                .join(format!("parsekit-sidecar-{triple}"));
+            if bundled.is_file() {
+                return Ok(bundled);
+            }
+            let plain = current.join("src-tauri/binaries/parsekit-sidecar");
+            if plain.is_file() {
+                return Ok(plain);
+            }
+            dir = current.parent().map(Path::to_path_buf);
+        }
+    }
+
+    Err(
+        "parsekit-sidecar not found. Build with: npm run build:sidecar (or set PARSEKIT_SIDECAR)"
+            .to_string(),
+    )
+}
+
 pub fn format_output(result: &ParseResult, base_name: &str, format: &str, is_spreadsheet: bool) -> String {
     if is_spreadsheet || format == "json" {
         let json_result = to_json_result(result);
@@ -175,15 +228,15 @@ pub fn format_output(result: &ParseResult, base_name: &str, format: &str, is_spr
         });
     }
     if format == "txt" {
-        if !result.pages.is_empty() {
-            return result
-                .pages
-                .iter()
-                .map(|p| p.text.as_str())
-                .collect::<Vec<_>>()
-                .join("\n\n---\n\n");
+        if result.pages.is_empty() {
+            return result.text.clone();
         }
-        return result.text.clone();
+        return result
+            .pages
+            .iter()
+            .map(|p| p.text.as_str())
+            .collect::<Vec<_>>()
+            .join("\n\n---\n\n");
     }
     // Markdown
     let pages: Vec<String> = result
@@ -233,5 +286,28 @@ mod tests {
         assert_eq!(cfg.num_workers, 4);
         let cfg_zero = build_liteparse_config(true, "eng".to_string(), 0);
         assert_eq!(cfg_zero.num_workers, 1, "worker count is clamped to >= 1");
+    }
+
+    #[test]
+    fn host_triple_matches_current_os() {
+        let triple = host_triple();
+        #[cfg(target_os = "macos")]
+        assert!(triple.ends_with("-apple-darwin"), "{triple}");
+        #[cfg(target_os = "linux")]
+        assert!(triple.contains("linux"), "{triple}");
+        #[cfg(target_os = "windows")]
+        assert!(triple.contains("windows"), "{triple}");
+    }
+
+    #[test]
+    fn resolve_sidecar_prefers_env_then_errors_if_missing() {
+        let prev = std::env::var("PARSEKIT_SIDECAR").ok();
+        std::env::set_var("PARSEKIT_SIDECAR", "/no/such/parsekit-sidecar-characterization");
+        let err = resolve_sidecar().unwrap_err();
+        assert!(err.contains("PARSEKIT_SIDECAR not found"), "{err}");
+        match prev {
+            Some(v) => std::env::set_var("PARSEKIT_SIDECAR", v),
+            None => std::env::remove_var("PARSEKIT_SIDECAR"),
+        }
     }
 }

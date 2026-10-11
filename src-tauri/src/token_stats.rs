@@ -43,8 +43,7 @@ pub struct RecordInput {
 }
 
 fn support_dir() -> Result<PathBuf, String> {
-    let home = std::env::var("HOME").map_err(|e| e.to_string())?;
-    Ok(PathBuf::from(home).join("Library/Application Support/com.harshabala.parsekit"))
+    crate::app_support_dir()
 }
 
 fn stats_path() -> Result<PathBuf, String> {

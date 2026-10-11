@@ -236,32 +236,10 @@ fn position_popover_under_tray<R: Runtime>(window: &WebviewWindow<R>, rect: &Rec
         return false;
     };
     let scale = window.scale_factor().unwrap_or(1.0);
-
-    let icon_x = match rect.position {
-        Position::Physical(p) => p.x as f64,
-        Position::Logical(p) => p.x * scale,
-    };
-    let icon_y = match rect.position {
-        Position::Physical(p) => p.y as f64,
-        Position::Logical(p) => p.y * scale,
-    };
-    let icon_w = match rect.size {
-        Size::Physical(s) => s.width as f64,
-        Size::Logical(s) => s.width * scale,
-    };
-    let icon_h = match rect.size {
-        Size::Physical(s) => s.height as f64,
-        Size::Logical(s) => s.height * scale,
-    };
+    let (icon_x, icon_y, icon_w, icon_h) = physical_xywh(rect, scale);
     let win_w = win_size.width as f64;
     let win_h = win_size.height as f64;
-
-    let (monitor_width, monitor_height) = window
-        .current_monitor()
-        .ok()
-        .flatten()
-        .map(|m| (m.size().width as f64, m.size().height as f64))
-        .unwrap_or((f64::MAX, f64::MAX));
+    let (monitor_width, monitor_height) = monitor_size_f64(window, (f64::MAX, f64::MAX));
 
     let x = (icon_x + icon_w / 2.0 - win_w / 2.0)
         .max(0.0)
@@ -274,7 +252,6 @@ fn position_popover_under_tray<R: Runtime>(window: &WebviewWindow<R>, rect: &Rec
 
     let _ = window.set_position(PhysicalPosition::new(x, y));
     popover_trace(&format!("Positioning: OK x={x} y={y} win={win_w}x{win_h}"));
-    let _ = win_h; // keep height available for future vertical clamping
     true
 }
 
@@ -394,8 +371,8 @@ fn restore_accessory_app_policy<R: Runtime>(app: &AppHandle<R>) {
     let _ = app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 }
 
-fn normalize_user_path(path: String) -> String {
-    let trimmed = path.trim();
+pub(crate) fn normalize_user_path(path: impl AsRef<str>) -> String {
+    let trimmed = path.as_ref().trim();
     if trimmed.starts_with("file://") {
         if let Ok(url) = url::Url::parse(trimmed) {
             if let Ok(p) = url.to_file_path() {
@@ -406,9 +383,24 @@ fn normalize_user_path(path: String) -> String {
     trimmed.to_string()
 }
 
+pub fn app_support_dir() -> Result<std::path::PathBuf, String> {
+    let home = std::env::var("HOME").map_err(|e| e.to_string())?;
+    Ok(std::path::PathBuf::from(home)
+        .join("Library/Application Support/com.harshabala.parsekit"))
+}
+
+pub fn settings_json_path() -> Result<std::path::PathBuf, String> {
+    Ok(app_support_dir()?.join("settings.json"))
+}
+
+pub fn read_settings_json() -> Option<serde_json::Value> {
+    let raw = std::fs::read_to_string(settings_json_path().ok()?).ok()?;
+    serde_json::from_str(&raw).ok()
+}
+
 /// Resolve and validate a user-supplied path before spawning `open` or similar OS commands.
 fn validate_user_path(path: &str) -> Result<std::path::PathBuf, String> {
-    let normalized = normalize_user_path(path.to_string());
+    let normalized = normalize_user_path(path);
     if normalized.is_empty() {
         return Err("Path is empty".into());
     }
@@ -423,6 +415,35 @@ fn file_path_to_string(path: tauri_plugin_dialog::FilePath) -> Option<String> {
         .ok()
         .and_then(|p| p.into_os_string().into_string().ok())
         .map(normalize_user_path)
+}
+
+fn physical_xywh(rect: &Rect, scale: f64) -> (f64, f64, f64, f64) {
+    let x = match rect.position {
+        Position::Physical(p) => p.x as f64,
+        Position::Logical(p) => p.x * scale,
+    };
+    let y = match rect.position {
+        Position::Physical(p) => p.y as f64,
+        Position::Logical(p) => p.y * scale,
+    };
+    let w = match rect.size {
+        Size::Physical(s) => s.width as f64,
+        Size::Logical(s) => s.width * scale,
+    };
+    let h = match rect.size {
+        Size::Physical(s) => s.height as f64,
+        Size::Logical(s) => s.height * scale,
+    };
+    (x, y, w, h)
+}
+
+fn monitor_size_f64<R: Runtime>(window: &WebviewWindow<R>, fallback: (f64, f64)) -> (f64, f64) {
+    window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .map(|m| (m.size().width as f64, m.size().height as f64))
+        .unwrap_or(fallback)
 }
 
 /// Open native pickers without a parent window. Borderless accessory popovers cannot host
@@ -507,13 +528,13 @@ async fn pick_input_files(
     .await
 }
 
-#[tauri::command]
-async fn pick_input_folder(
+async fn pick_named_folder(
     app: AppHandle,
     popover: State<'_, PopoverState>,
+    title: &'static str,
 ) -> Result<Option<String>, String> {
-    run_file_picker_async(app, popover.inner(), |app| async move {
-        await_pick_folder(&app, "Select folder")
+    run_file_picker_async(app, popover.inner(), move |app| async move {
+        await_pick_folder(&app, title)
             .await
             .ok()
             .flatten()
@@ -524,19 +545,19 @@ async fn pick_input_folder(
 }
 
 #[tauri::command]
+async fn pick_input_folder(
+    app: AppHandle,
+    popover: State<'_, PopoverState>,
+) -> Result<Option<String>, String> {
+    pick_named_folder(app, popover, "Select folder").await
+}
+
+#[tauri::command]
 async fn pick_output_folder(
     app: AppHandle,
     popover: State<'_, PopoverState>,
 ) -> Result<Option<String>, String> {
-    run_file_picker_async(app, popover.inner(), |app| async move {
-        await_pick_folder(&app, "Choose output folder")
-            .await
-            .ok()
-            .flatten()
-            .map(|path| vec![path])
-    })
-    .await
-    .map(|paths| paths.and_then(|mut v| v.pop()))
+    pick_named_folder(app, popover, "Choose output folder").await
 }
 
 #[cfg(target_os = "macos")]
@@ -666,6 +687,28 @@ fn imagemagick_available() -> bool {
         |p| Path::new(p).exists(),
         shell_which_on_augmented_path,
     )
+}
+
+#[cfg(test)]
+mod path_helper_tests {
+    use super::{normalize_user_path, path_has_supported_extension};
+    use std::path::Path;
+
+    #[test]
+    fn normalize_file_url_and_trim() {
+        assert_eq!(
+            normalize_user_path("file:///tmp/report.pdf"),
+            "/tmp/report.pdf"
+        );
+        assert_eq!(normalize_user_path("  /tmp/a.pdf  "), "/tmp/a.pdf");
+    }
+
+    #[test]
+    fn supported_extension_is_case_insensitive() {
+        assert!(path_has_supported_extension(Path::new("Report.PDF")));
+        assert!(!path_has_supported_extension(Path::new("notes.txt")));
+        assert!(!path_has_supported_extension(Path::new("noext")));
+    }
 }
 
 #[cfg(test)]
@@ -993,8 +1036,7 @@ pub(crate) fn display_notification(title: &str, body: &str) -> Result<(), String
 }
 
 /// Copy plain text to the system clipboard (macOS `pbcopy` — reliable for menu-bar apps).
-#[tauri::command]
-fn copy_text_to_clipboard(text: String) -> Result<(), String> {
+pub(crate) fn copy_text_to_system_clipboard(text: &str) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
         use std::io::Write;
@@ -1022,6 +1064,11 @@ fn copy_text_to_clipboard(text: String) -> Result<(), String> {
         let _ = text;
         Err("Clipboard copy is only supported on macOS".into())
     }
+}
+
+#[tauri::command]
+fn copy_text_to_clipboard(text: String) -> Result<(), String> {
+    copy_text_to_system_clipboard(&text)
 }
 
 #[tauri::command]
@@ -1053,10 +1100,53 @@ fn trigger_haptic() -> Result<(), String> {
 // Canonical list of supported file extensions — single source of truth used for both
 // the preview file count (scan_directory) and the actual parse file set passed to the sidecar.
 // Aligned with LiteParse v2 multi-format support (LibreOffice / ImageMagick where noted).
-pub(crate) const SUPPORTED_EXTENSIONS: &[&str] = &[
+pub const SUPPORTED_EXTENSIONS: &[&str] = &[
     "pdf", "doc", "docx", "docm", "odt", "rtf", "ppt", "pptx", "pptm", "odp", "xls", "xlsx",
     "xlsm", "ods", "csv", "tsv", "png", "jpg", "jpeg", "gif", "bmp", "tiff", "tif", "webp", "svg",
 ];
+
+pub fn path_has_supported_extension(path: &Path) -> bool {
+    path.extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|ext| {
+            SUPPORTED_EXTENSIONS
+                .iter()
+                .any(|candidate| candidate.eq_ignore_ascii_case(ext))
+        })
+}
+
+pub(crate) fn expand_path_to_supported_files(path: &str) -> Vec<String> {
+    let normalized = normalize_user_path(path);
+    if normalized.is_empty() {
+        return Vec::new();
+    }
+    let p = Path::new(&normalized);
+    if p.is_file() {
+        return if path_has_supported_extension(p) {
+            vec![normalized]
+        } else {
+            Vec::new()
+        };
+    }
+    if p.is_dir() {
+        return scan_directory_sync(normalized).unwrap_or_default();
+    }
+    Vec::new()
+}
+
+pub(crate) fn collect_supported_files<I, S>(raw_paths: I) -> Vec<String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let mut files = Vec::new();
+    for path in raw_paths {
+        files.extend(expand_path_to_supported_files(path.as_ref()));
+    }
+    files.sort();
+    files.dedup();
+    files
+}
 
 const SCAN_MAX_DEPTH: usize = 32;
 const SCAN_MAX_FILES: usize = 10_000;
@@ -1082,12 +1172,9 @@ pub(crate) fn scan_directory_sync(path: String) -> Result<Vec<String>, String> {
                     "Too many supported files (max {SCAN_MAX_FILES}). Choose a smaller folder."
                 ));
             }
-            if let Some(ext) = entry_path.extension().and_then(|e| e.to_str()) {
-                let ext_lower = ext.to_lowercase();
-                if SUPPORTED_EXTENSIONS.contains(&ext_lower.as_str()) {
-                    if let Some(s) = entry_path.to_str() {
-                        files.push(s.to_string());
-                    }
+            if path_has_supported_extension(entry_path) {
+                if let Some(s) = entry_path.to_str() {
+                    files.push(s.to_string());
                 }
             }
         }
@@ -1126,16 +1213,14 @@ async fn scan_directory(path: String) -> Result<Vec<String>, String> {
 
 #[cfg(target_os = "macos")]
 fn maybe_show_menu_bar_hint() {
-    let Ok(home) = std::env::var("HOME") else {
+    let Ok(dir) = app_support_dir() else {
         return;
     };
-    let marker = format!("{home}/Library/Application Support/com.harshabala.parsekit/.menu_bar_hint_shown");
-    if Path::new(&marker).exists() {
+    let marker = dir.join(".menu_bar_hint_shown");
+    if marker.exists() {
         return;
     }
-    if let Some(parent) = Path::new(&marker).parent() {
-        let _ = std::fs::create_dir_all(parent);
-    }
+    let _ = std::fs::create_dir_all(&dir);
     let _ = std::fs::write(&marker, "");
     let _ = show_completion_notification(
         "ParseKit".to_string(),
@@ -1249,32 +1334,10 @@ fn position_progress_hud_under_tray<R: Runtime>(window: &WebviewWindow<R>, rect:
         return false;
     };
     let scale = window.scale_factor().unwrap_or(1.0);
-
-    let icon_x = match rect.position {
-        Position::Physical(p) => p.x as f64,
-        Position::Logical(p) => p.x * scale,
-    };
-    let icon_y = match rect.position {
-        Position::Physical(p) => p.y as f64,
-        Position::Logical(p) => p.y * scale,
-    };
-    let icon_w = match rect.size {
-        Size::Physical(s) => s.width as f64,
-        Size::Logical(s) => s.width * scale,
-    };
-    let icon_h = match rect.size {
-        Size::Physical(s) => s.height as f64,
-        Size::Logical(s) => s.height * scale,
-    };
+    let (icon_x, icon_y, icon_w, icon_h) = physical_xywh(rect, scale);
     let win_w = win_size.width as f64;
     let win_h = win_size.height as f64;
-
-    let (monitor_width, monitor_height) = window
-        .current_monitor()
-        .ok()
-        .flatten()
-        .map(|m| (m.size().width as f64, m.size().height as f64))
-        .unwrap_or((f64::MAX, f64::MAX));
+    let (monitor_width, monitor_height) = monitor_size_f64(window, (f64::MAX, f64::MAX));
 
     // Anchor below menu bar icon, right-aligned to tray.
     let x = (icon_x + icon_w - win_w)
@@ -1294,12 +1357,7 @@ fn position_progress_hud_top_right<R: Runtime>(window: &WebviewWindow<R>) -> boo
         return false;
     };
     let scale = window.scale_factor().unwrap_or(1.0);
-    let (monitor_width, _) = window
-        .current_monitor()
-        .ok()
-        .flatten()
-        .map(|m| (m.size().width as f64, m.size().height as f64))
-        .unwrap_or((1920.0 * scale, 1080.0 * scale));
+    let (monitor_width, _) = monitor_size_f64(window, (1920.0 * scale, 1080.0 * scale));
 
     let margin = 16.0 * scale;
     let menu_bar = 36.0 * scale;

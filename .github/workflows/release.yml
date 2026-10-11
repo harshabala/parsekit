@@ -95,7 +95,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ github.workspace }}/.tauri-ci/parsekit.key
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
-          RELEASE_NOTES: ${{ github.event.head_commit.message }}
+          # Prefer docs/releases/vX.Y.Z.md via scripts/release-notes.sh (do not dump commit subject).
         run: |
           mkdir -p .tauri-ci
           cp "$HOME/.tauri/parsekit.key" "$TAURI_SIGNING_PRIVATE_KEY_PATH"
@@ -108,7 +108,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
+          git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/tauri.conf.json README.md docs/INSTALL.md
           if git diff --cached --quiet; then
             echo "Version files already match v${VERSION}"
             exit 0

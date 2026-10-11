@@ -1,6 +1,6 @@
 [package]
 name = "parsekit"
-version = "0.2.8"
+version = "0.2.11"
 edition = "2021"
 default-run = "parsekit"
 

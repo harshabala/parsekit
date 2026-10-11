@@ -16,11 +16,14 @@
     period,
     onPeriodChange,
     onStatsChange,
+    compact = false,
   }: {
     stats: TokenStats | null;
     period: TokenStatsPeriod;
     onPeriodChange: (period: TokenStatsPeriod) => void;
     onStatsChange: (stats: TokenStats) => void;
+    /** Hide outer title/long copy when the parent section already labels this block. */
+    compact?: boolean;
   } = $props();
 
   const reducedMotion = $derived(prefersReducedMotion.current);
@@ -62,9 +65,13 @@
   }
 </script>
 
-<div class="token-savings-panel">
-  <div class="settings-section-title">{t("tokenSavings.panelTitle")}</div>
-  <p class="settings-hint">{t("tokenSavings.panelHint")}</p>
+<div class="token-savings-panel" class:token-savings-panel--compact={compact}>
+  {#if !compact}
+    <div class="settings-section-title">{t("tokenSavings.panelTitle")}</div>
+    <p class="settings-hint">{t("tokenSavings.panelHint")}</p>
+  {:else}
+    <p class="settings-hint">{t("tokenSavings.panelHintShort")}</p>
+  {/if}
 
   <div class="token-savings-period" role="group" aria-label={t("tokenSavings.periodLabel")}>
     <div class="segmented-control token-savings-period-toggle">
@@ -96,7 +103,9 @@
         {t("tokenSavings.periodLifetime")}
       </button>
     </div>
-    <p class="settings-hint token-savings-period-hint">{t("tokenSavings.periodHint")}</p>
+    {#if !compact}
+      <p class="settings-hint token-savings-period-hint">{t("tokenSavings.periodHint")}</p>
+    {/if}
   </div>
 
   {#if !hasData}
@@ -111,11 +120,13 @@
         <dt>{t("tokenSavings.filesConverted")}</dt>
         <dd>{formatTokenCount(stats?.total_files_converted ?? 0)}</dd>
       </div>
-      <div class="token-savings-stat token-savings-stat--pages">
-        <dt>{t("tokenSavings.pagesUnlocked")}</dt>
-        <dd>{formatTokenCount(stats?.total_pages_unlocked ?? 0)}</dd>
-      </div>
-      {#if (stats?.total_documents_unlocked ?? 0) > 0}
+      {#if !compact || (stats?.total_pages_unlocked ?? 0) > 0}
+        <div class="token-savings-stat token-savings-stat--pages">
+          <dt>{t("tokenSavings.pagesUnlocked")}</dt>
+          <dd>{formatTokenCount(stats?.total_pages_unlocked ?? 0)}</dd>
+        </div>
+      {/if}
+      {#if !compact && (stats?.total_documents_unlocked ?? 0) > 0}
         <div class="token-savings-stat token-savings-stat--pages">
           <dt>{t("tokenSavings.documentsUnlocked")}</dt>
           <dd>{formatTokenCount(stats?.total_documents_unlocked ?? 0)}</dd>
@@ -123,7 +134,7 @@
       {/if}
     </dl>
 
-    {#if lifetimeTokens > 0}
+    {#if !compact && lifetimeTokens > 0}
       <p class="token-savings-approx">
         {t("tokenSavings.chatGptApprox", { count: formatTokenCount(chatGptApprox) })}
         <span class="token-savings-approx-label">{t("tokenSavings.approximateLabel")}</span>
@@ -132,15 +143,21 @@
 
     {#if sortedFileTypes.length > 0}
       <div class="token-savings-by-type">
-        <div class="token-savings-by-type-title">{t("tokenSavings.byTypeTitle")}</div>
-        <ul class="token-savings-by-type-list">
+        {#if !compact}
+          <div class="token-savings-by-type-title">{t("tokenSavings.byTypeTitle")}</div>
+        {/if}
+        <ul class="token-savings-by-type-list" class:token-savings-by-type-list--inline={compact}>
           {#each sortedFileTypes as [type, row]}
             <li>
-              {t("tokenSavings.byTypeRow", {
-                type: fileTypeLabel(type),
-                tokens: formatTokenCount(row.tokens_saved),
-                files: formatTokenCount(row.files),
-              })}
+              {#if compact}
+                {fileTypeLabel(type)} {formatTokenCount(row.files)}
+              {:else}
+                {t("tokenSavings.byTypeRow", {
+                  type: fileTypeLabel(type),
+                  tokens: formatTokenCount(row.tokens_saved),
+                  files: formatTokenCount(row.files),
+                })}
+              {/if}
             </li>
           {/each}
         </ul>
@@ -148,7 +165,11 @@
     {/if}
   {/if}
 
-  <p class="token-savings-privacy">{t("tokenSavings.privacy")}</p>
+  {#if !compact}
+    <p class="token-savings-privacy">{t("tokenSavings.privacy")}</p>
+  {:else}
+    <p class="token-savings-privacy">{t("tokenSavings.privacyShort")}</p>
+  {/if}
 
   <button
     type="button"

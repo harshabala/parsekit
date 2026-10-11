@@ -1,6 +1,7 @@
 /**
  * Panel enter/exit params for Svelte `fly` / `fade` transitions.
- * Easing curves match CSS tokens `--easing-decelerate` and `--easing-accelerate`.
+ * Easing curves match CSS tokens `--easing-decelerate` and `--easing-standard`.
+ * UI enters AND exits use ease-out (decelerate). No ease-in on exits (Emil / review bar).
  */
 
 function cubicBezier(x1: number, y1: number, x2: number, y2: number): (t: number) => number {
@@ -44,17 +45,21 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number): (t: number
   };
 }
 
-/** Matches `--easing-decelerate`: cubic-bezier(0, 0, 0.2, 1) */
-export const easingDecelerate = cubicBezier(0, 0, 0.2, 1);
+/** Strong ease-out: cubic-bezier(0.23, 1, 0.32, 1) — matches `--easing-decelerate` */
+export const easingDecelerate = cubicBezier(0.23, 1, 0.32, 1);
 
-/** Matches `--easing-accelerate`: cubic-bezier(0.4, 0, 1, 1) */
-export const easingAccelerate = cubicBezier(0.4, 0, 1, 1);
+/**
+ * @deprecated Prefer easingDecelerate for UI exits. Kept for any external import.
+ * Historically ease-in; now aliases decelerate so exits stay responsive.
+ */
+export const easingAccelerate = easingDecelerate;
 
 export const MOTION_ENTER_Y = 8;
 export const MOTION_EXIT_Y = -4;
 export const MOTION_BANNER_ENTER_Y = 4;
 export const MOTION_BANNER_EXIT_Y = -2;
-export const MOTION_ENTER_BLUR_PX = 4;
+/** Panel blur removed (GPU cost); kept at 0 for API stability. */
+export const MOTION_ENTER_BLUR_PX = 0;
 export const MOTION_ENTER_MS = 180;
 export const MOTION_EXIT_MS = 120;
 export const MOTION_HINT_MS = 120;
@@ -69,12 +74,9 @@ export const MOTION_DEPS_ENTER_MS = 180;
 /** Keep in sync with `--motion-deps-pop` in index.css */
 export const MOTION_DEPS_POP_MS = 220;
 
-function cappedStaggerDelayMs(
-  index: number,
-  durationMs: number
-): number {
+function cappedStaggerDelayMs(index: number, durationMs: number): number {
   const maxIndex = Math.floor(
-    (MOTION_STAGGER_BUDGET_MS - durationMs) / MOTION_DEPS_STAGGER_DELAY_MS
+    (MOTION_STAGGER_BUDGET_MS - durationMs) / MOTION_DEPS_STAGGER_DELAY_MS,
   );
   return Math.min(index, Math.max(0, maxIndex)) * MOTION_DEPS_STAGGER_DELAY_MS;
 }
@@ -89,13 +91,11 @@ export function depsPopDelayMs(index: number): number {
   return cappedStaggerDelayMs(index, MOTION_DEPS_POP_MS);
 }
 
-function panelBlurCss(
-  t: number,
-  u: number,
-  y: number,
-  blurPx: number
-): string {
-  return `transform: translateY(${y * u}px); opacity: ${t}; filter: blur(${blurPx * u}px);`;
+/** Opacity + translateY only (no filter:blur — GPU-friendly). */
+function panelFlyCss(t: number, u: number, y: number, scaleFrom = 1): string {
+  const scale = scaleFrom === 1 ? 1 : scaleFrom + (1 - scaleFrom) * t;
+  const scalePart = scaleFrom === 1 ? "" : ` scale(${scale})`;
+  return `transform: translateY(${y * u}px)${scalePart}; opacity: ${t};`;
 }
 
 export type BlurFlyTransition = {
@@ -104,30 +104,37 @@ export type BlurFlyTransition = {
   css: (t: number, u: number) => string;
 };
 
-/** Params for `in:panelBlurFlyIn` / `out:panelBlurFlyOut` Svelte transitions. */
-export function panelBlurFlyInParams(prefersReduced: boolean): BlurFlyTransition {
-  const y = prefersReduced ? 0 : MOTION_ENTER_Y;
-  const blur = prefersReduced ? 0 : MOTION_ENTER_BLUR_PX;
-  const duration = prefersReduced ? 0 : MOTION_ENTER_MS;
+/** Params for panel enter (translateY + opacity). Name kept for call sites. */
+export function panelBlurFlyInParams(
+  prefersReduced: boolean,
+  options?: { instant?: boolean; originScale?: boolean },
+): BlurFlyTransition {
+  const instant = options?.instant === true || prefersReduced;
+  const y = instant ? 0 : MOTION_ENTER_Y;
+  const duration = instant ? 0 : MOTION_ENTER_MS;
+  const scaleFrom = !instant && options?.originScale ? 0.96 : 1;
   return {
     duration,
     easing: easingDecelerate,
-    css: (t: number, u: number) => panelBlurCss(t, u, y, blur),
+    css: (t: number, u: number) => panelFlyCss(t, u, y, scaleFrom),
   };
 }
 
-export function panelBlurFlyOutParams(prefersReduced: boolean): BlurFlyTransition {
-  const y = prefersReduced ? 0 : MOTION_EXIT_Y;
-  const blur = prefersReduced ? 0 : MOTION_ENTER_BLUR_PX;
-  const duration = prefersReduced ? 0 : MOTION_EXIT_MS;
+export function panelBlurFlyOutParams(
+  prefersReduced: boolean,
+  options?: { instant?: boolean },
+): BlurFlyTransition {
+  const instant = options?.instant === true || prefersReduced;
+  const y = instant ? 0 : MOTION_EXIT_Y;
+  const duration = instant ? 0 : MOTION_EXIT_MS;
   return {
     duration,
-    easing: easingAccelerate,
-    css: (t: number, u: number) => panelBlurCss(t, u, y, blur),
+    easing: easingDecelerate,
+    css: (t: number, u: number) => panelFlyCss(t, u, y, 1),
   };
 }
 
-/** Svelte transition: panel enter (translateY + opacity + blur). */
+/** Svelte transition: panel enter. */
 export function panelBlurFlyIn(_node: Element, params: BlurFlyTransition) {
   return params;
 }
@@ -149,21 +156,22 @@ export function panelFlyOut(prefersReduced: boolean) {
   return {
     y: prefersReduced ? 0 : MOTION_EXIT_Y,
     duration: prefersReduced ? 0 : MOTION_EXIT_MS,
-    easing: easingAccelerate,
+    easing: easingDecelerate,
   };
 }
 
 export function panelFadeIn(prefersReduced: boolean) {
   return {
-    duration: prefersReduced ? 0 : MOTION_ENTER_MS,
+    // Under reduced motion: keep a short opacity crossfade for comprehension
+    duration: prefersReduced ? 100 : MOTION_ENTER_MS,
     easing: easingDecelerate,
   };
 }
 
 export function panelFadeOut(prefersReduced: boolean) {
   return {
-    duration: prefersReduced ? 0 : MOTION_EXIT_MS,
-    easing: easingAccelerate,
+    duration: prefersReduced ? 80 : MOTION_EXIT_MS,
+    easing: easingDecelerate,
   };
 }
 
@@ -179,11 +187,11 @@ export function bannerFlyOut(prefersReduced: boolean) {
   return {
     y: prefersReduced ? 0 : MOTION_BANNER_EXIT_Y,
     duration: prefersReduced ? 0 : MOTION_EXIT_MS,
-    easing: easingAccelerate,
+    easing: easingDecelerate,
   };
 }
 
-/** Progress section enter: y 8, 180ms decelerate */
+/** Progress section enter: y 8, 180ms ease-out */
 export function sectionFlyIn(prefersReduced: boolean) {
   return {
     y: prefersReduced ? 0 : MOTION_ENTER_Y,
@@ -192,21 +200,21 @@ export function sectionFlyIn(prefersReduced: boolean) {
   };
 }
 
-/** Progress section exit: y -4, 120ms accelerate */
+/** Progress section exit: y -4, 120ms ease-out */
 export function sectionFlyOut(prefersReduced: boolean) {
   return {
     y: prefersReduced ? 0 : MOTION_EXIT_Y,
     duration: prefersReduced ? 0 : MOTION_EXIT_MS,
-    easing: easingAccelerate,
+    easing: easingDecelerate,
   };
 }
 
-/** Run/cancel button crossfade enter: 180ms decelerate */
+/** Run/cancel button crossfade enter */
 export function buttonFadeIn(prefersReduced: boolean) {
   return panelFadeIn(prefersReduced);
 }
 
-/** Run/cancel button crossfade exit: 120ms accelerate */
+/** Run/cancel button crossfade exit */
 export function buttonFadeOut(prefersReduced: boolean) {
   return panelFadeOut(prefersReduced);
 }
@@ -214,7 +222,7 @@ export function buttonFadeOut(prefersReduced: boolean) {
 export const MOTION_ICON_ENTER_MS = 100;
 export const MOTION_ICON_EXIT_MS = 80;
 
-/** Status icon crossfade enter: 100ms decelerate */
+/** Status icon crossfade enter */
 export function iconFadeIn(prefersReduced: boolean) {
   return {
     duration: prefersReduced ? 0 : MOTION_ICON_ENTER_MS,
@@ -222,45 +230,103 @@ export function iconFadeIn(prefersReduced: boolean) {
   };
 }
 
-/** Status icon crossfade exit: 80ms accelerate */
+/** Status icon crossfade exit */
 export function iconFadeOut(prefersReduced: boolean) {
   return {
     duration: prefersReduced ? 0 : MOTION_ICON_EXIT_MS,
-    easing: easingAccelerate,
+    easing: easingDecelerate,
   };
 }
 
-/** Inline hints, status lines, drop-zone ready: 120ms */
+/** Inline hints, status lines, drop-zone ready */
 export function hintFadeIn(prefersReduced: boolean) {
   return {
-    duration: prefersReduced ? 0 : MOTION_HINT_MS,
+    duration: prefersReduced ? 80 : MOTION_HINT_MS,
     easing: easingDecelerate,
   };
 }
 
 export function hintFadeOut(prefersReduced: boolean) {
   return {
-    duration: prefersReduced ? 0 : MOTION_HINT_MS,
-    easing: easingAccelerate,
-  };
-}
-
-/** Config card ↔ collapsed summary */
-export function collapseSlideIn(prefersReduced: boolean) {
-  return {
-    duration: prefersReduced ? 0 : MOTION_ENTER_MS,
+    duration: prefersReduced ? 60 : MOTION_HINT_MS,
     easing: easingDecelerate,
   };
 }
 
-export function collapseSlideOut(prefersReduced: boolean) {
+/**
+ * Config card ↔ collapsed summary.
+ * Fade only (no height slide) — avoids layout thrash in the menu-bar popover.
+ */
+export function collapseFadeIn(prefersReduced: boolean) {
   return {
-    duration: prefersReduced ? 0 : MOTION_EXIT_MS,
-    easing: easingAccelerate,
+    duration: prefersReduced ? 80 : MOTION_ENTER_MS,
+    easing: easingDecelerate,
   };
 }
 
-/** Settings ↔ About sub-view exit (enter is instant) */
+export function collapseFadeOut(prefersReduced: boolean) {
+  return {
+    duration: prefersReduced ? 60 : MOTION_EXIT_MS,
+    easing: easingDecelerate,
+  };
+}
+
+/** @deprecated Prefer collapseFadeIn */
+export function collapseSlideIn(prefersReduced: boolean) {
+  return collapseFadeIn(prefersReduced);
+}
+
+/** @deprecated Prefer collapseFadeOut */
+export function collapseSlideOut(prefersReduced: boolean) {
+  return collapseFadeOut(prefersReduced);
+}
+
+/**
+ * Button / section fades that can be forced instant (keyboard path, background batches).
+ */
+export function buttonFadeInMaybeInstant(
+  prefersReduced: boolean,
+  instant: boolean,
+) {
+  return {
+    duration: prefersReduced || instant ? 0 : MOTION_ENTER_MS,
+    easing: easingDecelerate,
+  };
+}
+
+export function buttonFadeOutMaybeInstant(
+  prefersReduced: boolean,
+  instant: boolean,
+) {
+  return {
+    duration: prefersReduced || instant ? 0 : MOTION_EXIT_MS,
+    easing: easingDecelerate,
+  };
+}
+
+export function sectionFlyInMaybeLight(
+  prefersReduced: boolean,
+  light: boolean,
+) {
+  return {
+    y: prefersReduced || light ? 0 : MOTION_ENTER_Y,
+    duration: prefersReduced ? 0 : light ? MOTION_HINT_MS : MOTION_ENTER_MS,
+    easing: easingDecelerate,
+  };
+}
+
+export function sectionFlyOutMaybeLight(
+  prefersReduced: boolean,
+  light: boolean,
+) {
+  return {
+    y: prefersReduced || light ? 0 : MOTION_EXIT_Y,
+    duration: prefersReduced ? 0 : light ? MOTION_HINT_MS : MOTION_EXIT_MS,
+    easing: easingDecelerate,
+  };
+}
+
+/** Settings ↔ About sub-view */
 export function subviewFadeOut(prefersReduced: boolean) {
   return panelFadeOut(prefersReduced);
 }
@@ -269,7 +335,7 @@ export function subviewFadeOut(prefersReduced: boolean) {
 export function rowFlyIn(
   prefersReduced: boolean,
   index: number,
-  stagger: boolean
+  stagger: boolean,
 ) {
   const capped = Math.min(index, MOTION_ROW_STAGGER_MAX);
   return {
@@ -284,6 +350,6 @@ export function rowFlyOut(prefersReduced: boolean) {
   return {
     y: prefersReduced ? 0 : MOTION_EXIT_Y,
     duration: prefersReduced ? 0 : MOTION_EXIT_MS,
-    easing: easingAccelerate,
+    easing: easingDecelerate,
   };
 }

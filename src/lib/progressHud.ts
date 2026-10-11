@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { emitTo } from "@tauri-apps/api/event";
-import type { BatchTokenSavings } from "./progress";
+import { createBatchTokenSavings, type BatchTokenSavings } from "./progress";
 import type { FileProgress } from "./types";
 
 export const PROGRESS_HUD_WINDOW_LABEL = "progress-hud";
@@ -20,11 +20,7 @@ export function createEmptyHudState(): ProgressHudState {
     files: [],
     total: 0,
     isParsing: false,
-    batchTokenSavings: {
-      tokensSaved: 0,
-      pagesUnlocked: 0,
-      documentsUnlocked: 0,
-    },
+    batchTokenSavings: createBatchTokenSavings(),
   };
 }
 

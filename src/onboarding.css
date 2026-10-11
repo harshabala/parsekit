@@ -154,7 +154,9 @@ body[data-window="onboarding"] #app {
   border-radius: 50%;
   background: var(--onboarding-text-tertiary);
   opacity: 0.35;
-  transition: opacity 200ms ease, transform 200ms ease;
+  transition:
+    opacity var(--timing-normal, 180ms) var(--easing-decelerate, cubic-bezier(0.23, 1, 0.32, 1)),
+    transform var(--timing-normal, 180ms) var(--easing-decelerate, cubic-bezier(0.23, 1, 0.32, 1));
 }
 
 .onboarding-progress-dot.active {
@@ -297,7 +299,7 @@ body[data-window="onboarding"] #app {
   border: 0.5px solid var(--onboarding-card-border);
   border-radius: var(--onboarding-radius-card);
   overflow: hidden;
-  animation: onboarding-fade-in 400ms ease 300ms both;
+  animation: onboarding-fade-in 300ms cubic-bezier(0.23, 1, 0.32, 1) 200ms both;
 }
 
 .onboarding-code-toolbar {
@@ -388,10 +390,14 @@ body[data-window="onboarding"] #app {
 
 .onboarding-info-icon {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
   height: 20px;
   margin-top: 2px;
   color: var(--onboarding-text-tertiary);
+  line-height: 0;
 }
 
 .onboarding-info-title {
@@ -437,7 +443,7 @@ body[data-window="onboarding"] #app {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
@@ -445,6 +451,7 @@ body[data-window="onboarding"] #app {
   background: var(--onboarding-code-bg);
   color: var(--onboarding-text-tertiary);
   border: 0.5px solid var(--onboarding-card-border);
+  line-height: 0;
 }
 
 .onboarding-steps-list li.done .onboarding-step-badge {
@@ -489,7 +496,9 @@ body[data-window="onboarding"] #app {
   min-height: 44px;
   min-width: 160px;
   cursor: pointer;
-  transition: background 150ms ease, transform 150ms ease;
+  transition:
+    background 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .onboarding-btn-primary:hover {
@@ -596,7 +605,14 @@ body[data-window="onboarding"] #app {
 @media (prefers-reduced-motion: reduce) {
   .onboarding-icon-img,
   .onboarding-arrow-col,
-  .onboarding-code-card {
-    animation: none;
+  .onboarding-folder-icon {
+    animation: none !important;
+  }
+
+  .onboarding-code-card,
+  .onboarding-step-panel,
+  .onboarding-progress-dot {
+    animation: none !important;
+    transition-property: opacity, color, background-color, border-color !important;
   }
 }

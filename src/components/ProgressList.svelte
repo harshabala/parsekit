@@ -9,24 +9,13 @@
     hintFadeOut,
     rowFlyIn,
     rowFlyOut,
-    sectionFlyIn,
-    sectionFlyOut,
+    sectionFlyInMaybeLight,
+    sectionFlyOutMaybeLight,
     MOTION_ROW_STAGGER_CAP,
   } from "../lib/motion";
   import { isConverterDependencyError } from "../lib/converterErrors";
   import { resolvePrimaryParsingId } from "../lib/progress";
   import type { FileProgress } from "../lib/types";
-
-  const reducedMotion = $derived(prefersReducedMotion.current);
-  const iconFadeInParams = $derived(iconFadeIn(reducedMotion));
-  const iconFadeOutParams = $derived(iconFadeOut(reducedMotion));
-  const sectionFlyInParams = $derived(sectionFlyIn(reducedMotion));
-  const sectionFlyOutParams = $derived(sectionFlyOut(reducedMotion));
-  const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
-  const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
-
-  let prevFileCount = $state(0);
-  let rowStaggerActive = $state(false);
 
   let {
     files,
@@ -34,13 +23,31 @@
     isParsing,
     lastParsingId = null,
     onOpenFileSupport,
+    /** Hotkey/background batches: skip fly-in Y, shorter duration (Emil). */
+    lightMotion = false,
   }: {
     files: FileProgress[];
     total: number;
     isParsing: boolean;
     lastParsingId?: string | null;
     onOpenFileSupport?: () => void;
+    lightMotion?: boolean;
   } = $props();
+
+  const reducedMotion = $derived(prefersReducedMotion.current);
+  const iconFadeInParams = $derived(iconFadeIn(reducedMotion));
+  const iconFadeOutParams = $derived(iconFadeOut(reducedMotion));
+  const sectionFlyInParams = $derived(
+    sectionFlyInMaybeLight(reducedMotion, lightMotion),
+  );
+  const sectionFlyOutParams = $derived(
+    sectionFlyOutMaybeLight(reducedMotion, lightMotion),
+  );
+  const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
+  const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
+
+  let prevFileCount = $state(0);
+  let rowStaggerActive = $state(false);
 
   let listEl = $state<HTMLDivElement | null>(null);
   let userScrolledUntil = $state(0);
@@ -137,7 +144,15 @@
   <div class="section-title">{t("progress.title")}</div>
   <div class="progress-panel">
     <div class="row progress-header">
-      <span class="progress-heading">{isParsing ? t("progress.parsing") : t("progress.complete")}</span>
+      {#key isParsing}
+        <span
+          class="progress-heading"
+          in:fade={iconFadeInParams}
+          out:fade={iconFadeOutParams}
+        >
+          {isParsing ? t("progress.parsing") : t("progress.complete")}
+        </span>
+      {/key}
       <span class="progress-fraction" aria-live="polite">
         {t("progress.ofTotal", { done: finishedCount, total })}
       </span>
@@ -222,17 +237,24 @@
           class:file-row-active={file.status === "parsing"}
           class:file-row-error={file.status === "error"}
           class:file-row-done={file.status === "done"}
-          in:fly={rowFlyIn(reducedMotion, index, rowStaggerActive)}
+          in:fly={rowFlyIn(reducedMotion, index, rowStaggerActive && !lightMotion)}
           out:fly={rowFlyOut(reducedMotion)}
         >
           <div class="file-row-main">
             <span class="file-name" title={file.name}>{file.name}</span>
             {#if file.status === "error" && file.error}
-              <span class="file-error" title={file.error}>{file.error}</span>
+              <span
+                class="file-error"
+                title={file.error}
+                in:fade={hintFadeInParams}
+                out:fade={hintFadeOutParams}
+              >{file.error}</span>
               {#if onOpenFileSupport && isConverterDependencyError(file.error)}
                 <button
                   type="button"
                   class="file-error-link"
+                  in:fade={hintFadeInParams}
+                  out:fade={hintFadeOutParams}
                   onclick={onOpenFileSupport}
                 >
                   {t("errors.openFileSupport")}

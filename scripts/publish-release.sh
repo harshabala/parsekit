@@ -57,15 +57,22 @@ if [[ ! -f "$SIG_FILE" ]]; then
 fi
 
 echo "[5/6] Write parsekit-latest.json ..."
-RELEASE_NOTES="${RELEASE_NOTES:-ParseKit v${VERSION} — updater ships post-sign sealed .app bundle.}"
+# Prefer docs/releases/vX.Y.Z.md; fall back to a clear install-focused body.
+# RELEASE_NOTES env still overrides when set (workflow / maintainer).
+NOTES_FILE="$(mktemp)"
+bash "$ROOT/scripts/release-notes.sh" "$VERSION" >"$NOTES_FILE"
+RELEASE_NOTES="$(cat "$NOTES_FILE")"
 export VERSION SIG_FILE LATEST_JSON UPDATER_NAME RELEASE_NOTES
+# Updater banner uses a short plain-text summary (first line of notes, stripped).
+SHORT_NOTES="$(head -n 1 "$NOTES_FILE" | sed 's/^#* *//')"
+export SHORT_NOTES
 node <<'NODE'
 const fs = require("fs");
 const version = process.env.VERSION;
 const signature = fs.readFileSync(process.env.SIG_FILE, "utf8").trim();
 const json = {
   version,
-  notes: process.env.RELEASE_NOTES,
+  notes: process.env.SHORT_NOTES || `ParseKit v${version}`,
   pub_date: new Date().toISOString(),
   platforms: {
     "darwin-aarch64": {
@@ -91,6 +98,7 @@ if gh release view "$TAG" --repo "$REPO" &>/dev/null; then
   gh release upload "$TAG" "$UPDATER_STAGED" --repo "$REPO" --clobber
   gh release upload "$TAG" "$SIG_FILE" --repo "$REPO" --clobber 2>/dev/null || true
   gh release upload "$TAG" "$LATEST_JSON" --repo "$REPO" --clobber
+  gh release edit "$TAG" --repo "$REPO" --title "ParseKit v${VERSION}" --notes-file "$NOTES_FILE"
   echo "Updated existing release ${TAG}"
 else
   gh release create "$TAG" \
@@ -99,9 +107,10 @@ else
     "$LATEST_JSON" \
     --repo "$REPO" \
     --title "ParseKit v${VERSION}" \
-    --notes "$RELEASE_NOTES"
+    --notes-file "$NOTES_FILE"
   echo "Created release ${TAG}"
 fi
+rm -f "$NOTES_FILE"
 
 # Remove stray latest.json if a prior upload added it.
 if gh release view "$TAG" --repo "$REPO" --json assets -q '.assets[].name' 2>/dev/null | grep -qx 'latest.json'; then

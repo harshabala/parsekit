@@ -38,3 +38,11 @@ src-tauri/*.app
 
 # Design preview prototypes (throwaway)
 design/*.preview.html
+xcuserdata/
+*.xcuserstate
+*.tsbuildinfo
+.claude/launch.json
+.superpowers/
+data/app-state.json
+data/app-state.json.lock
+storage/logs/

@@ -30,6 +30,24 @@ To ship a **minor/major** bump instead of patch, set the version in `package.jso
 
 To re-run without new commits: **Actions → Release → Run workflow**.
 
+## Release notes
+
+Before shipping, write user-facing notes at:
+
+```
+docs/releases/vX.Y.Z.md
+```
+
+`scripts/publish-release.sh` loads that file via `scripts/release-notes.sh`.  
+If the file is missing, a clear install-focused default is used.  
+Do **not** pass raw commit subjects as `RELEASE_NOTES` (that used to produce empty one-liners on GitHub).
+
+Override only when needed:
+
+```bash
+RELEASE_NOTES="$(cat docs/releases/v0.2.10.md)" npm run publish:macos
+```
+
 ## Manual release (optional)
 
 ```bash
@@ -39,7 +57,7 @@ npm run release:macos
 # Manual upload to GitHub (normally handled by CI)
 export TAURI_SIGNING_PRIVATE_KEY="$HOME/.tauri/parsekit.key"
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
-RELEASE_NOTES="ParseKit v0.2.x — …" npm run publish:macos
+npm run publish:macos
 ```
 
 Build on each target platform (Apple Silicon vs Intel) so the sidecar filename embeds the correct host triple.

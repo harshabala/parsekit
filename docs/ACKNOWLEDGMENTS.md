@@ -17,6 +17,8 @@ This is a credit line in the docs, not a claim that any AI vendor ships or endor
 
 See [NOTICE.md](../NOTICE.md) for LiteParse, Tauri, Svelte, and bundled fonts.
 
+UI icons use the [Phosphor Icons](https://phosphoricons.com/) family via [`phosphor-svelte`](https://github.com/haruaki07/phosphor-svelte) (MIT). Same design system as `@phosphor-icons/react`, adapted for this Svelte app.
+
 ## GitHub contributors graph
 
 GitHub may list **Claude** as a contributor because some commits include a `Co-Authored-By` trailer from Claude Code. That's a git convention, not an official Anthropic affiliation. Grok and Gemini don't add those trailers by default, so they won't appear in the contributors graph — this file is where they're credited instead.
