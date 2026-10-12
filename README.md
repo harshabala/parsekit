@@ -73,7 +73,7 @@ More: [skills/parsekit/SKILL.md](skills/parsekit/SKILL.md) · [AGENTS.md](AGENTS
 
 ## Privacy
 
-Files, OCR, and conversion never leave your Mac. No telemetry. Network only for optional app updates and first-time OCR language packs.
+Files, OCR, and conversion never leave your Mac. No telemetry. Network only for optional app updates and first-time OCR language packs. Details: [PRIVACY.md](PRIVACY.md) · Vulnerability reports: [SECURITY.md](SECURITY.md).
 
 ## Product metrics (local-first)
 
@@ -96,7 +96,7 @@ npm run build:sidecar
 npm run tauri dev
 ```
 
-Checks: `npm test` (Vitest), `npm run check` (svelte-check), `npm run build` (frontend bundle). Requires Node, Rust, and Tauri prerequisites.
+Checks: `npm run lint`, `npm run format:check`, `npm test` (Vitest), `npm run check` (svelte-check), `npm run build` (frontend bundle), plus `cargo fmt`/`clippy`/`test` in `src-tauri`. Requires Node, Rust, and Tauri prerequisites. See [CONTRIBUTING.md](CONTRIBUTING.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Release process: [docs/RELEASING.md](docs/RELEASING.md) · Benchmarks: [docs/benchmark-results.md](docs/benchmark-results.md)
 
