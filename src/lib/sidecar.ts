@@ -56,9 +56,7 @@ function friendlySidecarMessage(raw: string): string {
   if (lower.includes("libreoffice")) {
     return "LibreOffice is required for Office documents. Open Settings → File Support to install.";
   }
-  if (
-    lower.includes("scoped command") && lower.includes("not found")
-  ) {
+  if (lower.includes("scoped command") && lower.includes("not found")) {
     return `Parse engine scope missing in this build. Install ParseKit from the latest DMG. (${trimmed})`;
   }
   if (lower.includes("not allowed by acl") || lower.includes("shell:allow-spawn")) {
@@ -73,13 +71,13 @@ function friendlySidecarMessage(raw: string): string {
   if (lower.includes("pdfium") || lower.includes("libpdfium")) {
     return `PDF engine library missing from this build. Reinstall ParseKit from the latest DMG, or run npm run build:sidecar and rebuild the app. (${trimmed})`;
   }
-  if (
-    lower.includes("image too small to scale") ||
-    lower.includes("line cannot be recognized")
-  ) {
-    const firstLine = trimmed.split("\n").find((l) => l.trim())?.trim() ?? trimmed;
-    const short =
-      firstLine.length > 220 ? `${firstLine.slice(0, 217)}…` : firstLine;
+  if (lower.includes("image too small to scale") || lower.includes("line cannot be recognized")) {
+    const firstLine =
+      trimmed
+        .split("\n")
+        .find((l) => l.trim())
+        ?.trim() ?? trimmed;
+    const short = firstLine.length > 220 ? `${firstLine.slice(0, 217)}…` : firstLine;
     return `OCR could not read part of a document (${short}). Other files in the batch can still finish.`;
   }
   return trimmed || "Parse engine failed to start (unknown error).";
@@ -100,21 +98,18 @@ function handleSidecarLine(
   onEvent: (event: ParseEvent) => void,
   onBatchActivity: () => void,
   finish: (fn: () => void) => void,
-  resolve: () => void
+  resolve: () => void,
 ): void {
   const event = parseSidecarLine(line);
   if (!event) {
     if (line.trim()) {
-      console.error("Failed to parse sidecar output:", line);
+      // Never log the line itself: it could contain document text.
+      console.error(`Failed to parse sidecar output (${line.length} chars)`);
     }
     return;
   }
   onEvent(event);
-  if (
-    event.type === "start" ||
-    event.type === "progress" ||
-    event.type === "token_savings"
-  ) {
+  if (event.type === "start" || event.type === "progress" || event.type === "token_savings") {
     onBatchActivity();
   }
   if (event.type === "done") {
@@ -124,12 +119,13 @@ function handleSidecarLine(
 
 export function runParse(
   config: ParseConfig,
-  onEvent: (event: ParseEvent) => void
+  onEvent: (event: ParseEvent) => void,
 ): ParseRunHandle {
   let child: Child | null = null;
   let stderrTail = "";
   let stdoutBuffer = "";
 
+  // eslint-disable-next-line no-async-promise-executor -- every await is inside try/catch that settles the promise
   const promise = new Promise<void>(async (resolve, reject) => {
     let settled = false;
     let sawBatchActivity = false;

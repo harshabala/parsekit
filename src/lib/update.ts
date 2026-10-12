@@ -8,8 +8,7 @@ export interface UpdateInfo {
 }
 
 /** Set `VITE_MOCK_UPDATE=1` when running dev to preview the update banner UI. */
-const MOCK_UPDATE_IN_DEV =
-  import.meta.env.DEV && import.meta.env.VITE_MOCK_UPDATE === "1";
+const MOCK_UPDATE_IN_DEV = import.meta.env.DEV && import.meta.env.VITE_MOCK_UPDATE === "1";
 
 export async function checkForUpdate(): Promise<UpdateInfo> {
   if (MOCK_UPDATE_IN_DEV) {

@@ -1,15 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  ACTIVATION_EVENT,
-  isActivated,
-  qualifiesForActivation,
-} from "./activation";
+import { ACTIVATION_EVENT, isActivated, qualifiesForActivation } from "./activation";
 
 describe("activation", () => {
   it("exports a stable activation event name", () => {
-    expect(ACTIVATION_EVENT).toBe(
-      "first_successful_convert_with_token_estimate",
-    );
+    expect(ACTIVATION_EVENT).toBe("first_successful_convert_with_token_estimate");
   });
 
   it("isActivated requires a timestamp", () => {

@@ -24,7 +24,10 @@
     const theme = normalizeThemeMode(await getSetting("theme", DEFAULT_THEME));
     applyTheme(theme);
 
-    const savedLocale = await getSetting<import("./lib/i18n.svelte").AppLocale | null>("locale", null);
+    const savedLocale = await getSetting<import("./lib/i18n.svelte").AppLocale | null>(
+      "locale",
+      null,
+    );
     const resolvedLocale = savedLocale
       ? normalizeLocale(savedLocale)
       : localeFromLegacyOcr(await getSetting("ocrLanguage", "eng"));

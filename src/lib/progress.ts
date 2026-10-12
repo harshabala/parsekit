@@ -35,13 +35,10 @@ export function applyTokenSavingsEvent(
   event: TokenSavingsEvent,
 ): BatchTokenSavings {
   return {
-    tokensSaved:
-      batch.tokensSaved + Math.max(0, Math.floor(event.tokens_saved ?? 0)),
-    pagesUnlocked:
-      batch.pagesUnlocked + Math.max(0, Math.floor(event.pages_unlocked ?? 0)),
+    tokensSaved: batch.tokensSaved + Math.max(0, Math.floor(event.tokens_saved ?? 0)),
+    pagesUnlocked: batch.pagesUnlocked + Math.max(0, Math.floor(event.pages_unlocked ?? 0)),
     documentsUnlocked:
-      batch.documentsUnlocked +
-      Math.max(0, Math.floor(event.documents_unlocked ?? 0)),
+      batch.documentsUnlocked + Math.max(0, Math.floor(event.documents_unlocked ?? 0)),
   };
 }
 
@@ -81,9 +78,7 @@ function findFileIndex(files: FileProgress[], event: ParseProgressEvent): number
   if (!displayName) return -1;
   // Prefer the oldest still-active row with this basename (FIFO within duplicates).
   return files.findIndex(
-    (f) =>
-      f.name === displayName &&
-      (f.status === "pending" || f.status === "parsing")
+    (f) => f.name === displayName && (f.status === "pending" || f.status === "parsing"),
   );
 }
 
@@ -91,7 +86,7 @@ function findFileIndex(files: FileProgress[], event: ParseProgressEvent): number
 export function applyParseProgressEvent(
   files: FileProgress[],
   event: ParseProgressEvent,
-  lastParsingId: string | null = null
+  lastParsingId: string | null = null,
 ): ParseProgressApplyResult {
   const sourcePath = event.sourcePath;
   const displayName = event.file || (sourcePath ? fileBaseName(sourcePath) : "");
@@ -109,7 +104,7 @@ export function applyParseProgressEvent(
             outputPath: event.path ?? f.outputPath,
             error: event.error,
           }
-        : f
+        : f,
     );
   } else if (sourcePath) {
     nextFiles = [
@@ -130,9 +125,7 @@ export function applyParseProgressEvent(
   if (status === "parsing" && sourcePath) {
     nextLast = sourcePath;
   } else if (nextLast && status !== "parsing") {
-    const stillParsing = nextFiles.some(
-      (f) => f.id === nextLast && f.status === "parsing"
-    );
+    const stillParsing = nextFiles.some((f) => f.id === nextLast && f.status === "parsing");
     if (!stillParsing) {
       const fallback = nextFiles.find((f) => f.status === "parsing");
       nextLast = fallback?.id ?? null;
@@ -155,7 +148,7 @@ export interface BatchSettleMessages {
  */
 export function settleBatchOnStop(
   files: FileProgress[],
-  messages: BatchSettleMessages
+  messages: BatchSettleMessages,
 ): FileProgress[] {
   const parsingMsg = messages.parsing ?? messages.pending ?? "Batch stopped.";
   const pendingMsg = messages.pending ?? messages.parsing ?? parsingMsg;
@@ -172,30 +165,22 @@ export function settleBatchOnStop(
 }
 
 /** @deprecated Use settleBatchOnStop */
-export function settleInFlightOnAbort(
-  files: FileProgress[],
-  message: string
-): FileProgress[] {
+export function settleInFlightOnAbort(files: FileProgress[], message: string): FileProgress[] {
   return settleBatchOnStop(files, { parsing: message, pending: message });
 }
 
 /** After a successful `done` event, clear any rows that never received a final status. */
-export function settleRemainingOnDone(
-  files: FileProgress[],
-  message: string
-): FileProgress[] {
+export function settleRemainingOnDone(files: FileProgress[], message: string): FileProgress[] {
   return settleBatchOnStop(files, { parsing: message, pending: message });
 }
 
 /** Pick the row to highlight in the progress banner. */
 export function resolvePrimaryParsingId(
   files: FileProgress[],
-  lastParsingId: string | null
+  lastParsingId: string | null,
 ): string | null {
   if (lastParsingId) {
-    const match = files.find(
-      (f) => f.id === lastParsingId && f.status === "parsing"
-    );
+    const match = files.find((f) => f.id === lastParsingId && f.status === "parsing");
     if (match) return match.id;
   }
   return files.find((f) => f.status === "parsing")?.id ?? null;

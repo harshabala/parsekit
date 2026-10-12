@@ -50,7 +50,9 @@
   use:focusTrap={{ restoreFocus: false }}
 >
   <div class="settings-header">
-    <button type="button" class="settings-back-btn" onclick={() => onClose()}>{t("about.back")}</button>
+    <button type="button" class="settings-back-btn" onclick={() => onClose()}
+      >{t("about.back")}</button
+    >
     <span class="settings-header-title" id="about-title">{t("about.title")}</span>
   </div>
 

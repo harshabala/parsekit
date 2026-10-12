@@ -25,9 +25,8 @@ export function createEmptyHudState(): ProgressHudState {
 }
 
 export function hudFinishedCount(files: FileProgress[]): number {
-  return files.filter(
-    (f) => f.status === "done" || f.status === "error" || f.status === "skipped",
-  ).length;
+  return files.filter((f) => f.status === "done" || f.status === "error" || f.status === "skipped")
+    .length;
 }
 
 export function hudSuccessCount(files: FileProgress[]): number {
@@ -64,10 +63,7 @@ export async function hideProgressHudWindow(): Promise<void> {
   }
 }
 
-export async function syncProgressHud(
-  state: ProgressHudState,
-  retries = 4,
-): Promise<void> {
+export async function syncProgressHud(state: ProgressHudState, retries = 4): Promise<void> {
   for (let attempt = 0; attempt < retries; attempt += 1) {
     try {
       await emitTo(PROGRESS_HUD_WINDOW_LABEL, PROGRESS_HUD_SYNC_EVENT, state);

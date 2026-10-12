@@ -323,9 +323,15 @@ body[data-window="onboarding"] #app {
   display: block;
 }
 
-.onboarding-traffic-lights span:nth-child(1) { background: #ff5f57; }
-.onboarding-traffic-lights span:nth-child(2) { background: #febc2e; }
-.onboarding-traffic-lights span:nth-child(3) { background: #28c840; }
+.onboarding-traffic-lights span:nth-child(1) {
+  background: #ff5f57;
+}
+.onboarding-traffic-lights span:nth-child(2) {
+  background: #febc2e;
+}
+.onboarding-traffic-lights span:nth-child(3) {
+  background: #28c840;
+}
 
 .onboarding-code-copy {
   font-size: 12px;
@@ -549,18 +555,36 @@ body[data-window="onboarding"] #app {
 }
 
 @keyframes onboarding-icon-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
 }
 
 @keyframes onboarding-arrow-pulse {
-  0%, 100% { transform: translateY(0); opacity: 0.65; }
-  50% { transform: translateY(5px); opacity: 1; }
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
 }
 
 @keyframes onboarding-fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-height: 680px) {

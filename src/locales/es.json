@@ -29,6 +29,7 @@
     "progress": "Paso {current} de {total}",
     "installTitle": "Instalar ParseKit",
     "installSubtitle": "Un clic copia ParseKit en Aplicaciones y lo vuelve a abrir allí.",
+    "terminalCommand": "Comando de corrección en Terminal",
     "installButton": "Instalar ParseKit",
     "installing": "Instalando…",
     "installFailed": "No se pudo instalar ParseKit. Abre el DMG y haz doble clic en ParseKit.app primero.",

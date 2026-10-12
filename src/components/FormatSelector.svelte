@@ -2,7 +2,8 @@
   import { t } from "../lib/i18n.svelte";
   import type { OutputFormat } from "../lib/types";
 
-  let { value, onChange }: { value: OutputFormat; onChange: (format: OutputFormat) => void } = $props();
+  let { value, onChange }: { value: OutputFormat; onChange: (format: OutputFormat) => void } =
+    $props();
 
   const formats: { label: string; value: OutputFormat }[] = [
     { label: "TXT", value: "txt" },

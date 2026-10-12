@@ -30,8 +30,7 @@
     if (!onRerun) return false;
     const selectedLabel = t("recent.selectedFiles");
     return (
-      (batch.sourcePaths?.length ?? 0) > 0 ||
-      (!!batch.inputDir && batch.inputDir !== selectedLabel)
+      (batch.sourcePaths?.length ?? 0) > 0 || (!!batch.inputDir && batch.inputDir !== selectedLabel)
     );
   }
 

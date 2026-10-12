@@ -2,7 +2,12 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { getSetting } from "./lib/store";
-  import { initLocale, localeFromLegacyOcr, normalizeLocale, type AppLocale } from "./lib/i18n.svelte";
+  import {
+    initLocale,
+    localeFromLegacyOcr,
+    normalizeLocale,
+    type AppLocale,
+  } from "./lib/i18n.svelte";
   import { applyTheme, DEFAULT_THEME, normalizeThemeMode } from "./lib/theme";
 
   import {

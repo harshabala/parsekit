@@ -36,20 +36,10 @@
     {t("update.available", { version: versionLabel })}
   </p>
   <div class="update-banner-actions">
-    <button
-      type="button"
-      class="update-banner-primary"
-      disabled={installing}
-      onclick={onInstall}
-    >
+    <button type="button" class="update-banner-primary" disabled={installing} onclick={onInstall}>
       {installing ? t("update.installing") : t("update.installRestart")}
     </button>
-    <button
-      type="button"
-      class="update-banner-secondary"
-      disabled={installing}
-      onclick={onDismiss}
-    >
+    <button type="button" class="update-banner-secondary" disabled={installing} onclick={onDismiss}>
       {t("update.later")}
     </button>
   </div>

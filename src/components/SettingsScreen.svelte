@@ -52,6 +52,7 @@
     finderActionBusy = false,
     finderActionNotice = null,
     onInstallFinderAction,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for caller compatibility
     appVersion = "0.2.0",
     updateCheckBusy = false,
     updateStatusNote = null,
@@ -172,8 +173,7 @@
         /* optional */
       }
     } catch (e) {
-      hotkeyError =
-        e instanceof Error ? e.message : String(e) || t("settings.hotkeyUpdateFailed");
+      hotkeyError = e instanceof Error ? e.message : String(e) || t("settings.hotkeyUpdateFailed");
     }
   }
 
@@ -227,15 +227,13 @@
   use:focusTrap={{ restoreFocus: false }}
 >
   <div class="settings-header">
-    <button type="button" class="settings-back-btn" onclick={handleBack}>{t("settings.back")}</button>
+    <button type="button" class="settings-back-btn" onclick={handleBack}
+      >{t("settings.back")}</button
+    >
     <span class="settings-header-title" id="settings-title">{t("settings.title")}</span>
   </div>
 
-  <div
-    class="settings-tab-bar"
-    role="tablist"
-    aria-label={t("settings.title")}
-  >
+  <div class="settings-tab-bar" role="tablist" aria-label={t("settings.title")}>
     <div class="segmented-control settings-tabs">
       {#each tabs as tab}
         <button
@@ -314,9 +312,7 @@
                     type="checkbox"
                     checked={autoConvertOnCopy}
                     onchange={(e) =>
-                      onAutoConvertOnCopyChange(
-                        (e.currentTarget as HTMLInputElement).checked,
-                      )}
+                      onAutoConvertOnCopyChange((e.currentTarget as HTMLInputElement).checked)}
                   />
                   <span class="settings-toggle-copy">
                     <span class="settings-toggle-title">{t("settings.autoConvertOnCopy")}</span>
@@ -333,9 +329,7 @@
                     type="checkbox"
                     checked={showFloatingHud}
                     onchange={(e) =>
-                      onShowFloatingHudChange(
-                        (e.currentTarget as HTMLInputElement).checked,
-                      )}
+                      onShowFloatingHudChange((e.currentTarget as HTMLInputElement).checked)}
                   />
                   <span class="settings-toggle-copy">
                     <span class="settings-toggle-title">{t("settings.floatingHudTitle")}</span>
@@ -411,11 +405,7 @@
           <div class="settings-divider"></div>
 
           <div class="settings-section">
-            <button
-              type="button"
-              class="settings-link-card"
-              onclick={() => (generalPage = 1)}
-            >
+            <button type="button" class="settings-link-card" onclick={() => (generalPage = 1)}>
               <span class="settings-link-text">{t("settings.moreSettings")}</span>
               <span class="settings-link-chevron" aria-hidden="true">›</span>
             </button>

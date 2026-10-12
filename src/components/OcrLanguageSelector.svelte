@@ -20,7 +20,7 @@
   <select
     class="ocr-language-select ocr-language-select--compact"
     {disabled}
-    value={value}
+    {value}
     onchange={(e) => onChange(e.currentTarget.value as OcrLanguageCode)}
     aria-label={t("settings.ocrLanguageLabel")}
   >
@@ -34,7 +34,7 @@
     <select
       class="ocr-language-select"
       {disabled}
-      value={value}
+      {value}
       onchange={(e) => onChange(e.currentTarget.value as OcrLanguageCode)}
       aria-label={t("settings.ocrLanguageLabel")}
     >

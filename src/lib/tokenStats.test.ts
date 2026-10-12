@@ -18,12 +18,7 @@ import {
   type TokenStats,
 } from "./tokenStats";
 
-function event(
-  ts: string,
-  tokensSaved: number,
-  pagesUnlocked = 0,
-  fileType = "pdf",
-): TokenEvent {
+function event(ts: string, tokensSaved: number, pagesUnlocked = 0, fileType = "pdf"): TokenEvent {
   return { ts, file_type: fileType, tokens_saved: tokensSaved, pages_unlocked: pagesUnlocked };
 }
 
@@ -55,10 +50,7 @@ describe("tokenStats aggregation", () => {
   });
 
   it("sums tokens and pages separately in a range", () => {
-    const events = [
-      event("2026-07-02T12:00:00Z", 50, 3),
-      event("2026-07-03T12:00:00Z", 75, 0),
-    ];
+    const events = [event("2026-07-02T12:00:00Z", 50, 3), event("2026-07-03T12:00:00Z", 75, 0)];
     const start = new Date("2026-07-01T00:00:00Z");
     const end = new Date("2026-08-01T00:00:00Z");
     expect(sumTokensInRange(events, start, end)).toBe(125);

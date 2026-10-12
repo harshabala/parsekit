@@ -1,0 +1,10 @@
+dist
+node_modules
+src-tauri
+sidecar
+scripts
+docs
+assets
+packaging
+package-lock.json
+*.md

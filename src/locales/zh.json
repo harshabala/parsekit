@@ -29,6 +29,7 @@
     "progress": "第 {current} 步，共 {total} 步",
     "installTitle": "安装 ParseKit",
     "installSubtitle": "一键将 ParseKit 复制到「应用程序」并在那里重新打开。",
+    "terminalCommand": "终端修复命令",
     "installButton": "安装 ParseKit",
     "installing": "正在安装…",
     "installFailed": "无法安装 ParseKit。请先打开 DMG 并双击 ParseKit.app。",

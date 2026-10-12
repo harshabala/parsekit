@@ -36,11 +36,7 @@
   --glass-bg: oklch(0.97 0.01 85 / 1);
   --glass-blur: blur(20px);
   --secondary-bg: oklch(0.92 0.012 85 / 0.95);
-  --gradient-bg: linear-gradient(
-    145deg,
-    oklch(0.96 0.015 85) 0%,
-    oklch(0.91 0.025 95) 100%
-  );
+  --gradient-bg: linear-gradient(145deg, oklch(0.96 0.015 85) 0%, oklch(0.91 0.025 95) 100%);
 
   --status-success: oklch(0.55 0.14 145);
   --status-error: oklch(0.55 0.18 25);
@@ -50,9 +46,9 @@
   --shadow-color: oklch(0.18 0.01 50 / 0.18);
   --shadow-color-strong: oklch(0.18 0.01 50 / 0.32);
 
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --timing-fast: 120ms;
   --timing-normal: 180ms;
@@ -90,11 +86,7 @@
   --border-color: oklch(0.72 0.02 50 / 0.95);
   --glass-bg: oklch(0.97 0.01 85 / 1);
   --secondary-bg: oklch(0.92 0.012 85 / 0.95);
-  --gradient-bg: linear-gradient(
-    145deg,
-    oklch(0.96 0.015 85) 0%,
-    oklch(0.91 0.025 95) 100%
-  );
+  --gradient-bg: linear-gradient(145deg, oklch(0.96 0.015 85) 0%, oklch(0.91 0.025 95) 100%);
   --shadow-color: oklch(0.18 0.01 50 / 0.18);
   --shadow-color-strong: oklch(0.18 0.01 50 / 0.32);
   --focus-ring: oklch(0.32 0.03 50 / 0.2);
@@ -107,16 +99,12 @@
   --text-primary: var(--text-color);
   --text-secondary: oklch(0.72 0.02 85);
   --accent-color: oklch(0.78 0.08 75);
-  --accent-color-hover: oklch(0.85 0.10 75);
+  --accent-color-hover: oklch(0.85 0.1 75);
   --accent-fg: oklch(0.18 0.02 75);
   --border-color: oklch(0.26 0.01 85 / 0.9);
   --glass-bg: oklch(0.14 0.008 85 / 0.98);
   --secondary-bg: oklch(0.22 0.01 85 / 0.65);
-  --gradient-bg: linear-gradient(
-    145deg,
-    oklch(0.14 0.008 85) 0%,
-    oklch(0.17 0.015 95) 100%
-  );
+  --gradient-bg: linear-gradient(145deg, oklch(0.14 0.008 85) 0%, oklch(0.17 0.015 95) 100%);
 
   --shadow-color: oklch(0.18 0.01 50 / 0.35);
   --shadow-color-strong: oklch(0.18 0.01 50 / 0.48);
@@ -133,16 +121,12 @@
     --text-color: oklch(0.96 0.005 85);
     --text-secondary: oklch(0.72 0.02 85);
     --accent-color: oklch(0.78 0.08 75);
-    --accent-color-hover: oklch(0.85 0.10 75);
+    --accent-color-hover: oklch(0.85 0.1 75);
     --accent-fg: oklch(0.18 0.02 75);
     --border-color: oklch(0.26 0.01 85 / 0.9);
     --glass-bg: oklch(0.14 0.008 85 / 0.98);
     --secondary-bg: oklch(0.22 0.01 85 / 0.65);
-    --gradient-bg: linear-gradient(
-      145deg,
-      oklch(0.14 0.008 85) 0%,
-      oklch(0.17 0.015 95) 100%
-    );
+    --gradient-bg: linear-gradient(145deg, oklch(0.14 0.008 85) 0%, oklch(0.17 0.015 95) 100%);
 
     --shadow-color: oklch(0.18 0.01 50 / 0.35);
     --shadow-color-strong: oklch(0.18 0.01 50 / 0.48);
@@ -175,8 +159,8 @@
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-property: opacity, color, background-color, border-color, box-shadow,
-      outline-color !important;
+    transition-property:
+      opacity, color, background-color, border-color, box-shadow, outline-color !important;
   }
 }
 
@@ -478,8 +462,6 @@ main,
   padding: 0;
   overflow: hidden;
 }
-
-
 
 .card {
   background: var(--secondary-bg);
@@ -1258,21 +1240,13 @@ label {
   margin: 0 0 8px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: linear-gradient(
-    135deg,
-    oklch(0.94 0.06 85) 0%,
-    oklch(0.91 0.08 75) 100%
-  );
+  background: linear-gradient(135deg, oklch(0.94 0.06 85) 0%, oklch(0.91 0.08 75) 100%);
   border: 0.5px solid oklch(0.78 0.1 70 / 0.55);
   box-shadow: 0 1px 0 oklch(1 0 0 / 0.35) inset;
 }
 
 :root[data-theme="dark"] .update-banner {
-  background: linear-gradient(
-    135deg,
-    oklch(0.38 0.06 75) 0%,
-    oklch(0.32 0.07 68) 100%
-  );
+  background: linear-gradient(135deg, oklch(0.38 0.06 75) 0%, oklch(0.32 0.07 68) 100%);
   border-color: oklch(0.55 0.08 70 / 0.45);
   box-shadow: none;
 }
@@ -1608,7 +1582,8 @@ button.config-collapse-btn:focus-visible {
   background: var(--bg-color);
   color: var(--text-primary);
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
     linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
   background-position:
     calc(100% - 14px) 55%,
@@ -1753,7 +1728,8 @@ button.config-collapse-btn:focus-visible {
 }
 
 .deps-status-pop.deps-status-installed {
-  animation: deps-badge-pop var(--motion-deps-pop) var(--easing-decelerate) var(--deps-pop-delay, 0ms) both;
+  animation: deps-badge-pop var(--motion-deps-pop) var(--easing-decelerate)
+    var(--deps-pop-delay, 0ms) both;
 }
 
 .deps-check-icon,
@@ -1763,7 +1739,8 @@ button.config-collapse-btn:focus-visible {
 }
 
 .deps-status-installed .deps-check-icon {
-  animation: deps-check-draw 0.16s var(--easing-decelerate) calc(var(--deps-pop-delay, 0ms) + 60ms) both;
+  animation: deps-check-draw 0.16s var(--easing-decelerate) calc(var(--deps-pop-delay, 0ms) + 60ms)
+    both;
 }
 
 @keyframes deps-badge-pop {
@@ -1882,8 +1859,6 @@ button.config-collapse-btn:focus-visible {
   border-color: oklch(0.58 0.14 155);
   background: color-mix(in srgb, oklch(0.58 0.14 155) 12%, var(--secondary-bg));
 }
-
-
 
 .drop-zone {
   border: 1.5px dashed color-mix(in srgb, var(--border-color) 90%, var(--text-secondary));

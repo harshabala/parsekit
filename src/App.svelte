@@ -79,7 +79,6 @@
   import BatchScoreboard from "./components/BatchScoreboard.svelte";
   import { updateState } from "./lib/updateState.svelte";
   import { finderActionState } from "./lib/finderActionState.svelte";
-  import { pickOutputFolder } from "./lib/picker";
   import { warmDependencies } from "./lib/depsCache";
   import { DEFAULT_GLOBAL_SHORTCUT } from "./lib/globalShortcut";
   import { isConverterDependencyError, type SettingsTab } from "./lib/converterErrors";
@@ -183,9 +182,7 @@
     }
   }
   const lightParseMotion = $derived(parseChromeInstant || isBackgroundBatch);
-  const mainPanelIn = $derived(
-    panelBlurFlyInParams(reducedMotion, { instant: false }),
-  );
+  const mainPanelIn = $derived(panelBlurFlyInParams(reducedMotion, { instant: false }));
   const mainPanelOut = $derived(
     panelBlurFlyOutParams(reducedMotion, { instant: viewChromeInstant }),
   );
@@ -198,15 +195,9 @@
   const settingsPanelOut = $derived(
     panelBlurFlyOutParams(reducedMotion, { instant: viewChromeInstant }),
   );
-  const sectionFlyInParams = $derived(
-    sectionFlyInMaybeLight(reducedMotion, lightParseMotion),
-  );
-  const sectionFlyOutParams = $derived(
-    sectionFlyOutMaybeLight(reducedMotion, lightParseMotion),
-  );
-  const buttonFadeInParams = $derived(
-    buttonFadeInMaybeInstant(reducedMotion, parseChromeInstant),
-  );
+  const sectionFlyInParams = $derived(sectionFlyInMaybeLight(reducedMotion, lightParseMotion));
+  const sectionFlyOutParams = $derived(sectionFlyOutMaybeLight(reducedMotion, lightParseMotion));
+  const buttonFadeInParams = $derived(buttonFadeInMaybeInstant(reducedMotion, parseChromeInstant));
   const buttonFadeOutParams = $derived(
     buttonFadeOutMaybeInstant(reducedMotion, parseChromeInstant),
   );
@@ -223,10 +214,7 @@
   const PARSE_STALL_MAX_MS = 600_000;
 
   function parseStallTimeoutMs(fileCount: number): number {
-    return Math.min(
-      PARSE_STALL_MAX_MS,
-      PARSE_STALL_BASE_MS + fileCount * PARSE_STALL_PER_FILE_MS
-    );
+    return Math.min(PARSE_STALL_MAX_MS, PARSE_STALL_BASE_MS + fileCount * PARSE_STALL_PER_FILE_MS);
   }
 
   let parseStallLimitMs = PARSE_STALL_BASE_MS;
@@ -235,10 +223,7 @@
 
   let showProgress = $derived(isParsing || files.length > 0);
   let canRunParse = $derived(
-    !isParsing &&
-      !!outputDir &&
-      inputFileCount !== null &&
-      inputFileCount > 0
+    !isParsing && !!outputDir && inputFileCount !== null && inputFileCount > 0,
   );
   /** Why Convert is disabled — shown under the CTA (Emil: disabled must explain itself). */
   let canRunParseBlockedReason = $derived.by(() => {
@@ -248,7 +233,6 @@
     if (inputFileCount === null || inputFileCount <= 0) return t("errors.addFiles");
     return null;
   });
-
 
   async function resolveDefaultWorkers(savedWorkers: number) {
     if (savedWorkers > 0) {
@@ -324,10 +308,7 @@
     openSettings("file-support");
   }
 
-  async function ingestExternalPaths(
-    paths: string[],
-    options?: { openPopover?: boolean }
-  ) {
+  async function ingestExternalPaths(paths: string[], options?: { openPopover?: boolean }) {
     const openPopover = options?.openPopover ?? true;
     const supported = filterSupportedPaths(paths);
     if (supported.length === 0) {
@@ -352,7 +333,9 @@
     showHistory = false;
     try {
       await invoke("trigger_haptic");
-    } catch {}
+    } catch {
+      // Haptic feedback is best-effort.
+    }
     if (openPopover) {
       void openPopoverFromExternal();
     }
@@ -490,103 +473,103 @@
     let unlistenHudFileSupport: (() => void) | undefined;
 
     void (async () => {
-    theme = normalizeThemeMode(await getSetting("theme", DEFAULT_THEME));
-    applyTheme(theme);
+      theme = normalizeThemeMode(await getSetting("theme", DEFAULT_THEME));
+      applyTheme(theme);
 
-    const savedLocale = await getSetting<AppLocale | null>("locale", null);
-    const resolvedLocale = savedLocale
-      ? normalizeLocale(savedLocale)
-      : localeFromLegacyOcr(await getSetting("ocrLanguage", "eng"));
-    initLocale(resolvedLocale);
-    await setSetting("locale", resolvedLocale);
+      const savedLocale = await getSetting<AppLocale | null>("locale", null);
+      const resolvedLocale = savedLocale
+        ? normalizeLocale(savedLocale)
+        : localeFromLegacyOcr(await getSetting("ocrLanguage", "eng"));
+      initLocale(resolvedLocale);
+      await setSetting("locale", resolvedLocale);
 
-    outputDir = await getSetting("outputDir", "");
-    if (!outputDir) {
-      outputDir = await downloadDir();
-      await setSetting("outputDir", outputDir);
-    }
+      outputDir = await getSetting("outputDir", "");
+      if (!outputDir) {
+        outputDir = await downloadDir();
+        await setSetting("outputDir", outputDir);
+      }
 
-    format = await getSetting<OutputFormat>("format", "md");
-    // OCR is automatic for scans (main panel no longer exposes a toggle).
-    ocrEnabled = true;
-    await setSetting("ocrEnabled", true);
-    const rawOcr = String(await getSetting("ocrLanguage", "eng"));
-    if (!isKnownOcrLanguage(rawOcr)) {
-      noticeMsg = t("settings.ocrMigrated");
-    }
-    ocrLanguage = normalizeOcrLanguage(rawOcr);
-    await setSetting("ocrLanguage", ocrLanguage);
-    recentBatches = await getSetting<BatchResult[]>("recentBatches", []);
-    hasSuccessfulParse = await getSetting("hasSuccessfulParse", false);
-    configCollapsed = hasSuccessfulParse;
-    activatedAt = await getSetting<string | null>(ACTIVATION_AT_KEY, null);
-    jobOutcomes = await loadJobOutcomes();
-    // Popover opens from tray click after onboarding — not auto-shown on launch.
-    await resolveDefaultWorkers(await getSetting<number>("workers", 0));
-    launchAtLogin = await getSetting<boolean>("launchAtLogin", false);
-    autoConvertOnCopy = await getSetting<boolean>("autoConvertOnCopy", false);
-    globalShortcut = await getSetting("globalShortcut", DEFAULT_GLOBAL_SHORTCUT);
-    showFloatingHud = await getSetting("showFloatingHud", true);
-    if (launchAtLogin) {
+      format = await getSetting<OutputFormat>("format", "md");
+      // OCR is automatic for scans (main panel no longer exposes a toggle).
+      ocrEnabled = true;
+      await setSetting("ocrEnabled", true);
+      const rawOcr = String(await getSetting("ocrLanguage", "eng"));
+      if (!isKnownOcrLanguage(rawOcr)) {
+        noticeMsg = t("settings.ocrMigrated");
+      }
+      ocrLanguage = normalizeOcrLanguage(rawOcr);
+      await setSetting("ocrLanguage", ocrLanguage);
+      recentBatches = await getSetting<BatchResult[]>("recentBatches", []);
+      hasSuccessfulParse = await getSetting("hasSuccessfulParse", false);
+      configCollapsed = hasSuccessfulParse;
+      activatedAt = await getSetting<string | null>(ACTIVATION_AT_KEY, null);
+      jobOutcomes = await loadJobOutcomes();
+      // Popover opens from tray click after onboarding — not auto-shown on launch.
+      await resolveDefaultWorkers(await getSetting<number>("workers", 0));
+      launchAtLogin = await getSetting<boolean>("launchAtLogin", false);
+      autoConvertOnCopy = await getSetting<boolean>("autoConvertOnCopy", false);
+      globalShortcut = await getSetting("globalShortcut", DEFAULT_GLOBAL_SHORTCUT);
+      showFloatingHud = await getSetting("showFloatingHud", true);
+      if (launchAtLogin) {
+        try {
+          await invoke("set_launch_at_login", { enabled: true });
+        } catch {
+          launchAtLogin = false;
+          await setSetting("launchAtLogin", false);
+        }
+      }
       try {
-        await invoke("set_launch_at_login", { enabled: true });
+        await invoke("set_auto_convert_on_copy", { enabled: autoConvertOnCopy });
       } catch {
-        launchAtLogin = false;
-        await setSetting("launchAtLogin", false);
+        /* tray/native only */
       }
-    }
-    try {
-      await invoke("set_auto_convert_on_copy", { enabled: autoConvertOnCopy });
-    } catch {
-      /* tray/native only */
-    }
-    await syncTrayMenu();
+      await syncTrayMenu();
 
-    tokenStatsPeriod = await getSetting<TokenStatsPeriod>(
-      "tokenStatsPeriod",
-      DEFAULT_TOKEN_STATS_PERIOD,
-    );
-    if (
-      tokenStatsPeriod !== "today" &&
-      tokenStatsPeriod !== "month" &&
-      tokenStatsPeriod !== "lifetime"
-    ) {
-      tokenStatsPeriod = DEFAULT_TOKEN_STATS_PERIOD;
-      await setSetting("tokenStatsPeriod", tokenStatsPeriod);
-    }
-    await refreshTokenStats();
-
-    try {
-      const info = await invoke<{ version?: string }>("get_system_info");
-      if (info.version) appVersion = info.version;
-    } catch {
-      /* keep default */
-    }
-
-    updateState.scheduleBackgroundCheck(appVersion);
-
-    const savedInput = await getSetting("inputDir", "");
-    if (savedInput) {
-      await handleFolderSelected(savedInput, null, { silent: true });
-    }
-
-    unlistenOpen = await listen<string[]>("open-files", (event) => {
-      const paths = event.payload;
-      if (paths?.length) {
-        void ingestExternalPaths(paths);
+      tokenStatsPeriod = await getSetting<TokenStatsPeriod>(
+        "tokenStatsPeriod",
+        DEFAULT_TOKEN_STATS_PERIOD,
+      );
+      if (
+        tokenStatsPeriod !== "today" &&
+        tokenStatsPeriod !== "month" &&
+        tokenStatsPeriod !== "lifetime"
+      ) {
+        tokenStatsPeriod = DEFAULT_TOKEN_STATS_PERIOD;
+        await setSetting("tokenStatsPeriod", tokenStatsPeriod);
       }
-    });
+      await refreshTokenStats();
 
-    unlistenBackgroundParse = await listen<string[]>("background-parse", (event) => {
-      const paths = event.payload;
-      if (paths?.length) {
-        void handleBackgroundParse(paths);
+      try {
+        const info = await invoke<{ version?: string }>("get_system_info");
+        if (info.version) appVersion = info.version;
+      } catch {
+        /* keep default */
       }
-    });
 
-    unlistenHudFileSupport = await listen("hud-open-file-support", () => {
-      openFileSupportSettings();
-    });
+      updateState.scheduleBackgroundCheck(appVersion);
+
+      const savedInput = await getSetting("inputDir", "");
+      if (savedInput) {
+        await handleFolderSelected(savedInput, null, { silent: true });
+      }
+
+      unlistenOpen = await listen<string[]>("open-files", (event) => {
+        const paths = event.payload;
+        if (paths?.length) {
+          void ingestExternalPaths(paths);
+        }
+      });
+
+      unlistenBackgroundParse = await listen<string[]>("background-parse", (event) => {
+        const paths = event.payload;
+        if (paths?.length) {
+          void handleBackgroundParse(paths);
+        }
+      });
+
+      unlistenHudFileSupport = await listen("hud-open-file-support", () => {
+        openFileSupportSettings();
+      });
     })();
 
     return () => {
@@ -603,7 +586,7 @@
   async function handleFolderSelected(
     path: string,
     count: number | null,
-    options?: { silent?: boolean }
+    options?: { silent?: boolean },
   ) {
     inputDir = path;
     selectedFiles = [];
@@ -671,8 +654,6 @@
     format = f;
     await setSetting("format", format);
   }
-
-
 
   async function handleWorkersChange(value: number) {
     workers = value;
@@ -776,7 +757,9 @@
 
     try {
       await invoke("trigger_haptic");
-    } catch {}
+    } catch {
+      // Haptic feedback is best-effort.
+    }
 
     isParsing = true;
     parseStallLimitMs = parseStallTimeoutMs(filesToParse.length);
@@ -805,117 +788,117 @@
         workers,
       },
       (event: ParseEvent) => {
-          touchParseActivity();
-          if (event.type === "start") {
-            totalFiles = event.total || 0;
-          } else if (event.type === "token_savings") {
-            const savingsEvent = {
-              type: "token_savings" as const,
+        touchParseActivity();
+        if (event.type === "start") {
+          totalFiles = event.total || 0;
+        } else if (event.type === "token_savings") {
+          const savingsEvent = {
+            type: "token_savings" as const,
+            file: event.file,
+            file_type: event.file_type,
+            tokens_saved: event.tokens_saved,
+            pages_unlocked: event.pages_unlocked,
+            documents_unlocked: event.documents_unlocked,
+          };
+          batchTokenSavings = applyTokenSavingsEvent(batchTokenSavings, savingsEvent);
+          void syncHudIfActive();
+          void recordTokenSavingsFromSidecarEvent(savingsEvent)
+            .then((next) => {
+              if (next) tokenStats = next;
+            })
+            .catch((e) => console.warn("[tokenStats] record failed", e));
+        } else if (event.type === "progress") {
+          const applied = applyParseProgressEvent(
+            files,
+            {
+              type: "progress",
               file: event.file,
-              file_type: event.file_type,
-              tokens_saved: event.tokens_saved,
-              pages_unlocked: event.pages_unlocked,
-              documents_unlocked: event.documents_unlocked,
-            };
-            batchTokenSavings = applyTokenSavingsEvent(batchTokenSavings, savingsEvent);
-            void syncHudIfActive();
-            void recordTokenSavingsFromSidecarEvent(savingsEvent)
-              .then((next) => {
-                if (next) tokenStats = next;
-              })
-              .catch((e) => console.warn("[tokenStats] record failed", e));
-          } else if (event.type === "progress") {
-            const applied = applyParseProgressEvent(
-              files,
-              {
-                type: "progress",
-                file: event.file,
-                sourcePath: event.sourcePath,
-                status: event.status,
-                path: event.path,
-                error: event.error,
-              },
-              lastParsingId
-            );
-            files = applied.files;
-            lastParsingId = applied.lastParsingId;
-            void syncHudIfActive();
-          } else if (event.type === "done") {
-            clearParseStallWatchdog();
-            isParsing = false;
-            lastParsingId = null;
-            totalFiles = totalFiles || files.length;
-            const sawProgress = files.some((f) => f.status !== "pending");
-            if (!sawProgress) {
-              errorMsg = t("errors.engineNoOutput");
-              noticeMsg = t("errors.parseFailed");
-              files = settleBatchOnStop(files, {
-                parsing: t("errors.engineNoOutput"),
-                pending: t("errors.engineNoOutput"),
-              });
-              return;
-            }
-            files = settleRemainingOnDone(files, t("errors.batchNotReached"));
-            const errCount = files.filter((f) => f.status === "error").length;
-            if (errCount > 0) {
-              noticeMsg = t("run.batchDoneWithErrors", { errors: errCount });
-              errorMsg = null;
-            } else {
-              noticeMsg = null;
-              errorMsg = null;
-            }
-            void addToHistory();
-            const parsed = files.filter((f) => f.status === "done").length;
-            const notifyErrors = files.filter((f) => f.status === "error").length;
-            if (!hasSuccessfulParse && parsed > 0) {
-              hasSuccessfulParse = true;
-              configCollapsed = true;
-              void setSetting("hasSuccessfulParse", true);
-            }
-            // PK-2/3: local job outcomes + activation (no paths stored)
-            const tokensInBatch = batchTokenSavings.tokensSaved;
-            void persistJobOutcome({
-              success: parsed,
-              failed: notifyErrors,
-              tokensSaved: tokensInBatch,
-            }).then((next) => {
-              jobOutcomes = next;
+              sourcePath: event.sourcePath,
+              status: event.status,
+              path: event.path,
+              error: event.error,
+            },
+            lastParsingId,
+          );
+          files = applied.files;
+          lastParsingId = applied.lastParsingId;
+          void syncHudIfActive();
+        } else if (event.type === "done") {
+          clearParseStallWatchdog();
+          isParsing = false;
+          lastParsingId = null;
+          totalFiles = totalFiles || files.length;
+          const sawProgress = files.some((f) => f.status !== "pending");
+          if (!sawProgress) {
+            errorMsg = t("errors.engineNoOutput");
+            noticeMsg = t("errors.parseFailed");
+            files = settleBatchOnStop(files, {
+              parsing: t("errors.engineNoOutput"),
+              pending: t("errors.engineNoOutput"),
             });
-            if (
-              qualifiesForActivation({
-                alreadyActivated: !!activatedAt,
-                successCount: parsed,
-                tokensSavedInBatch: tokensInBatch,
-              })
-            ) {
-              const at = new Date().toISOString();
-              activatedAt = at;
-              void setSetting(ACTIVATION_AT_KEY, at);
-            }
-            // PK-4: soft destination prompt once after first success
-            void getSetting(DESTINATION_PROMPT_KEY, false).then((seen) => {
-              showDestinationPrompt = !seen && parsed > 0;
-            });
-            showBatchScoreboard = parsed > 0 || notifyErrors > 0;
-            void refreshTokenStats();
-            void syncHudIfActive();
-            void invoke("show_completion_notification", {
-              title: t("app.name"),
-              body: t("run.notifyDone", { parsed, errors: notifyErrors }),
-            }).catch(() => {});
-            isBackgroundBatch = false;
-          } else if (event.type === "error") {
-            // Fatal sidecar error (see sidecar.ts protocol) — not per-file progress errors.
-            console.error("[parse batch]", event.message);
-            if (isParsing && event.message) {
-              parseRun?.cancel();
-              parseRun = null;
-              stopParseUi(t("errors.parseFailed"), event.message);
-            } else if (event.message) {
-              errorMsg = event.message;
-            }
+            return;
+          }
+          files = settleRemainingOnDone(files, t("errors.batchNotReached"));
+          const errCount = files.filter((f) => f.status === "error").length;
+          if (errCount > 0) {
+            noticeMsg = t("run.batchDoneWithErrors", { errors: errCount });
+            errorMsg = null;
+          } else {
+            noticeMsg = null;
+            errorMsg = null;
+          }
+          void addToHistory();
+          const parsed = files.filter((f) => f.status === "done").length;
+          const notifyErrors = files.filter((f) => f.status === "error").length;
+          if (!hasSuccessfulParse && parsed > 0) {
+            hasSuccessfulParse = true;
+            configCollapsed = true;
+            void setSetting("hasSuccessfulParse", true);
+          }
+          // PK-2/3: local job outcomes + activation (no paths stored)
+          const tokensInBatch = batchTokenSavings.tokensSaved;
+          void persistJobOutcome({
+            success: parsed,
+            failed: notifyErrors,
+            tokensSaved: tokensInBatch,
+          }).then((next) => {
+            jobOutcomes = next;
+          });
+          if (
+            qualifiesForActivation({
+              alreadyActivated: !!activatedAt,
+              successCount: parsed,
+              tokensSavedInBatch: tokensInBatch,
+            })
+          ) {
+            const at = new Date().toISOString();
+            activatedAt = at;
+            void setSetting(ACTIVATION_AT_KEY, at);
+          }
+          // PK-4: soft destination prompt once after first success
+          void getSetting(DESTINATION_PROMPT_KEY, false).then((seen) => {
+            showDestinationPrompt = !seen && parsed > 0;
+          });
+          showBatchScoreboard = parsed > 0 || notifyErrors > 0;
+          void refreshTokenStats();
+          void syncHudIfActive();
+          void invoke("show_completion_notification", {
+            title: t("app.name"),
+            body: t("run.notifyDone", { parsed, errors: notifyErrors }),
+          }).catch(() => {});
+          isBackgroundBatch = false;
+        } else if (event.type === "error") {
+          // Fatal sidecar error (see sidecar.ts protocol) — not per-file progress errors.
+          console.error("[parse batch]", event.message);
+          if (isParsing && event.message) {
+            parseRun?.cancel();
+            parseRun = null;
+            stopParseUi(t("errors.parseFailed"), event.message);
+          } else if (event.message) {
+            errorMsg = event.message;
           }
         }
+      },
     );
 
     try {
@@ -923,10 +906,7 @@
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       const allSettled = files.every(
-        (f) =>
-          f.status === "done" ||
-          f.status === "error" ||
-          f.status === "skipped"
+        (f) => f.status === "done" || f.status === "error" || f.status === "skipped",
       );
       if (isParsing) {
         if (allSettled) {
@@ -934,10 +914,7 @@
           isParsing = false;
           lastParsingId = null;
           const errCount = files.filter((f) => f.status === "error").length;
-          noticeMsg =
-            errCount > 0
-              ? t("run.batchDoneWithErrors", { errors: errCount })
-              : null;
+          noticeMsg = errCount > 0 ? t("run.batchDoneWithErrors", { errors: errCount }) : null;
           errorMsg = errCount > 0 ? msg : null;
           void addToHistory();
           void syncHudIfActive();
@@ -966,8 +943,7 @@
       fileCount: files.length,
       parsed,
       errors,
-      sourcePaths:
-        selectedFiles.length > 0 ? [...selectedFiles] : undefined,
+      sourcePaths: selectedFiles.length > 0 ? [...selectedFiles] : undefined,
       fileErrors:
         errors > 0
           ? errored.map((f) => ({
@@ -1002,12 +978,8 @@
     await setSetting(CONVERT_DESTINATION_KEY, value);
   }
 
-  const lastBatchSuccessCount = $derived(
-    files.filter((f) => f.status === "done").length,
-  );
-  const lastBatchFailedCount = $derived(
-    files.filter((f) => f.status === "error").length,
-  );
+  const lastBatchSuccessCount = $derived(files.filter((f) => f.status === "done").length);
+  const lastBatchFailedCount = $derived(files.filter((f) => f.status === "error").length);
   const jobSuccessRateLabel = $derived(successRate(jobOutcomes).label);
 
   function handleKeydown(e: KeyboardEvent) {
@@ -1038,238 +1010,246 @@
     {#key "main"}
       <div class="motion-panel" in:panelBlurFlyIn={mainPanelIn} out:panelBlurFlyOut={mainPanelOut}>
         <div class="motion-panel-content">
-  <header class="main-header">
-    <div class="main-header-brand">
-      <span class="main-header-title">{t("app.name")}</span>
-      {#if appVersion}<span class="header-ver">{appVersion}</span>{/if}
-    </div>
-    <div class="header-actions">
-      <button
-        type="button"
-        class="icon-btn icon-btn-settings"
-        onclick={() => openSettings()}
-        onmouseenter={warmDependencies}
-        onfocusin={warmDependencies}
-        title={t("header.settings")}
-        aria-label={t("header.settings")}
-      >
-        <GearSixIcon size={16} weight="regular" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        onclick={quitApp}
-        title={t("header.quit")}
-        aria-label={t("header.quit")}
-      >
-        <XIcon size={16} weight="bold" aria-hidden="true" />
-      </button>
-    </div>
-  </header>
+          <header class="main-header">
+            <div class="main-header-brand">
+              <span class="main-header-title">{t("app.name")}</span>
+              {#if appVersion}<span class="header-ver">{appVersion}</span>{/if}
+            </div>
+            <div class="header-actions">
+              <button
+                type="button"
+                class="icon-btn icon-btn-settings"
+                onclick={() => openSettings()}
+                onmouseenter={warmDependencies}
+                onfocusin={warmDependencies}
+                title={t("header.settings")}
+                aria-label={t("header.settings")}
+              >
+                <GearSixIcon size={16} weight="regular" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                class="icon-btn"
+                onclick={quitApp}
+                title={t("header.quit")}
+                aria-label={t("header.quit")}
+              >
+                <XIcon size={16} weight="bold" aria-hidden="true" />
+              </button>
+            </div>
+          </header>
 
-  {#if updateState.available}
-    <div in:fly={bannerFlyInParams} out:fly={bannerFlyOutParams}>
-      <UpdateBanner
-        info={updateState.available}
-        installing={updateState.isInstalling}
-        error={updateState.error}
-        onInstall={() => updateState.installAvailable()}
-        onDismiss={() => updateState.dismiss()}
-      />
-    </div>
-  {/if}
-
-  <main class="main-panel">
-    <section class="section output-settings-section">
-      {#if hasSuccessfulParse}
-        <div class="config-section-header output-settings-toolbar">
-          <div class="output-settings-heading">
-            <LinkIcon size={16} weight="regular" aria-hidden="true" />
-            <span class="output-settings-title">{t("config.title")}</span>
-          </div>
-          <button
-            type="button"
-            class="config-collapse-btn"
-            in:fade={hintFadeInParams}
-            out:fade={hintFadeOutParams}
-            onclick={toggleConfigCollapsed}
-            aria-expanded={!configCollapsed}
-          >
-            {configCollapsed ? t("config.expand") : t("config.collapse")}
-          </button>
-        </div>
-      {/if}
-
-      {#if !configCollapsed}
-        <div class="card output-settings-card" in:fade={configFadeIn} out:fade={configFadeOut}>
-          {#if !hasSuccessfulParse}
-            <div class="output-settings-heading">
-              <LinkIcon size={16} weight="regular" aria-hidden="true" />
-              <span class="output-settings-title">{t("config.title")}</span>
+          {#if updateState.available}
+            <div in:fly={bannerFlyInParams} out:fly={bannerFlyOutParams}>
+              <UpdateBanner
+                info={updateState.available}
+                installing={updateState.isInstalling}
+                error={updateState.error}
+                onInstall={() => updateState.installAvailable()}
+                onDismiss={() => updateState.dismiss()}
+              />
             </div>
           {/if}
 
-          <OutputFolderPicker value={outputDir} onSelect={handleOutputSelect} />
+          <main class="main-panel">
+            <section class="section output-settings-section">
+              {#if hasSuccessfulParse}
+                <div class="config-section-header output-settings-toolbar">
+                  <div class="output-settings-heading">
+                    <LinkIcon size={16} weight="regular" aria-hidden="true" />
+                    <span class="output-settings-title">{t("config.title")}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="config-collapse-btn"
+                    in:fade={hintFadeInParams}
+                    out:fade={hintFadeOutParams}
+                    onclick={toggleConfigCollapsed}
+                    aria-expanded={!configCollapsed}
+                  >
+                    {configCollapsed ? t("config.expand") : t("config.collapse")}
+                  </button>
+                </div>
+              {/if}
 
-          <div class="config-control-row">
-            <div class="config-control-label">
-              <FileTextIcon size={16} weight="regular" aria-hidden="true" />
-              <span>{t("config.format")}</span>
+              {#if !configCollapsed}
+                <div
+                  class="card output-settings-card"
+                  in:fade={configFadeIn}
+                  out:fade={configFadeOut}
+                >
+                  {#if !hasSuccessfulParse}
+                    <div class="output-settings-heading">
+                      <LinkIcon size={16} weight="regular" aria-hidden="true" />
+                      <span class="output-settings-title">{t("config.title")}</span>
+                    </div>
+                  {/if}
+
+                  <OutputFolderPicker value={outputDir} onSelect={handleOutputSelect} />
+
+                  <div class="config-control-row">
+                    <div class="config-control-label">
+                      <FileTextIcon size={16} weight="regular" aria-hidden="true" />
+                      <span>{t("config.format")}</span>
+                    </div>
+                    <div class="config-control-fields config-control-fields--format">
+                      <FormatSelector value={format} onChange={handleFormatChange} />
+                      <span class="ocr-auto-chip" title={t("config.ocrAutoHint")}>
+                        <SparkleIcon size={12} weight="fill" aria-hidden="true" />
+                        {t("config.ocrAuto")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p class="caption-hint output-settings-hint">{t("config.formatHint")}</p>
+                </div>
+              {:else}
+                <button
+                  type="button"
+                  class="config-collapsed-summary"
+                  title={outputDir || t("config.downloads")}
+                  in:fade={configFadeIn}
+                  out:fade={configFadeOut}
+                  onclick={toggleConfigCollapsed}
+                >
+                  <span class="config-summary-path"
+                    >{outputDir ? truncatePath(outputDir, 26) : t("config.downloads")}</span
+                  >
+                  <span class="config-summary-chips">
+                    <span class="config-summary-chip">{format.toUpperCase()}</span>
+                    <span class="config-summary-chip">OCR</span>
+                  </span>
+                </button>
+              {/if}
+            </section>
+
+            <DropZone
+              fileCount={inputFileCount}
+              disabled={isIngesting || isParsing}
+              onIngestStart={() => (isIngesting = true)}
+              onIngestEnd={() => (isIngesting = false)}
+              onFolder={handleFolderFromDropZone}
+              onFiles={handleFilesSelected}
+            />
+
+            {#if showProgress}
+              <div in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
+                <ProgressList
+                  {files}
+                  total={totalFiles || files.length}
+                  {isParsing}
+                  {lastParsingId}
+                  lightMotion={lightParseMotion}
+                  onOpenFileSupport={openFileSupportSettings}
+                />
+              </div>
+            {/if}
+
+            <div class="section run-section">
+              {#key isParsing}
+                <div in:fade={buttonFadeInParams} out:fade={buttonFadeOutParams}>
+                  {#if isParsing}
+                    <button type="button" class="secondary run-parse-btn" onclick={cancelParse}>
+                      {t("run.cancel")}
+                    </button>
+                  {:else}
+                    <button
+                      type="button"
+                      class="run-parse-btn"
+                      disabled={!canRunParse}
+                      onclick={() => void startParse()}
+                    >
+                      {t("run.runParse")}
+                    </button>
+                  {/if}
+                </div>
+              {/key}
+              {#if canRunParseBlockedReason}
+                <p class="run-blocked-hint" role="status">{canRunParseBlockedReason}</p>
+              {/if}
+              {#if noticeMsg}
+                <div
+                  class="notice-banner"
+                  role="status"
+                  in:fly={bannerFlyInParams}
+                  out:fly={bannerFlyOutParams}
+                >
+                  {noticeMsg}
+                </div>
+              {/if}
+              {#if errorMsg}
+                <div
+                  class="error-banner"
+                  role="alert"
+                  in:fly={bannerFlyInParams}
+                  out:fly={bannerFlyOutParams}
+                >
+                  <p class="error-banner-text">{errorMsg}</p>
+                  {#if isConverterDependencyError(errorMsg)}
+                    <button
+                      type="button"
+                      class="error-banner-link"
+                      onclick={openFileSupportSettings}
+                    >
+                      {t("errors.openFileSupport")}
+                    </button>
+                  {/if}
+                </div>
+              {/if}
+              {#if !isParsing && showBatchScoreboard && files.length > 0}
+                <BatchScoreboard
+                  batch={batchTokenSavings}
+                  stats={tokenStats}
+                  successCount={lastBatchSuccessCount}
+                  failedCount={lastBatchFailedCount}
+                  successRateLabel={jobSuccessRateLabel}
+                  {showDestinationPrompt}
+                  onOpenOutput={() => openFolder(outputDir)}
+                  onConvertMore={handleConvertMore}
+                  onDestination={handleDestination}
+                />
+              {:else if !isParsing && files.length > 0 && files.some((f) => f.status === "done")}
+                <div
+                  class="post-parse-actions"
+                  in:fly={sectionFlyInParams}
+                  out:fly={sectionFlyOutParams}
+                >
+                  <button
+                    type="button"
+                    class="secondary post-parse-open-btn"
+                    onclick={() => openFolder(outputDir)}
+                  >
+                    {t("run.openOutput")}
+                  </button>
+                </div>
+              {/if}
+
+              {#if !isParsing && !hasSuccessfulParse && !showBatchScoreboard}
+                <div class="first-run-hero" in:fly={sectionFlyInParams}>
+                  <p class="first-run-hero-title">{t("firstRun.title")}</p>
+                  <p class="first-run-hero-body">{t("firstRun.body")}</p>
+                  <p class="first-run-hero-privacy">{t("scoreboard.privacy")}</p>
+                </div>
+              {/if}
             </div>
-            <div class="config-control-fields config-control-fields--format">
-              <FormatSelector value={format} onChange={handleFormatChange} />
-              <span class="ocr-auto-chip" title={t("config.ocrAutoHint")}>
-                <SparkleIcon size={12} weight="fill" aria-hidden="true" />
-                {t("config.ocrAuto")}
-              </span>
-            </div>
-          </div>
 
-          <p class="caption-hint output-settings-hint">{t("config.formatHint")}</p>
-        </div>
-      {:else}
-        <button
-          type="button"
-          class="config-collapsed-summary"
-          title={outputDir || t("config.downloads")}
-          in:fade={configFadeIn}
-          out:fade={configFadeOut}
-          onclick={toggleConfigCollapsed}
-        >
-          <span class="config-summary-path"
-            >{outputDir ? truncatePath(outputDir, 26) : t("config.downloads")}</span
-          >
-          <span class="config-summary-chips">
-            <span class="config-summary-chip">{format.toUpperCase()}</span>
-            <span class="config-summary-chip">OCR</span>
-          </span>
-        </button>
-      {/if}
-    </section>
-
-    <DropZone
-      fileCount={inputFileCount}
-      disabled={isIngesting || isParsing}
-      onIngestStart={() => (isIngesting = true)}
-      onIngestEnd={() => (isIngesting = false)}
-      onFolder={handleFolderFromDropZone}
-      onFiles={handleFilesSelected}
-    />
-
-    {#if showProgress}
-      <div in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
-        <ProgressList
-          {files}
-          total={totalFiles || files.length}
-          {isParsing}
-          {lastParsingId}
-          lightMotion={lightParseMotion}
-          onOpenFileSupport={openFileSupportSettings}
-        />
-      </div>
-    {/if}
-
-    <div class="section run-section">
-      {#key isParsing}
-        <div in:fade={buttonFadeInParams} out:fade={buttonFadeOutParams}>
-          {#if isParsing}
-            <button type="button" class="secondary run-parse-btn" onclick={cancelParse}>
-              {t("run.cancel")}
-            </button>
-          {:else}
-            <button
-              type="button"
-              class="run-parse-btn"
-              disabled={!canRunParse}
-              onclick={() => void startParse()}
-            >
-              {t("run.runParse")}
-            </button>
-          {/if}
-        </div>
-      {/key}
-      {#if canRunParseBlockedReason}
-        <p class="run-blocked-hint" role="status">{canRunParseBlockedReason}</p>
-      {/if}
-      {#if noticeMsg}
-        <div
-          class="notice-banner"
-          role="status"
-          in:fly={bannerFlyInParams}
-          out:fly={bannerFlyOutParams}
-        >
-          {noticeMsg}
-        </div>
-      {/if}
-      {#if errorMsg}
-        <div
-          class="error-banner"
-          role="alert"
-          in:fly={bannerFlyInParams}
-          out:fly={bannerFlyOutParams}
-        >
-          <p class="error-banner-text">{errorMsg}</p>
-          {#if isConverterDependencyError(errorMsg)}
-            <button
-              type="button"
-              class="error-banner-link"
-              onclick={openFileSupportSettings}
-            >
-              {t("errors.openFileSupport")}
-            </button>
-          {/if}
-        </div>
-      {/if}
-      {#if !isParsing && showBatchScoreboard && files.length > 0}
-        <BatchScoreboard
-          batch={batchTokenSavings}
-          stats={tokenStats}
-          successCount={lastBatchSuccessCount}
-          failedCount={lastBatchFailedCount}
-          successRateLabel={jobSuccessRateLabel}
-          showDestinationPrompt={showDestinationPrompt}
-          onOpenOutput={() => openFolder(outputDir)}
-          onConvertMore={handleConvertMore}
-          onDestination={handleDestination}
-        />
-      {:else if !isParsing && files.length > 0 && files.some((f) => f.status === "done")}
-        <div class="post-parse-actions" in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
-          <button
-            type="button"
-            class="secondary post-parse-open-btn"
-            onclick={() => openFolder(outputDir)}
-          >
-            {t("run.openOutput")}
-          </button>
-        </div>
-      {/if}
-
-      {#if !isParsing && !hasSuccessfulParse && !showBatchScoreboard}
-        <div class="first-run-hero" in:fly={sectionFlyInParams}>
-          <p class="first-run-hero-title">{t("firstRun.title")}</p>
-          <p class="first-run-hero-body">{t("firstRun.body")}</p>
-          <p class="first-run-hero-privacy">{t("scoreboard.privacy")}</p>
-        </div>
-      {/if}
-    </div>
-
-    {#if !isParsing}
-      <div in:fade={mainFadeIn} out:fade={mainFadeOut}>
-        <TokenSavingsBanner
-          stats={tokenStats}
-          period={tokenStatsPeriod}
-          onOpenDetails={() => openSettings("general")}
-        />
-        <RecentBatches
-          {latestBatch}
-          {appVersion}
-          showHistoryButton={recentBatches.length > 0}
-          onOpenFolder={openFolder}
-          onOpenHistory={openHistory}
-        />
-      </div>
-    {/if}
-  </main>
+            {#if !isParsing}
+              <div in:fade={mainFadeIn} out:fade={mainFadeOut}>
+                <TokenSavingsBanner
+                  stats={tokenStats}
+                  period={tokenStatsPeriod}
+                  onOpenDetails={() => openSettings("general")}
+                />
+                <RecentBatches
+                  {latestBatch}
+                  {appVersion}
+                  showHistoryButton={recentBatches.length > 0}
+                  onOpenFolder={openFolder}
+                  onOpenHistory={openHistory}
+                />
+              </div>
+            {/if}
+          </main>
         </div>
       </div>
     {/key}
@@ -1326,8 +1306,8 @@
                     {globalShortcut}
                     {showFloatingHud}
                     initialTab={settingsTab}
-                    tokenStats={tokenStats}
-                    tokenStatsPeriod={tokenStatsPeriod}
+                    {tokenStats}
+                    {tokenStatsPeriod}
                     onLocaleChange={handleLocaleChange}
                     onOcrLanguageChange={handleOcrLanguageChange}
                     onThemeChange={handleThemeChange}

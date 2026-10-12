@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  emptyJobOutcomes,
-  recordJobOutcome,
-  successRate,
-  JOB_OUTCOMES_CAP,
-} from "./jobOutcomes";
+import { emptyJobOutcomes, recordJobOutcome, successRate, JOB_OUTCOMES_CAP } from "./jobOutcomes";
 
 describe("jobOutcomes", () => {
   it("starts empty", () => {

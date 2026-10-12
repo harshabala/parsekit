@@ -13,9 +13,7 @@
     onChange: (value: number) => void;
   } = $props();
 
-  let fillPercent = $derived(
-    max > min ? ((value - min) / (max - min)) * 100 : 0
-  );
+  let fillPercent = $derived(max > min ? ((value - min) / (max - min)) * 100 : 0);
 </script>
 
 <div class="workers-slider" style="--workers-fill: {fillPercent}%">

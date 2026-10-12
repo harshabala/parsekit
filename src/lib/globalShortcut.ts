@@ -38,7 +38,7 @@ export function keyboardEventToShortcut(event: KeyboardEvent): string | null {
     code.startsWith("Key") ||
     code.startsWith("Digit") ||
     code === "Space" ||
-    code.startsWith("F") && /^F\d+$/.test(code);
+    (code.startsWith("F") && /^F\d+$/.test(code));
   if (!isKey) return null;
 
   const mods: string[] = [];

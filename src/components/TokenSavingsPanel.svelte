@@ -38,9 +38,7 @@
   const hasData = $derived((stats?.total_files_converted ?? 0) > 0);
 
   const sortedFileTypes = $derived(
-    stats
-      ? Object.entries(stats.by_file_type).sort(([a], [b]) => a.localeCompare(b))
-      : [],
+    stats ? Object.entries(stats.by_file_type).sort(([a], [b]) => a.localeCompare(b)) : [],
   );
 
   function fileTypeLabel(type: string): string {

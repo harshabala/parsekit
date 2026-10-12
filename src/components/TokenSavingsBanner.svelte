@@ -3,11 +3,7 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { hintFadeIn, hintFadeOut } from "../lib/motion";
   import { t } from "../lib/i18n.svelte";
-  import {
-    formatTokenCount,
-    tokensForPeriod,
-    type TokenStats,
-  } from "../lib/tokenStats";
+  import { formatTokenCount, tokensForPeriod, type TokenStats } from "../lib/tokenStats";
   import type { TokenStatsPeriod } from "../lib/store";
 
   let {
@@ -24,9 +20,7 @@
   const fadeInParams = $derived(hintFadeIn(reducedMotion));
   const fadeOutParams = $derived(hintFadeOut(reducedMotion));
 
-  const displayTokens = $derived(
-    stats ? tokensForPeriod(stats, period) : 0,
-  );
+  const displayTokens = $derived(stats ? tokensForPeriod(stats, period) : 0);
   const show = $derived(displayTokens > 0);
   const label = $derived(
     period === "today"

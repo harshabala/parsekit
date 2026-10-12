@@ -42,17 +42,15 @@
   use:focusTrap={{ restoreFocus: false }}
 >
   <div class="settings-header">
-    <button type="button" class="settings-back-btn" onclick={() => onClose()}>{t("history.back")}</button>
+    <button type="button" class="settings-back-btn" onclick={() => onClose()}
+      >{t("history.back")}</button
+    >
     <span class="settings-header-title" id="history-title">{t("history.title")}</span>
   </div>
 
   <div class="settings-scroll">
     {#if batches.length === 0}
-      <div
-        class="history-empty"
-        in:fade={hintFadeInParams}
-        out:fade={hintFadeOutParams}
-      >
+      <div class="history-empty" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
         <p class="settings-hint">{t("history.empty")}</p>
         <button type="button" class="secondary history-empty-action" onclick={() => onClose()}>
           {t("history.backToConvert")}

@@ -3,7 +3,7 @@ export function depRowAriaLabel(
   name: string,
   installed: boolean,
   statusInstalled: string,
-  statusMissing: string
+  statusMissing: string,
 ): string {
   return `${name}: ${installed ? statusInstalled : statusMissing}`;
 }

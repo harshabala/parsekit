@@ -42,9 +42,7 @@
   const isComplete = $derived(hudIsComplete(hudState.files, total, hudState.isParsing));
   const failedFiles = $derived(hudState.files.filter((f) => f.status === "error"));
   const selectedError = $derived(
-    selectedErrorId
-      ? (failedFiles.find((f) => f.id === selectedErrorId) ?? null)
-      : null,
+    selectedErrorId ? (failedFiles.find((f) => f.id === selectedErrorId) ?? null) : null,
   );
   const tokensSaved = $derived(hudState.batchTokenSavings.tokensSaved);
 
@@ -83,11 +81,7 @@
 <div class="progress-hud" role="status" aria-live="polite">
   <div class="progress-hud-header">
     {#key isComplete}
-      <span
-        class="progress-hud-title"
-        in:fade={fadeInParams}
-        out:fade={fadeOutParams}
-      >
+      <span class="progress-hud-title" in:fade={fadeInParams} out:fade={fadeOutParams}>
         {isComplete ? t("progressHud.complete") : t("progressHud.parsing")}
       </span>
     {/key}

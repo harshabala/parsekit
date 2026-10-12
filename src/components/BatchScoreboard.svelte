@@ -2,12 +2,7 @@
   import { fade, fly } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
   import { t } from "../lib/i18n.svelte";
-  import {
-    hintFadeOut,
-    MOTION_ENTER_MS,
-    MOTION_ENTER_Y,
-    easingDecelerate,
-  } from "../lib/motion";
+  import { hintFadeOut, MOTION_ENTER_MS, MOTION_ENTER_Y, easingDecelerate } from "../lib/motion";
   import {
     approximateChatGptMessages,
     formatTokenCount,
@@ -59,9 +54,7 @@
   const chatApprox = $derived(approximateChatGptMessages(lifetimeTokens));
   const partialFail = $derived(failedCount > 0 && successCount > 0);
   const allFailed = $derived(failedCount > 0 && successCount === 0);
-  const tone = $derived(
-    allFailed ? "fail" : partialFail ? "warn" : "success",
-  );
+  const tone = $derived(allFailed ? "fail" : partialFail ? "warn" : "success");
 </script>
 
 <section
@@ -143,12 +136,7 @@
     <div class="batch-scoreboard-dest" role="group" aria-label={t("scoreboard.destAria")}>
       <p class="batch-scoreboard-dest-title">{t("scoreboard.destTitle")}</p>
       <div class="batch-scoreboard-dest-btns">
-        {#each [
-          ["claude", "Claude"],
-          ["chatgpt", "ChatGPT"],
-          ["gemini", "Gemini"],
-          ["obsidian", "Obsidian"],
-        ] as [id, label]}
+        {#each [["claude", "Claude"], ["chatgpt", "ChatGPT"], ["gemini", "Gemini"], ["obsidian", "Obsidian"]] as [id, label]}
           <button
             type="button"
             class="batch-scoreboard-chip"
@@ -157,11 +145,7 @@
             {label}
           </button>
         {/each}
-        <button
-          type="button"
-          class="batch-scoreboard-chip"
-          onclick={() => onDestination("other")}
-        >
+        <button type="button" class="batch-scoreboard-chip" onclick={() => onDestination("other")}>
           {t("scoreboard.destOther")}
         </button>
         <button

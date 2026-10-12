@@ -5,7 +5,11 @@
   let { value, onChange }: { value: AppLocale; onChange: (code: AppLocale) => void } = $props();
 </script>
 
-<div class="segmented-control language-selector" role="group" aria-label={t("settings.appLanguageTitle")}>
+<div
+  class="segmented-control language-selector"
+  role="group"
+  aria-label={t("settings.appLanguageTitle")}
+>
   {#each SUPPORTED_LOCALES as code}
     <button
       type="button"

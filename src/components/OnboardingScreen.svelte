@@ -75,8 +75,7 @@
     try {
       await invoke("install_and_relaunch");
     } catch (e) {
-      installError =
-        e instanceof Error ? e.message : String(e) || t("onboarding.installFailed");
+      installError = e instanceof Error ? e.message : String(e) || t("onboarding.installFailed");
       installing = false;
     }
   }
@@ -131,16 +130,16 @@
 
         <p class="onboarding-helper">{t("onboarding.installHelper")}</p>
 
-        <div class="onboarding-code-card" role="region" aria-label={t("onboarding.terminalCommand")}>
+        <div
+          class="onboarding-code-card"
+          role="region"
+          aria-label={t("onboarding.terminalCommand")}
+        >
           <div class="onboarding-code-toolbar">
             <div class="onboarding-traffic-lights" aria-hidden="true">
               <span></span><span></span><span></span>
             </div>
-            <button
-              type="button"
-              class="onboarding-code-copy"
-              onclick={copyGatekeeperCommand}
-            >
+            <button type="button" class="onboarding-code-copy" onclick={copyGatekeeperCommand}>
               {#key gatekeeperCopied}
                 <span in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
                   {gatekeeperCopied ? t("gatekeeper.copied") : t("onboarding.copyCommand")}

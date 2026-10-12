@@ -37,12 +37,8 @@
   const reducedMotion = $derived(prefersReducedMotion.current);
   const iconFadeInParams = $derived(iconFadeIn(reducedMotion));
   const iconFadeOutParams = $derived(iconFadeOut(reducedMotion));
-  const sectionFlyInParams = $derived(
-    sectionFlyInMaybeLight(reducedMotion, lightMotion),
-  );
-  const sectionFlyOutParams = $derived(
-    sectionFlyOutMaybeLight(reducedMotion, lightMotion),
-  );
+  const sectionFlyInParams = $derived(sectionFlyInMaybeLight(reducedMotion, lightMotion));
+  const sectionFlyOutParams = $derived(sectionFlyOutMaybeLight(reducedMotion, lightMotion));
   const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
   const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
 
@@ -59,13 +55,11 @@
   let pendingCount = $derived(files.filter((f) => f.status === "pending").length);
 
   let finishedCount = $derived(completedCount + errorCount + skippedCount);
-  let progressPercent = $derived(
-    total > 0 ? Math.round((finishedCount / total) * 100) : 0
-  );
+  let progressPercent = $derived(total > 0 ? Math.round((finishedCount / total) * 100) : 0);
 
   let primaryActiveId = $derived(resolvePrimaryParsingId(files, lastParsingId));
   let primaryActive = $derived(
-    primaryActiveId ? files.find((f) => f.id === primaryActiveId) ?? null : null
+    primaryActiveId ? (files.find((f) => f.id === primaryActiveId) ?? null) : null,
   );
 
   let showCompletePulse = $state(false);
@@ -74,8 +68,7 @@
 
   $effect(() => {
     const justFinished = prevIsParsing && !isParsing;
-    const parseComplete =
-      total > 0 && (progressPercent >= 100 || finishedCount >= total);
+    const parseComplete = total > 0 && (progressPercent >= 100 || finishedCount >= total);
 
     if (justFinished && parseComplete && !reducedMotion) {
       showCompletePulse = true;
@@ -145,11 +138,7 @@
   <div class="progress-panel">
     <div class="row progress-header">
       {#key isParsing}
-        <span
-          class="progress-heading"
-          in:fade={iconFadeInParams}
-          out:fade={iconFadeOutParams}
-        >
+        <span class="progress-heading" in:fade={iconFadeInParams} out:fade={iconFadeOutParams}>
           {isParsing ? t("progress.parsing") : t("progress.complete")}
         </span>
       {/key}
@@ -216,11 +205,7 @@
     </div>
 
     {#if finishedCount > 0}
-      <div
-        class="progress-summary"
-        in:fade={hintFadeInParams}
-        out:fade={hintFadeOutParams}
-      >
+      <div class="progress-summary" in:fade={hintFadeInParams} out:fade={hintFadeOutParams}>
         {t("progress.summary", {
           parsed: completedCount,
           errors: errorCount,
@@ -247,8 +232,8 @@
                 class="file-error"
                 title={file.error}
                 in:fade={hintFadeInParams}
-                out:fade={hintFadeOutParams}
-              >{file.error}</span>
+                out:fade={hintFadeOutParams}>{file.error}</span
+              >
               {#if onOpenFileSupport && isConverterDependencyError(file.error)}
                 <button
                   type="button"

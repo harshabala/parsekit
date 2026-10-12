@@ -50,15 +50,9 @@ function lookup(table: Record<string, unknown>, key: string): string | undefined
   return typeof current === "string" ? current : undefined;
 }
 
-export function t(
-  key: string,
-  vars?: Record<string, string | number>
-): string {
+export function t(key: string, vars?: Record<string, string | number>): string {
   const active = localeValue;
-  let text =
-    lookup(catalogs[active], key) ??
-    lookup(catalogs.en, key) ??
-    key;
+  let text = lookup(catalogs[active], key) ?? lookup(catalogs.en, key) ?? key;
 
   if (vars) {
     for (const [name, value] of Object.entries(vars)) {

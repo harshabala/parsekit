@@ -10,10 +10,7 @@ export const DEFAULT_TOKEN_STATS_PERIOD: TokenStatsPeriod = "today";
 /** Avoid hanging the UI if the store IPC never responds (e.g. early webview init). */
 const STORE_READ_TIMEOUT_MS = 3000;
 
-async function withStoreTimeout<T>(
-  op: () => Promise<T>,
-  label: string,
-): Promise<T> {
+async function withStoreTimeout<T>(op: () => Promise<T>, label: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(
@@ -30,10 +27,7 @@ async function withStoreTimeout<T>(
 
 export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
   try {
-    const val = await withStoreTimeout(
-      () => store.get<T>(key),
-      `getSetting(${key})`,
-    );
+    const val = await withStoreTimeout(() => store.get<T>(key), `getSetting(${key})`);
     return val !== undefined ? val : defaultValue;
   } catch (error) {
     console.warn(`[ParseKit] getSetting(${key}) failed, using default`, error);

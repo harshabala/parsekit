@@ -37,9 +37,7 @@ export async function resetTokenStats(): Promise<TokenStats> {
   return invoke<TokenStats>("reset_token_stats");
 }
 
-export async function recordTokenSavings(
-  input: RecordTokenSavingsInput,
-): Promise<TokenStats> {
+export async function recordTokenSavings(input: RecordTokenSavingsInput): Promise<TokenStats> {
   return invoke<TokenStats>("record_token_savings", {
     fileType: input.fileType,
     tokensSaved: Math.max(0, input.tokensSaved),
@@ -49,11 +47,7 @@ export async function recordTokenSavings(
 }
 
 /** Inclusive start, exclusive end — matches calendar period helpers below. */
-export function filterEventsInRange(
-  events: TokenEvent[],
-  start: Date,
-  end: Date,
-): TokenEvent[] {
+export function filterEventsInRange(events: TokenEvent[], start: Date, end: Date): TokenEvent[] {
   const startMs = start.getTime();
   const endMs = end.getTime();
   return events.filter((event) => {
@@ -68,25 +62,14 @@ function sumFieldInRange(
   end: Date,
   field: "tokens_saved" | "pages_unlocked",
 ): number {
-  return filterEventsInRange(events, start, end).reduce(
-    (sum, event) => sum + event[field],
-    0,
-  );
+  return filterEventsInRange(events, start, end).reduce((sum, event) => sum + event[field], 0);
 }
 
-export function sumTokensInRange(
-  events: TokenEvent[],
-  start: Date,
-  end: Date,
-): number {
+export function sumTokensInRange(events: TokenEvent[], start: Date, end: Date): number {
   return sumFieldInRange(events, start, end, "tokens_saved");
 }
 
-export function sumPagesUnlockedInRange(
-  events: TokenEvent[],
-  start: Date,
-  end: Date,
-): number {
+export function sumPagesUnlockedInRange(events: TokenEvent[], start: Date, end: Date): number {
   return sumFieldInRange(events, start, end, "pages_unlocked");
 }
 
@@ -114,17 +97,11 @@ export function endOfWeek(date: Date): Date {
   return end;
 }
 
-export function tokensSavedThisMonth(
-  stats: TokenStats,
-  now: Date = new Date(),
-): number {
+export function tokensSavedThisMonth(stats: TokenStats, now: Date = new Date()): number {
   return sumTokensInRange(stats.events, startOfMonth(now), endOfMonth(now));
 }
 
-export function tokensSavedThisWeek(
-  stats: TokenStats,
-  now: Date = new Date(),
-): number {
+export function tokensSavedThisWeek(stats: TokenStats, now: Date = new Date()): number {
   return sumTokensInRange(stats.events, startOfWeek(now), endOfWeek(now));
 }
 
@@ -141,37 +118,20 @@ export function endOfDay(date: Date): Date {
   return end;
 }
 
-export function tokensSavedToday(
-  stats: TokenStats,
-  now: Date = new Date(),
-): number {
+export function tokensSavedToday(stats: TokenStats, now: Date = new Date()): number {
   return sumTokensInRange(stats.events, startOfDay(now), endOfDay(now));
 }
 
-export function filesConvertedInRange(
-  events: TokenEvent[],
-  start: Date,
-  end: Date,
-): number {
+export function filesConvertedInRange(events: TokenEvent[], start: Date, end: Date): number {
   return filterEventsInRange(events, start, end).length;
 }
 
-export function filesConvertedToday(
-  stats: TokenStats,
-  now: Date = new Date(),
-): number {
+export function filesConvertedToday(stats: TokenStats, now: Date = new Date()): number {
   return filesConvertedInRange(stats.events, startOfDay(now), endOfDay(now));
 }
 
-export function pagesUnlockedThisMonth(
-  stats: TokenStats,
-  now: Date = new Date(),
-): number {
-  return sumPagesUnlockedInRange(
-    stats.events,
-    startOfMonth(now),
-    endOfMonth(now),
-  );
+export function pagesUnlockedThisMonth(stats: TokenStats, now: Date = new Date()): number {
+  return sumPagesUnlockedInRange(stats.events, startOfMonth(now), endOfMonth(now));
 }
 
 /** Rough tokens per long ChatGPT message — relatable comparison only. */

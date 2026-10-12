@@ -1,11 +1,5 @@
 /** Tesseract OCR language codes for text inside input documents (not UI, not output format). */
-export type OcrLanguageCode =
-  | "eng"
-  | "chi_sim"
-  | "spa"
-  | "hin"
-  | "tam"
-  | "kan";
+export type OcrLanguageCode = "eng" | "chi_sim" | "spa" | "hin" | "tam" | "kan";
 
 export interface OcrLanguageOption {
   code: OcrLanguageCode;

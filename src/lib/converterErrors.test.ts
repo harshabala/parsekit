@@ -7,9 +7,7 @@ describe("isConverterDependencyError", () => {
   });
 
   it("detects LibreOffice messages", () => {
-    expect(isConverterDependencyError("LibreOffice is required for Office documents.")).toBe(
-      true
-    );
+    expect(isConverterDependencyError("LibreOffice is required for Office documents.")).toBe(true);
   });
 
   it("detects brew install hints", () => {

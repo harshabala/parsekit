@@ -135,19 +135,30 @@
   <p class="settings-hint deps-card-hint">{t("deps.hint")}</p>
 
   {#if loading && deps.length === 0}
-    <p class="settings-hint deps-checking-line" transition:fade={{ duration: reducedMotion ? 0 : 120 }}>
+    <p
+      class="settings-hint deps-checking-line"
+      transition:fade={{ duration: reducedMotion ? 0 : 120 }}
+    >
       {t("deps.checking")}
     </p>
   {/if}
 
   {#if error}
-    <p class="settings-hint deps-error" role="alert" transition:fade={{ duration: reducedMotion ? 0 : 120 }}>
+    <p
+      class="settings-hint deps-error"
+      role="alert"
+      transition:fade={{ duration: reducedMotion ? 0 : 120 }}
+    >
       {error}
     </p>
   {/if}
 
   {#if copyError}
-    <p class="settings-hint deps-error" role="alert" transition:fade={{ duration: reducedMotion ? 0 : 120 }}>
+    <p
+      class="settings-hint deps-error"
+      role="alert"
+      transition:fade={{ duration: reducedMotion ? 0 : 120 }}
+    >
       {copyError}
     </p>
   {/if}
@@ -164,16 +175,13 @@
           t("deps.pdf"),
           true,
           t("deps.statusInstalled"),
-          t("deps.statusMissing")
+          t("deps.statusMissing"),
         )}
         in:fly={itemFly(0)}
         out:fly={rowFlyOut(reducedMotion)}
       >
         <div class="deps-item-row">
-          <span
-            class="deps-status-badge deps-status-installed"
-            aria-hidden="true"
-          >
+          <span class="deps-status-badge deps-status-installed" aria-hidden="true">
             <CheckIcon class="deps-check-icon" size={12} weight="bold" />
           </span>
           <div class="deps-item-copy">
@@ -192,7 +200,7 @@
             depName(dep.id, dep.labelKey),
             dep.installed,
             t("deps.statusInstalled"),
-            t("deps.statusMissing")
+            t("deps.statusMissing"),
           )}
           in:fly={itemFly(index + 1)}
           out:fly={rowFlyOut(reducedMotion)}
@@ -252,7 +260,10 @@
       {/each}
     </ul>
     {#if missing.length > 0}
-      <p class="settings-hint deps-missing-note" transition:fade={{ duration: reducedMotion ? 0 : 150 }}>
+      <p
+        class="settings-hint deps-missing-note"
+        transition:fade={{ duration: reducedMotion ? 0 : 150 }}
+      >
         {t("deps.missingNote")}
       </p>
     {/if}

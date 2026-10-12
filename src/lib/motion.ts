@@ -284,30 +284,21 @@ export function collapseSlideOut(prefersReduced: boolean) {
 /**
  * Button / section fades that can be forced instant (keyboard path, background batches).
  */
-export function buttonFadeInMaybeInstant(
-  prefersReduced: boolean,
-  instant: boolean,
-) {
+export function buttonFadeInMaybeInstant(prefersReduced: boolean, instant: boolean) {
   return {
     duration: prefersReduced || instant ? 0 : MOTION_ENTER_MS,
     easing: easingDecelerate,
   };
 }
 
-export function buttonFadeOutMaybeInstant(
-  prefersReduced: boolean,
-  instant: boolean,
-) {
+export function buttonFadeOutMaybeInstant(prefersReduced: boolean, instant: boolean) {
   return {
     duration: prefersReduced || instant ? 0 : MOTION_EXIT_MS,
     easing: easingDecelerate,
   };
 }
 
-export function sectionFlyInMaybeLight(
-  prefersReduced: boolean,
-  light: boolean,
-) {
+export function sectionFlyInMaybeLight(prefersReduced: boolean, light: boolean) {
   return {
     y: prefersReduced || light ? 0 : MOTION_ENTER_Y,
     duration: prefersReduced ? 0 : light ? MOTION_HINT_MS : MOTION_ENTER_MS,
@@ -315,10 +306,7 @@ export function sectionFlyInMaybeLight(
   };
 }
 
-export function sectionFlyOutMaybeLight(
-  prefersReduced: boolean,
-  light: boolean,
-) {
+export function sectionFlyOutMaybeLight(prefersReduced: boolean, light: boolean) {
   return {
     y: prefersReduced || light ? 0 : MOTION_EXIT_Y,
     duration: prefersReduced ? 0 : light ? MOTION_HINT_MS : MOTION_EXIT_MS,
@@ -332,11 +320,7 @@ export function subviewFadeOut(prefersReduced: boolean) {
 }
 
 /** File row stagger on batch start (≤15 files, capped by MOTION_STAGGER_BUDGET_MS). */
-export function rowFlyIn(
-  prefersReduced: boolean,
-  index: number,
-  stagger: boolean,
-) {
+export function rowFlyIn(prefersReduced: boolean, index: number, stagger: boolean) {
   const capped = Math.min(index, MOTION_ROW_STAGGER_MAX);
   return {
     y: prefersReduced ? 0 : 6,

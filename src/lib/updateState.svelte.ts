@@ -9,7 +9,7 @@ export class UpdateState {
   statusNote = $state<string | null>(null);
   statusOk = $state(false);
 
-  scheduleBackgroundCheck(appVersion: string) {
+  scheduleBackgroundCheck(_appVersion: string) {
     void checkForUpdate()
       .then((info) => {
         if (info.available) {
@@ -48,8 +48,7 @@ export class UpdateState {
     try {
       await installUpdate();
     } catch (e) {
-      this.error =
-        (e instanceof Error ? e.message : String(e)) || t("update.installFailed");
+      this.error = (e instanceof Error ? e.message : String(e)) || t("update.installFailed");
       this.isInstalling = false;
     }
   }

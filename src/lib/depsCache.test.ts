@@ -14,7 +14,9 @@ describe("depsCache", () => {
   });
 
   it("take returns cached deps and clears", () => {
-    const deps = [{ id: "tesseract", labelKey: "x", installed: true, optional: false, brewHint: "" }];
+    const deps = [
+      { id: "tesseract", labelKey: "x", installed: true, optional: false, brewHint: "" },
+    ];
     setCachedDependenciesForTests(deps);
     expect(takeCachedDependencies()).toEqual(deps);
     expect(peekCachedDependencies()).toBeNull();

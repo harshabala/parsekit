@@ -48,7 +48,7 @@ describe("depsStaggerDelayMs", () => {
 
   it("caps delay for high indices", () => {
     const maxIndex = Math.floor(
-      (MOTION_STAGGER_BUDGET_MS - MOTION_DEPS_ENTER_MS) / MOTION_DEPS_STAGGER_DELAY_MS
+      (MOTION_STAGGER_BUDGET_MS - MOTION_DEPS_ENTER_MS) / MOTION_DEPS_STAGGER_DELAY_MS,
     );
     expect(depsStaggerDelayMs(99)).toBe(depsStaggerDelayMs(maxIndex));
   });
@@ -56,8 +56,7 @@ describe("depsStaggerDelayMs", () => {
 
 describe("row stagger constants", () => {
   it("aligns row enter duration with stagger cap", () => {
-    const total =
-      MOTION_ROW_STAGGER_MAX * MOTION_ROW_STAGGER_DELAY_MS + MOTION_ROW_ENTER_MS;
+    const total = MOTION_ROW_STAGGER_MAX * MOTION_ROW_STAGGER_DELAY_MS + MOTION_ROW_ENTER_MS;
     expect(total).toBe(MOTION_STAGGER_BUDGET_MS);
   });
 });
@@ -89,9 +88,7 @@ describe("keyboard / light motion helpers", () => {
     const instantIn = panelBlurFlyInParams(false, { instant: true });
     expect(instantIn.duration).toBe(0);
     expect(panelBlurFlyInParams(false).duration).toBe(MOTION_ENTER_MS);
-    expect(panelBlurFlyInParams(false).css(1, 1)).toContain(
-      `translateY(${MOTION_ENTER_Y}px)`,
-    );
+    expect(panelBlurFlyInParams(false).css(1, 1)).toContain(`translateY(${MOTION_ENTER_Y}px)`);
   });
 
   it("forces instant button fades when instant is true", () => {

@@ -16,11 +16,7 @@ function bootstrap() {
       document.body.dataset.window = label;
     }
     const component =
-      label === "progress-hud"
-        ? ProgressHudApp
-        : label === "onboarding"
-          ? OnboardingApp
-          : App;
+      label === "progress-hud" ? ProgressHudApp : label === "onboarding" ? OnboardingApp : App;
     const app = mount(component, { target });
     document.getElementById("boot-fallback")?.remove();
     console.info(`[ParseKit] UI mounted (${label})`);

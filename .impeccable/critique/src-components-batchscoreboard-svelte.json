@@ -14,11 +14,31 @@
     "Local privacy posture explicit"
   ],
   "priorityIssues": [
-    {"sev": "P1", "id": "hero-metric-risk", "text": "Large number + label pattern can read as SaaS hero-metric if over-decorated; keep restrained"},
-    {"sev": "P1", "id": "dest-option-count", "text": "Six destination choices is high decision load; optional should stay quiet"},
-    {"sev": "P2", "id": "secondary-contrast", "text": "Watch text-secondary contrast on tinted surfaces in light mode"},
-    {"sev": "P2", "id": "popover-density", "text": "Scoreboard + progress list + recent batches can stack tall in tray popover"},
-    {"sev": "P2", "id": "chip-touch", "text": "Chip min-height 32 below 44px guideline for touch; acceptable for dense tray pointer UI"}
+    {
+      "sev": "P1",
+      "id": "hero-metric-risk",
+      "text": "Large number + label pattern can read as SaaS hero-metric if over-decorated; keep restrained"
+    },
+    {
+      "sev": "P1",
+      "id": "dest-option-count",
+      "text": "Six destination choices is high decision load; optional should stay quiet"
+    },
+    {
+      "sev": "P2",
+      "id": "secondary-contrast",
+      "text": "Watch text-secondary contrast on tinted surfaces in light mode"
+    },
+    {
+      "sev": "P2",
+      "id": "popover-density",
+      "text": "Scoreboard + progress list + recent batches can stack tall in tray popover"
+    },
+    {
+      "sev": "P2",
+      "id": "chip-touch",
+      "text": "Chip min-height 32 below 44px guideline for touch; acceptable for dense tray pointer UI"
+    }
   ],
   "heuristics": {
     "visibility_of_status": 3,

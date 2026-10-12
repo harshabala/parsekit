@@ -16,13 +16,7 @@ export const DESTINATION_PROMPT_KEY = "destinationPromptSeen";
 /** Settings key for soft destination preference (local only). */
 export const CONVERT_DESTINATION_KEY = "convertDestination";
 
-export type ConvertDestination =
-  | "claude"
-  | "chatgpt"
-  | "gemini"
-  | "obsidian"
-  | "other"
-  | "skipped";
+export type ConvertDestination = "claude" | "chatgpt" | "gemini" | "obsidian" | "other" | "skipped";
 
 export function isActivated(activatedAt: string | number | null | undefined): boolean {
   if (activatedAt == null || activatedAt === "") return false;
