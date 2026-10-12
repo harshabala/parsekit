@@ -6,32 +6,97 @@ on:
   pull_request:
     branches: [master]
 
-jobs:
-  test:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
+permissions:
+  contents: read
 
-      - uses: actions/setup-node@v4
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "20"
           cache: npm
 
-      - uses: dtolnay/rust-toolchain@stable
-
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Frontend unit tests
-        run: npm test
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Format check (Prettier)
+        run: npm run format:check
 
       - name: Svelte typecheck
         run: npm run check
 
-      # Tauri build.rs requires binaries/parsekit-sidecar-<triple> before cargo test compiles.
+      - name: Frontend unit tests
+        run: npm test
+
+      - name: Frontend build
+        run: npm run build
+
+  rust:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # Tauri build.rs requires binaries/parsekit-sidecar-<triple> before cargo compiles the crate.
       - name: Build parsekit sidecar
         run: npm run build:sidecar
 
+      - name: rustfmt
+        run: cargo fmt --check
+        working-directory: src-tauri
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+
       - name: Rust unit tests
         run: cargo test
+        working-directory: src-tauri
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: npm audit (all dependencies, high and above)
+        run: npm audit --audit-level=high
+
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: stable
+
+      - name: cargo audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
         working-directory: src-tauri
