@@ -80,11 +80,11 @@ Files, OCR, and conversion never leave your Mac. No telemetry. Network only for 
 | Metric | Definition | Storage |
 |--------|------------|---------|
 | **Activation** | First batch with at least one successful file | `activatedAt` in the Tauri settings store |
-| **Tokens saved** | Estimate: raw extract vs cleaned Markdown (~4 chars/token) | On-disk token stats |
+| **Tokens saved** | `max(0, baseline − output)` with `cl100k_base`. A PDF with a text layer uses that text as the baseline. Other types use the published reduction ratio, which is 0.0 on every fixture, so no saving is claimed. The app's long ChatGPT message is 800 tokens and is marked approximate. | On-disk token stats |
 | **Today / all-time** | Calendar-day and lifetime sums of token events | Same |
 | **Success rate** | Successful vs failed files across the last 20 jobs | `jobOutcomesV1` in the settings store (counts only) |
 
-Stored only on this device. Never uploaded. See [`docs/TASKS.md`](docs/TASKS.md).
+The published fixture benchmark records 0.0% reduction on every file, and ParseKit's output was larger than the naive baseline. Structure is the value, not a smaller token count. Reproduce the published figures with `node scripts/reproduce_published_numbers.mjs`. Stored only on this device. Never uploaded. See [`docs/benchmark-results.md`](docs/benchmark-results.md).
 
 ## Develop
 

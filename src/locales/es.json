@@ -307,7 +307,7 @@
     "bannerLifetime": "{count} tokens ahorrados",
     "bannerHint": "Abre Ajustes para ver el desglose completo",
     "panelTitle": "Tokens ahorrados",
-    "panelHint": "Tokens estimados que evitaste enviar a la IA al analizar localmente. Las páginas escaneadas se cuentan por separado.",
+    "panelHint": "Se cuenta con cl100k solo cuando el extracto en bruto es más largo que la salida. Las pruebas publicadas no muestran reducción. Las páginas escaneadas se cuentan aparte, no como ahorro.",
     "periodLabel": "Periodo del banner",
     "periodToday": "Hoy",
     "periodMonth": "Este mes",

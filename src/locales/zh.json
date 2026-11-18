@@ -307,7 +307,7 @@
     "bannerLifetime": "已节省 {count} 个 token",
     "bannerHint": "打开设置查看完整统计",
     "panelTitle": "Token 节省",
-    "panelHint": "本地解析后估算避免的 token 数量。扫描页数单独统计。",
+    "panelHint": "仅当原始提取比输出更长时，用 cl100k 计数。已发布样例没有减少。扫描页单独计数，不算节省。",
     "periodLabel": "横幅统计周期",
     "periodToday": "今天",
     "periodMonth": "本月",

@@ -309,7 +309,7 @@
     "bannerLifetime": "{count} tokens saved",
     "bannerHint": "Open Settings for the full breakdown",
     "panelTitle": "Tokens saved",
-    "panelHint": "Estimated tokens you avoided sending to AI by parsing locally. Scanned pages are tracked separately.",
+    "panelHint": "Counted with cl100k only when the raw extract is longer than the output. The published fixtures show no reduction. Scanned pages are tracked separately, not as savings.",
     "panelHintShort": "Local counter. Never sent anywhere.",
     "privacyShort": "Counted locally on your Mac.",
     "periodLabel": "Banner period",

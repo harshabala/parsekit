@@ -26,7 +26,10 @@ Offline, no accounts, no keys. It is public and has releases (0.2.12).
 3. **Drop and done.** Drag in a folder of mixed files; a few seconds later the Markdown is where
    the owner wants it, with a clear note on anything that did not convert well.
 
-## Where it is today (purpose score: 6/10)
+## Where it is today (purpose score: 7/10)
+
+2026-11-18: was 6. The extra point is honest token numbers. The published fixtures
+still show no reduction. Quality is still unmeasured.
 
 True today:
 - Works and is released. Conversion through a bundled sidecar, with optional OCR.
@@ -50,6 +53,11 @@ Gaps:
 - Merge or close `docs/parsekit-screenshots`. Compare each " 2.md" duplicate with its original,
   keep the right one and delete the other.
 - **Done when:** one checkout on `master`, no duplicate documents, GitHub equals local.
+- 2026-11-18: not done. Tracked files have no ` 2.md` copies; the local copies are
+  gitignored and the ones that differ only put personal paths back. They were
+  not kept. `docs/parsekit-screenshots` is behind `master`, which already has
+  the gallery commit `dc38b40`. Do not merge that branch. Not merged to
+  `master`, and not pushed. Not a scoring point.
 
 ### 1. A quality benchmark (before any conversion change)
 - A set of at least 30 real documents the owner may share or that are freely licensed: reports
@@ -70,6 +78,13 @@ Gaps:
   compare against what people actually paste into an AI tool. If structure is the value and not
   size, say that instead.
 - **Done when:** every number shown in the app and the README is reproduced by a script.
+- 2026-11-18: the README no longer says "~4 chars/token". It states `cl100k_base`,
+  `max(0, baseline − output)`, the 800-token ChatGPT approximation, and the
+  published 0.0% fixture deltas. `node scripts/reproduce_published_numbers.mjs`
+  prints those figures from the benchmark files and the source constant.
+  The settings hint no longer says tokens were avoided. Live counters are
+  still sums of on-device events, not a new measurement. This is the honest
+  token-numbers point. Score 6 → 7.
 
 ### 4. Know when it went badly
 - A confidence note per file: low OCR confidence, a table that could not be kept, pages skipped.
@@ -104,5 +119,4 @@ One point each, ten in all: benchmark and baseline (1); tables (2); reading orde
 spreadsheets (1); honest token numbers (1); bad conversions flagged (1); owner accepts the flow
 (1); released (1).
 
-Today: 6 for a released, working converter whose quality is unmeasured and whose headline saving
-is not supported by its own benchmark.
+Today: 7. The headline saving is no longer claimed. Quality is still unmeasured.
