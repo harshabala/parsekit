@@ -14,6 +14,8 @@ are `cl100k_base`, an 800-token approximate ChatGPT message, and 0.0%
 reduction on every fixture. `node scripts/reproduce_published_numbers.mjs`
 prints them. Settings copy no longer says tokens were avoided. Score 6 → 7.
 
+Commit: `f5a4e637dc9887c79d4bf114bb6ebdbb5e495039`. Not pushed.
+
 Checks: `npm test` — 58 passed, 0 failed. The sidecar benchmark was not
 re-run. No new measurement was invented.
 
