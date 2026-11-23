@@ -175,6 +175,7 @@
     type="button"
     class="secondary token-savings-reset-btn"
     disabled={resetting || !hasData}
+    aria-busy={resetting}
     onclick={handleReset}
   >
     {#key resetting}

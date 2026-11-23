@@ -27,4 +27,16 @@ describe("UI token CSS", () => {
     expect(css).toMatch(/\.workers-slider-track-wrap\s*\{[^}]*min-height:\s*44px/s);
     expect(css).toMatch(/\.workers-slider-input::-webkit-slider-thumb\s*\{[^}]*width:\s*22px/s);
   });
+
+  it("disables button press scale under reduced motion", () => {
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*button:active[^}]*transform:\s*none/s,
+    );
+  });
+
+  it("marks a busy button with a still border, not a spinner", () => {
+    expect(css).toMatch(/button\[aria-busy="true"\]\s*\{[^}]*(?:box-shadow|border)[^}]*\}/s);
+    expect(css).not.toMatch(/button\[aria-busy="true"\][^{]*\{[^}]*animation:/s);
+    expect(css).not.toMatch(/button\[aria-busy="true"\][^{]*\{[^}]*rotate\(/s);
+  });
 });

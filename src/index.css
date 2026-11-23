@@ -641,6 +641,7 @@ button {
   cursor: pointer;
   transition:
     background-color var(--timing-fast) var(--easing-standard),
+    filter var(--timing-fast) var(--easing-standard),
     transform var(--timing-fast) var(--easing-standard),
     box-shadow var(--timing-fast) var(--easing-standard);
   box-shadow:
@@ -654,8 +655,9 @@ button:hover {
   background: var(--accent-color-hover);
 }
 
-button:active {
+button:active:not(:disabled) {
   transform: scale(0.97);
+  filter: brightness(0.96);
   box-shadow:
     0 0 0 1px var(--accent-color),
     0 1px 2px var(--shadow-color);
@@ -665,7 +667,21 @@ button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  filter: none;
   box-shadow: none;
+}
+
+/* Busy is a still border plus the existing label swap. No spinner. */
+button[aria-busy="true"] {
+  cursor: wait;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 65%, transparent);
+}
+
+button[aria-busy="true"]:disabled {
+  opacity: 0.9;
+  cursor: wait;
+  transform: none;
+  filter: none;
 }
 
 button:focus-visible {
@@ -1067,6 +1083,7 @@ label {
 
 .file-error-link:active {
   transform: none;
+  filter: none;
   opacity: 0.85;
 }
 
@@ -1251,6 +1268,7 @@ label {
 
 .error-banner-link:active {
   transform: none;
+  filter: none;
   opacity: 0.85;
 }
 
@@ -1906,6 +1924,11 @@ button.config-collapse-btn:focus-visible {
   background: oklch(from var(--accent-color) l c h / 0.08);
 }
 
+.drop-zone.drop-zone-busy {
+  border-color: var(--accent-color);
+  border-style: solid;
+}
+
 .drop-zone-icon {
   color: var(--text-secondary);
   opacity: 0.75;
@@ -1998,6 +2021,11 @@ button.config-collapse-btn:focus-visible {
   background: linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color-hover) 100%);
 }
 
+.run-parse-btn:not(:disabled):active {
+  filter: brightness(0.96);
+  transform: scale(0.97);
+}
+
 /* Secondary variant (Cancel) keeps the calm card look, just taller to match */
 .run-parse-btn.secondary {
   background: var(--secondary-bg);
@@ -2030,7 +2058,9 @@ button.config-collapse-btn:focus-visible {
     opacity var(--timing-fast) var(--easing-standard),
     background-color var(--timing-fast) var(--easing-standard),
     border-color var(--timing-fast) var(--easing-standard),
-    box-shadow var(--timing-fast) var(--easing-standard);
+    box-shadow var(--timing-fast) var(--easing-standard),
+    filter var(--timing-fast) var(--easing-standard),
+    transform var(--timing-fast) var(--easing-standard);
 }
 
 .icon-btn:hover {
@@ -2666,6 +2696,14 @@ button.about-author-link:hover {
   transform: none;
 }
 
+button.about-author-link:active {
+  transform: none;
+  filter: none;
+  opacity: 0.72;
+  background: transparent;
+  box-shadow: none;
+}
+
 button.about-author-link:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
@@ -2818,6 +2856,14 @@ button.about-author-link:focus-visible {
   color: var(--text-primary);
   background: transparent;
   transform: none;
+}
+
+.token-savings-banner:active {
+  transform: none;
+  filter: none;
+  opacity: 0.72;
+  background: transparent;
+  box-shadow: none;
 }
 
 .token-savings-panel--compact {
@@ -3023,6 +3069,16 @@ button.about-author-link:focus-visible {
   opacity: 0.85;
 }
 
+.progress-hud-stat-err:active,
+.progress-hud-error-file:active,
+.progress-hud-error-link:active {
+  transform: none;
+  filter: none;
+  opacity: 0.72;
+  background: transparent;
+  box-shadow: none;
+}
+
 .progress-hud-complete {
   display: flex;
   flex-direction: column;
@@ -3129,4 +3185,12 @@ button.about-author-link:focus-visible {
 .progress-hud-error-chip.active {
   border-color: var(--accent-color);
   color: var(--text-primary);
+}
+
+/* Scale is motion. Reduced motion keeps the still darken from :active filter. */
+@media (prefers-reduced-motion: reduce) {
+  button:active,
+  .segmented-control .segment:active {
+    transform: none !important;
+  }
 }

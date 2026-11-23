@@ -152,12 +152,14 @@
       type="button"
       class="drop-zone-btn-primary"
       disabled={disabled || scanning}
+      aria-busy={scanning || disabled}
       onclick={selectFiles}>{t("dropzone.selectFiles")}</button
     >
     <button
       type="button"
       class="secondary drop-zone-btn-secondary"
       disabled={disabled || scanning}
+      aria-busy={scanning || disabled}
       onclick={selectFolder}>{t("dropzone.selectFolder")}</button
     >
   </div>

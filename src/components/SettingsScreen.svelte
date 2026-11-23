@@ -489,6 +489,7 @@
                 type="button"
                 class="secondary settings-finder-install-btn"
                 disabled={finderActionBusy}
+                aria-busy={finderActionBusy}
                 onclick={onInstallFinderAction}
               >
                 {#key finderActionBusy}
@@ -524,6 +525,7 @@
                 type="button"
                 class="secondary"
                 disabled={updateCheckBusy}
+                aria-busy={updateCheckBusy}
                 onclick={onCheckForUpdates}
               >
                 {updateCheckBusy ? t("update.checking") : t("update.checkButton")}

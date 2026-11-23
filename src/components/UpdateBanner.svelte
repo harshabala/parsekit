@@ -40,6 +40,7 @@
       type="button"
       class="update-banner-primary"
       disabled={installing}
+      aria-busy={installing}
       onclick={onInstall}
     >
       {installing ? t("update.installing") : t("update.installRestart")}

@@ -120,6 +120,7 @@
             class="onboarding-btn-primary onboarding-btn-install"
             onclick={installParseKit}
             disabled={installing}
+            aria-busy={installing}
           >
             {installing ? t("onboarding.installing") : t("onboarding.installButton")}
           </button>
