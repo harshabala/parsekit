@@ -9,8 +9,6 @@
     hintFadeOut,
     rowFlyIn,
     rowFlyOut,
-    sectionFlyInMaybeLight,
-    sectionFlyOutMaybeLight,
     MOTION_ROW_STAGGER_CAP,
   } from "../lib/motion";
   import { isConverterDependencyError } from "../lib/converterErrors";
@@ -37,12 +35,6 @@
   const reducedMotion = $derived(prefersReducedMotion.current);
   const iconFadeInParams = $derived(iconFadeIn(reducedMotion));
   const iconFadeOutParams = $derived(iconFadeOut(reducedMotion));
-  const sectionFlyInParams = $derived(
-    sectionFlyInMaybeLight(reducedMotion, lightMotion),
-  );
-  const sectionFlyOutParams = $derived(
-    sectionFlyOutMaybeLight(reducedMotion, lightMotion),
-  );
   const hintFadeInParams = $derived(hintFadeIn(reducedMotion));
   const hintFadeOutParams = $derived(hintFadeOut(reducedMotion));
 
@@ -144,15 +136,9 @@
   <div class="section-title">{t("progress.title")}</div>
   <div class="progress-panel">
     <div class="row progress-header">
-      {#key isParsing}
-        <span
-          class="progress-heading"
-          in:fade={iconFadeInParams}
-          out:fade={iconFadeOutParams}
-        >
-          {isParsing ? t("progress.parsing") : t("progress.complete")}
-        </span>
-      {/key}
+      <span class="progress-heading" role="status">
+        {isParsing ? t("progress.parsing") : t("progress.complete")}
+      </span>
       <span class="progress-fraction" aria-live="polite">
         {t("progress.ofTotal", { done: finishedCount, total })}
       </span>
@@ -177,13 +163,10 @@
     </div>
 
     {#if isParsing && primaryActive}
-      <p
-        class="progress-now"
-        aria-live="polite"
-        in:fly={sectionFlyInParams}
-        out:fly={sectionFlyOutParams}
-      >
-        <span class="parse-spinner parse-spinner-inline" aria-hidden="true"></span>
+      <p class="progress-now" aria-live="polite">
+        {#if !reducedMotion}
+          <span class="parse-spinner parse-spinner-inline" aria-hidden="true"></span>
+        {/if}
         <span class="progress-now-text">
           {t("progress.nowParsing", { name: primaryActive.name })}
           {#if parsingCount > 1}
@@ -243,12 +226,7 @@
           <div class="file-row-main">
             <span class="file-name" title={file.name}>{file.name}</span>
             {#if file.status === "error" && file.error}
-              <span
-                class="file-error"
-                title={file.error}
-                in:fade={hintFadeInParams}
-                out:fade={hintFadeOutParams}
-              >{file.error}</span>
+              <p class="file-error" tabindex="0">{file.error}</p>
               {#if onOpenFileSupport && isConverterDependencyError(file.error)}
                 <button
                   type="button"
@@ -269,7 +247,7 @@
                 in:fade={iconFadeInParams}
                 out:fade={iconFadeOutParams}
               >
-                {#if file.status === "parsing"}
+                {#if file.status === "parsing" && !reducedMotion}
                   <span class="parse-spinner" aria-hidden="true"></span>
                 {:else if file.status === "done"}
                   <span class="status-glyph" aria-hidden="true">✓</span>

@@ -1071,6 +1071,23 @@ fn copy_text_to_clipboard(text: String) -> Result<(), String> {
     copy_text_to_system_clipboard(&text)
 }
 
+/// Read a batch output file and copy its text. Capped so a huge file cannot stall the panel.
+#[tauri::command]
+fn copy_output_file_to_clipboard(path: String) -> Result<(), String> {
+    const MAX_BYTES: u64 = 8 * 1024 * 1024;
+    let canonical = validate_user_path(&path)?;
+    if !canonical.is_file() {
+        return Err("Output is not a file".into());
+    }
+    let meta = std::fs::metadata(&canonical).map_err(|e| format!("Could not read output: {e}"))?;
+    if meta.len() > MAX_BYTES {
+        return Err("Output is too large to copy".into());
+    }
+    let text =
+        std::fs::read_to_string(&canonical).map_err(|e| format!("Could not read output: {e}"))?;
+    copy_text_to_system_clipboard(&text)
+}
+
 #[tauri::command]
 fn get_system_info() -> Result<serde_json::Value, String> {
     Ok(serde_json::json!({
@@ -1567,6 +1584,7 @@ pub fn run() {
             open_privacy_security_settings,
             gatekeeper_fix_command,
             copy_text_to_clipboard,
+            copy_output_file_to_clipboard,
             trigger_haptic,
             pick_input_files,
             pick_input_folder,
@@ -1615,7 +1633,7 @@ pub fn run() {
                 tray_id: Arc::new(Mutex::new(TrayIconId::new("pending"))),
                 open_label: Arc::new(Mutex::new("Open ParseKit".to_string())),
                 clipboard_label: Arc::new(Mutex::new(
-                    "Parse Clipboard File → Copy Markdown".to_string(),
+                    "Convert Clipboard File → Copy Markdown".to_string(),
                 )),
                 quit_label: Arc::new(Mutex::new("Quit ParseKit".to_string())),
             });

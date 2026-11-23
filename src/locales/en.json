@@ -51,7 +51,7 @@
     "stepRun": "Click Convert Files",
     "trayHint": "The ParseKit menu bar icon (top-right) reopens the panel anytime.",
     "firstConvertTitle": "Next: convert one file",
-    "firstConvertBody": "After you continue, drop a PDF or Office file into ParseKit. You'll see an estimate of tokens saved — counted only on this Mac."
+    "firstConvertBody": "After you continue, drop a PDF into ParseKit. Word, Excel, PowerPoint, and images need extra converters. You'll see an estimate of tokens saved — counted only on this Mac."
   },
   "deps": {
     "title": "File converters",
@@ -103,7 +103,7 @@
   },
   "dropzone": {
     "title": "Drag files or folders here",
-    "hint": "PDF, CSV, XLSX, XLS, TSV and more",
+    "hint": "PDF works out of the box. Word, Excel, PowerPoint, and images need extra converters.",
     "filesReadyOne": "1 file ready to convert",
     "filesReady": "{count} files ready to convert",
     "selectFiles": "Select Files",
@@ -111,19 +111,21 @@
     "scanning": "Scanning folder…"
   },
   "run": {
-    "parsing": "Parsing...",
+    "parsing": "Converting...",
     "runParse": "Convert Files",
     "cancel": "Cancel",
     "openOutput": "Open Output",
     "copyOutputPath": "Copy Output Path",
     "copyLast": "Copy Last File",
+    "copied": "Copied to clipboard",
+    "copyFailed": "Could not copy to clipboard. Try again.",
     "notifyDone": "Done: {parsed} parsed, {errors} errors",
     "batchDoneWithErrors": "Batch finished with {errors} file errors. See the list below."
   },
   "progress": {
     "title": "Processing",
-    "parsing": "Parsing documents...",
-    "complete": "Parsing complete",
+    "parsing": "Converting documents...",
+    "complete": "Conversion complete",
     "ofTotal": "{done} of {total}",
     "completed": "{count} completed",
     "inProgress": "{count} in progress",
@@ -131,16 +133,16 @@
     "failed": "{count} failed",
     "skipped": "{count} skipped",
     "summary": "{parsed} parsed, {errors} errors out of {total} files",
-    "nowParsing": "Parsing {name}",
+    "nowParsing": "Converting {name}",
     "andMore": "+{count} more",
-    "statusParsing": "Parsing",
+    "statusParsing": "Converting",
     "statusDone": "Done",
     "statusError": "Failed",
     "statusSkipped": "Skipped",
     "statusWaiting": "Waiting"
   },
   "progressHud": {
-    "parsing": "Parsing…",
+    "parsing": "Converting…",
     "complete": "Done",
     "success": "{count} done",
     "failed": "{count} failed",
@@ -208,8 +210,8 @@
     "addFiles": "Add files or a folder to convert.",
     "needOutputFolder": "Choose an output folder first.",
     "noSupported": "No supported files found.",
-    "parseFailed": "Parsing failed.",
-    "parseCancelled": "Parsing cancelled.",
+    "parseFailed": "Conversion failed.",
+    "parseCancelled": "Conversion cancelled.",
     "batchInterrupted": "Batch stopped before this file finished.",
     "batchNotReached": "Batch ended before this file was processed.",
     "engineStalled": "Parse engine stopped responding. Try again with fewer parallel workers.",
@@ -273,12 +275,12 @@
   },
   "tray": {
     "open": "Open ParseKit",
-    "parseClipboard": "Parse Clipboard File → Copy Markdown",
+    "parseClipboard": "Convert Clipboard File → Copy Markdown",
     "quit": "Quit ParseKit"
   },
   "firstRun": {
     "title": "Convert one file to see your token savings",
-    "body": "Drop a PDF or Office file above (or pick files). ParseKit cleans it on your Mac and shows how many AI tokens you avoided. No account. Nothing is uploaded."
+    "body": "Drop a PDF above (or pick files). Word, Excel, PowerPoint, and images need extra converters. ParseKit cleans it on your Mac and shows how many AI tokens you avoided. No account. Nothing is uploaded."
   },
   "scoreboard": {
     "aria": "Conversion results and token savings",

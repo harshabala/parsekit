@@ -50,7 +50,7 @@
     "stepRun": "点击「转换文件」",
     "trayHint": "随时点击菜单栏（右上角）的 ParseKit 图标可重新打开面板。",
     "firstConvertTitle": "下一步：转换一个文件",
-    "firstConvertBody": "继续后，将 PDF 或 Office 文件拖入 ParseKit。你会看到节省的 token 估算——仅保存在本机。"
+    "firstConvertBody": "继续后，将 PDF 拖入 ParseKit。Word、Excel、PowerPoint 和图片需要额外转换工具。你会看到节省的 token 估算——仅保存在本机。"
   },
   "deps": {
     "title": "文件转换工具",
@@ -101,7 +101,7 @@
   },
   "dropzone": {
     "title": "拖放文件或文件夹到此处",
-    "hint": "PDF、CSV、XLSX、XLS、TSV 等",
+    "hint": "PDF 可直接解析。Word、Excel、PowerPoint 和图片需要额外转换工具。",
     "filesReadyOne": "1 个文件待转换",
     "filesReady": "{count} 个文件待转换",
     "selectFiles": "选择文件",
@@ -109,19 +109,21 @@
     "scanning": "正在扫描文件夹…"
   },
   "run": {
-    "parsing": "解析中...",
+    "parsing": "转换中...",
     "runParse": "转换文件",
     "cancel": "取消",
     "openOutput": "打开输出",
     "copyOutputPath": "复制输出路径",
     "copyLast": "复制上一个文件",
+    "copied": "已复制到剪贴板",
+    "copyFailed": "无法复制到剪贴板，请重试。",
     "notifyDone": "完成：已解析 {parsed}，错误 {errors}",
     "batchDoneWithErrors": "批次完成，{errors} 个文件出错。请查看下方列表。"
   },
   "progress": {
     "title": "处理中",
-    "parsing": "正在解析文档...",
-    "complete": "解析完成",
+    "parsing": "正在转换文档...",
+    "complete": "转换完成",
     "ofTotal": "{done} / {total}",
     "completed": "已完成 {count}",
     "inProgress": "进行中 {count}",
@@ -129,16 +131,16 @@
     "failed": "失败 {count}",
     "skipped": "跳过 {count}",
     "summary": "共 {total} 个文件，已解析 {parsed}，错误 {errors}",
-    "nowParsing": "正在解析 {name}",
+    "nowParsing": "正在转换 {name}",
     "andMore": "另有 {count} 个",
-    "statusParsing": "解析中",
+    "statusParsing": "转换中",
     "statusDone": "完成",
     "statusError": "失败",
     "statusSkipped": "跳过",
     "statusWaiting": "等待"
   },
   "progressHud": {
-    "parsing": "解析中…",
+    "parsing": "转换中…",
     "complete": "完成",
     "success": "{count} 已完成",
     "failed": "{count} 失败",
@@ -206,8 +208,8 @@
     "addFiles": "请添加文件或文件夹以解析。",
     "needOutputFolder": "请先选择输出文件夹。",
     "noSupported": "未找到支持的文件。",
-    "parseFailed": "解析失败。",
-    "parseCancelled": "已取消解析。",
+    "parseFailed": "转换失败。",
+    "parseCancelled": "已取消转换。",
     "batchInterrupted": "批次已停止，此文件未完成。",
     "batchNotReached": "批次已结束，此文件尚未处理。",
     "engineStalled": "解析引擎无响应。请减少并行 worker 后重试。",
@@ -271,12 +273,12 @@
   },
   "tray": {
     "open": "打开 ParseKit",
-    "parseClipboard": "解析剪贴板文件 → 复制 Markdown",
+    "parseClipboard": "转换剪贴板文件 → 复制 Markdown",
     "quit": "退出 ParseKit"
   },
   "firstRun": {
     "title": "转换一个文件即可看到 token 节省",
-    "body": "将 PDF 或 Office 文件拖到上方。ParseKit 在你的 Mac 上清理内容，并显示你避免消耗的 AI token。无需账号，不会上传。"
+    "body": "将 PDF 拖到上方（或选择文件）。Word、Excel、PowerPoint 和图片需要额外转换工具。ParseKit 在你的 Mac 上清理内容，并显示你避免消耗的 AI token。无需账号，不会上传。"
   },
   "scoreboard": {
     "aria": "转换结果与 token 节省",

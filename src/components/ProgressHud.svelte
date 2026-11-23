@@ -159,12 +159,12 @@
         type="button"
         class="progress-hud-error-file"
         onclick={() => toggleFailedDetail(selectedError)}
-        title={selectedError.error ?? ""}
+        aria-describedby={selectedError.error ? "progress-hud-error-msg" : undefined}
       >
         {selectedError.name}
       </button>
       {#if selectedError.error}
-        <p class="progress-hud-error-msg">{selectedError.error}</p>
+        <p class="progress-hud-error-msg" id="progress-hud-error-msg">{selectedError.error}</p>
       {/if}
       {#if isConverterDependencyError(selectedError.error ?? "")}
         <button type="button" class="progress-hud-error-link" onclick={openFileSupport}>

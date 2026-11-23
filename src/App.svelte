@@ -158,6 +158,9 @@
   let jobOutcomes = $state<JobOutcomesState>({ jobs: [] });
   let showDestinationPrompt = $state(false);
   let showBatchScoreboard = $state(false);
+  let lastCompletedOutputPath = $state<string | null>(null);
+  let copyLastNotice = $state<string | null>(null);
+  let copyLastBusy = $state(false);
   /** Instant chrome for keyboard convert (Emil: keyboard-initiated = no animation). */
   let parseChromeInstant = $state(false);
   /**
@@ -778,6 +781,8 @@
       await invoke("trigger_haptic");
     } catch {}
 
+    lastCompletedOutputPath = null;
+    copyLastNotice = null;
     isParsing = true;
     parseStallLimitMs = parseStallTimeoutMs(filesToParse.length);
     startParseStallWatchdog();
@@ -825,6 +830,12 @@
               })
               .catch((e) => console.warn("[tokenStats] record failed", e));
           } else if (event.type === "progress") {
+            if (
+              event.path &&
+              (event.status === "completed" || event.status === "skipped")
+            ) {
+              lastCompletedOutputPath = event.path;
+            }
             const applied = applyParseProgressEvent(
               files,
               {
@@ -984,9 +995,31 @@
     await invoke("open_in_finder", { path });
   }
 
+  async function copyLastOutput() {
+    const path = lastCompletedOutputPath;
+    if (!path || copyLastBusy) return;
+    copyLastBusy = true;
+    copyLastNotice = null;
+    try {
+      await invoke("copy_output_file_to_clipboard", { path });
+      try {
+        await invoke("trigger_haptic");
+      } catch {
+        /* optional */
+      }
+      copyLastNotice = t("run.copied");
+    } catch {
+      copyLastNotice = t("run.copyFailed");
+    } finally {
+      copyLastBusy = false;
+    }
+  }
+
   function handleConvertMore() {
     showBatchScoreboard = false;
     files = [];
+    lastCompletedOutputPath = null;
+    copyLastNotice = null;
     lastParsingId = null;
     batchTokenSavings = createBatchTokenSavings();
     selectedFiles = [];
@@ -1080,6 +1113,15 @@
   {/if}
 
   <main class="main-panel">
+    <DropZone
+      fileCount={inputFileCount}
+      disabled={isIngesting || isParsing}
+      onIngestStart={() => (isIngesting = true)}
+      onIngestEnd={() => (isIngesting = false)}
+      onFolder={handleFolderFromDropZone}
+      onFiles={handleFilesSelected}
+    />
+
     <section class="section output-settings-section">
       {#if hasSuccessfulParse}
         <div class="config-section-header output-settings-toolbar">
@@ -1118,7 +1160,7 @@
             </div>
             <div class="config-control-fields config-control-fields--format">
               <FormatSelector value={format} onChange={handleFormatChange} />
-              <span class="ocr-auto-chip" title={t("config.ocrAutoHint")}>
+              <span class="ocr-auto-chip">
                 <SparkleIcon size={12} weight="fill" aria-hidden="true" />
                 {t("config.ocrAuto")}
               </span>
@@ -1126,6 +1168,7 @@
           </div>
 
           <p class="caption-hint output-settings-hint">{t("config.formatHint")}</p>
+          <p class="caption-hint ocr-auto-hint" id="ocr-auto-hint">{t("config.ocrAutoHint")}</p>
         </div>
       {:else}
         <button
@@ -1146,15 +1189,6 @@
         </button>
       {/if}
     </section>
-
-    <DropZone
-      fileCount={inputFileCount}
-      disabled={isIngesting || isParsing}
-      onIngestStart={() => (isIngesting = true)}
-      onIngestEnd={() => (isIngesting = false)}
-      onFolder={handleFolderFromDropZone}
-      onFiles={handleFilesSelected}
-    />
 
     {#if showProgress}
       <div in:fly={sectionFlyInParams} out:fly={sectionFlyOutParams}>
@@ -1229,6 +1263,8 @@
           successRateLabel={jobSuccessRateLabel}
           showDestinationPrompt={showDestinationPrompt}
           onOpenOutput={() => openFolder(outputDir)}
+          onCopyLast={lastCompletedOutputPath ? copyLastOutput : undefined}
+          copyLastBusy={copyLastBusy}
           onConvertMore={handleConvertMore}
           onDestination={handleDestination}
         />
@@ -1241,7 +1277,21 @@
           >
             {t("run.openOutput")}
           </button>
+          {#if lastCompletedOutputPath}
+            <button
+              type="button"
+              class="secondary post-parse-copy-btn"
+              disabled={copyLastBusy}
+              aria-busy={copyLastBusy}
+              onclick={() => void copyLastOutput()}
+            >
+              {t("run.copyLast")}
+            </button>
+          {/if}
         </div>
+      {/if}
+      {#if copyLastNotice}
+        <p class="run-blocked-hint" role="status">{copyLastNotice}</p>
       {/if}
 
       {#if !isParsing && !hasSuccessfulParse && !showBatchScoreboard}

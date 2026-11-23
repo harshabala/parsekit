@@ -25,6 +25,8 @@
     successRateLabel,
     showDestinationPrompt = false,
     onOpenOutput,
+    onCopyLast,
+    copyLastBusy = false,
     onConvertMore,
     onDestination,
   }: {
@@ -35,6 +37,8 @@
     successRateLabel: string;
     showDestinationPrompt?: boolean;
     onOpenOutput: () => void;
+    onCopyLast?: () => void;
+    copyLastBusy?: boolean;
     onConvertMore: () => void;
     onDestination: (value: ConvertDestination) => void;
   } = $props();
@@ -134,6 +138,17 @@
     <button type="button" class="run-parse-btn" onclick={onOpenOutput}>
       {t("run.openOutput")}
     </button>
+    {#if onCopyLast}
+      <button
+        type="button"
+        class="secondary"
+        disabled={copyLastBusy}
+        aria-busy={copyLastBusy}
+        onclick={onCopyLast}
+      >
+        {t("run.copyLast")}
+      </button>
+    {/if}
     <button type="button" class="secondary" onclick={onConvertMore}>
       {t("scoreboard.convertMore")}
     </button>

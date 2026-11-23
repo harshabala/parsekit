@@ -50,7 +50,7 @@
     "stepRun": "Pulsa Convertir archivos",
     "trayHint": "El icono de ParseKit en la barra de menú (arriba a la derecha) vuelve a abrir el panel.",
     "firstConvertTitle": "Siguiente: convierte un archivo",
-    "firstConvertBody": "Al continuar, suelta un PDF u Office en ParseKit. Verás una estimación de tokens ahorrados — solo en este Mac."
+    "firstConvertBody": "Al continuar, suelta un PDF en ParseKit. Word, Excel, PowerPoint e imágenes necesitan convertidores. Verás una estimación de tokens ahorrados — solo en este Mac."
   },
   "deps": {
     "title": "Convertidores de archivos",
@@ -101,7 +101,7 @@
   },
   "dropzone": {
     "title": "Arrastra archivos o carpetas aquí",
-    "hint": "PDF, CSV, XLSX, XLS, TSV y más",
+    "hint": "PDF funciona sin herramientas extra. Word, Excel, PowerPoint e imágenes necesitan convertidores.",
     "filesReadyOne": "1 archivo listo para convertir",
     "filesReady": "{count} archivos listos para convertir",
     "selectFiles": "Seleccionar archivos",
@@ -109,19 +109,21 @@
     "scanning": "Escaneando carpeta…"
   },
   "run": {
-    "parsing": "Analizando...",
+    "parsing": "Convirtiendo...",
     "runParse": "Convertir archivos",
     "cancel": "Cancelar",
     "openOutput": "Abrir salida",
     "copyOutputPath": "Copiar ruta de salida",
     "copyLast": "Copiar último archivo",
+    "copied": "Copiado al portapapeles",
+    "copyFailed": "No se pudo copiar al portapapeles. Inténtalo de nuevo.",
     "notifyDone": "Listo: {parsed} analizados, {errors} errores",
     "batchDoneWithErrors": "Lote terminado con {errors} errores. Revisa la lista."
   },
   "progress": {
     "title": "Procesando",
-    "parsing": "Analizando documentos...",
-    "complete": "Análisis completado",
+    "parsing": "Convirtiendo documentos...",
+    "complete": "Conversión completa",
     "ofTotal": "{done} de {total}",
     "completed": "{count} completados",
     "inProgress": "{count} en curso",
@@ -129,16 +131,16 @@
     "failed": "{count} fallidos",
     "skipped": "{count} omitidos",
     "summary": "{parsed} analizados, {errors} errores de {total} archivos",
-    "nowParsing": "Analizando {name}",
+    "nowParsing": "Convirtiendo {name}",
     "andMore": "+{count} más",
-    "statusParsing": "En curso",
+    "statusParsing": "Convirtiendo",
     "statusDone": "Listo",
     "statusError": "Error",
     "statusSkipped": "Omitido",
     "statusWaiting": "En espera"
   },
   "progressHud": {
-    "parsing": "Analizando…",
+    "parsing": "Convirtiendo…",
     "complete": "Listo",
     "success": "{count} listos",
     "failed": "{count} fallidos",
@@ -206,8 +208,8 @@
     "addFiles": "Añade archivos o una carpeta para analizar.",
     "needOutputFolder": "Elige primero una carpeta de salida.",
     "noSupported": "No se encontraron archivos compatibles.",
-    "parseFailed": "Error al analizar.",
-    "parseCancelled": "Análisis cancelado.",
+    "parseFailed": "No se pudo convertir.",
+    "parseCancelled": "Conversión cancelada.",
     "batchInterrupted": "El lote se detuvo antes de terminar este archivo.",
     "batchNotReached": "El lote terminó antes de procesar este archivo.",
     "engineStalled": "El motor de análisis dejó de responder. Vuelve a intentarlo con menos trabajos en paralelo.",
@@ -271,12 +273,12 @@
   },
   "tray": {
     "open": "Abrir ParseKit",
-    "parseClipboard": "Analizar archivo del portapapeles → Copiar Markdown",
+    "parseClipboard": "Convertir archivo del portapapeles → Copiar Markdown",
     "quit": "Salir de ParseKit"
   },
   "firstRun": {
     "title": "Convierte un archivo para ver el ahorro de tokens",
-    "body": "Suelta un PDF u Office arriba. ParseKit lo limpia en tu Mac y muestra cuántos tokens de IA evitaste. Sin cuenta. Nada se sube."
+    "body": "Suelta un PDF arriba (o elige archivos). Word, Excel, PowerPoint e imágenes necesitan convertidores. ParseKit lo limpia en tu Mac y muestra cuántos tokens de IA evitaste. Sin cuenta. Nada se sube."
   },
   "scoreboard": {
     "aria": "Resultados de conversión y ahorro de tokens",
