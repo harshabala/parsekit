@@ -34,3 +34,9 @@ library. Parsing and token claims were not changed.
 Commit: `ea5e668840dfd8dc302afb045a24bfb320e940bd`. Not pushed.
 
 Checks: `npm test` — 60 passed, 0 failed. Not verified in the running app.
+
+Impeccable panel fixes. Copy Last File is next to Open Output after a batch. The drop zone is before output settings; the panel size is unchanged. The drop hint and onboarding agree that Word needs an extra converter. The OCR hint and a failed file's error are in the text, not a tooltip. Reduced motion keeps the converting text and does not use a spinner as the only cue. The job is named Convert, not Parse, in the button, status, and clipboard label. The 3px active-row stripe is gone. `BatchScoreboard 2.svelte` is unimported and untested; it was left in place.
+
+Commit: `2c974277533b669209b808610e66a2fd86078aa5`. Not pushed.
+
+Checks: `npm test` — 60 passed, 0 failed. Not verified in the running app. No new measurement was invented.
