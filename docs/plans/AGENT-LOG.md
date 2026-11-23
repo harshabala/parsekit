@@ -21,3 +21,16 @@ re-run. No new measurement was invented.
 
 Needs the owner: confirm the North Star, supply or approve the real document
 set, and agree targets. Do not merge to `master` from this branch.
+
+## 2026-11-23
+
+Press and loading states on the existing buttons. A press scales to 0.97
+or 0.98 and darkens, then returns. `prefers-reduced-motion` disables the
+scale and keeps a still darken. Busy controls (update install, drop zone
+scan, dependency recheck, Finder install, update check, onboarding install,
+token reset) keep their text and get a still inset border. No spinner
+library. Parsing and token claims were not changed.
+
+Commit: `ea5e668840dfd8dc302afb045a24bfb320e940bd`. Not pushed.
+
+Checks: `npm test` — 60 passed, 0 failed. Not verified in the running app.
